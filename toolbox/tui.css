@@ -1,12 +1,45 @@
 Screen {
-    background: #000000;
-    color: #e2e8f0;
+    /*background: #000000;
+    color: #e2e8f0;*/
+}
+
+#main-container {
+    /*background: #000000;*/
 }
 
 #title-bar {
-    height: 5%;
+    height: 7%;
+    align: center middle;
+}
+
+#version {
+    /*color: #989aa0;*/
+}
+
+#app-shell {
+    /*background: #000000;*/
 }
 
 #sidebar {
     width: 20%;
+    padding: 0 1;
+}
+
+#sidebar-list {
+    padding: 1 1;
+    /*background: #000000;*/
+}
+
+.sidebar-item {
+    padding: 1;
+    margin: 0 0;
+}
+
+ListItem.-highlight {
+    /*background: #4f0ba7;
+    color: #ffffff;*/
+}
+
+Footer {
+    /* background: #000000;*/
 }
