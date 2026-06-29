@@ -1,0 +1,12 @@
+Screen {
+    background: #000000;
+    color: #e2e8f0;
+}
+
+#title-bar {
+    height: 5%;
+}
+
+#sidebar {
+    width: 20%;
+}
