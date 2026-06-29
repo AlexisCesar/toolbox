@@ -8,7 +8,15 @@ class ToolboxTUI(App):
 
     ENABLE_COMMAND_PALETTE = False
     CSS_PATH = "tui.css"
-    BINDINGS = [("q", "quit", "Quit")]
+    BINDINGS = [
+        ("h", "select_view(0)", "Home"),
+        ("s", "select_view(1)", "Search"),
+        ("c", "select_view(2)", "Scripts"),
+        ("l", "select_view(3)", "Logs"),
+        ("t", "select_view(4)", "Health Checkers"),
+        ("e", "select_view(5)", "Settings"),
+        ("q", "quit", "Quit")
+    ]
 
     def compose(self) -> ComposeResult:
         """Create the main layout for the TUI."""
@@ -72,6 +80,7 @@ class ToolboxTUI(App):
         log.write(f"[{level.upper()}] {message}\n")
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
+        """Handle selection changes in the sidebar list view."""
         switcher = self.query_one("#main-content-switcher", ContentSwitcher)
 
         match event.list_view.index:
@@ -89,4 +98,14 @@ class ToolboxTUI(App):
                 switcher.current = "settings-view"
             case 6:
                 App.exit()
-        
+
+    def action_select_view(self, view_id: int) -> None:
+        list_view = self.query_one("#sidebar-list")
+        list_view.index = view_id
+        list_view.focus()
+
+        selected_item = list_view.highlighted_child
+        if selected_item is not None:
+            list_view.post_message(
+                ListView.Selected(list_view, item=selected_item, index=view_id)
+            )
