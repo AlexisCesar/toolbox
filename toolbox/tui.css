@@ -40,6 +40,24 @@ ListItem.-highlight {
     color: #ffffff;*/
 }
 
+#main-panel {
+    padding: 0 1;
+}
+
+#main-content-switcher {
+    height: 85%;
+    border: round #1f2937;
+    background: #020617;
+}
+
+#log {
+    height: 15%;
+    border: round #1f2937;
+    background: #020617;
+}
+
 Footer {
     /* background: #000000;*/
+    margin: 1 1;
+    width: 100%;
 }

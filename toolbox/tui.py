@@ -1,6 +1,7 @@
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical
-from textual.widgets import Footer, Label, ListItem, ListView, Placeholder, Static
+from textual.containers import Container, Horizontal, Vertical
+from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, Log, Placeholder
+from toolbox.views.home import Home
 
 class ToolboxTUI(App):
     """A Textual-based TUI for the Toolbox application."""
@@ -18,7 +19,8 @@ class ToolboxTUI(App):
             with Horizontal(id="app-shell"):
                 with Vertical(id="sidebar"):
                     yield self._build_sidebar(id="sidebar-list")
-                yield Placeholder(label="Main content", id="main-content")
+                with Vertical(id="main-panel"):
+                    yield self._build_main_content()
         yield Footer()
 
 
@@ -36,7 +38,55 @@ class ToolboxTUI(App):
         list_view.index = 0
         return list_view
 
+    
+    def _build_main_content(self) -> Container:
+        """Create the main content area."""
+        log = Log(id="log")
+        container = Container(
+            ContentSwitcher(
+                Home(id="home-view"),
+                Placeholder(label="Search view", id="search-view"),
+                Placeholder(label="Scripts view", id="scripts-view"),
+                Placeholder(label="Logs view", id="logs-view"),
+                Placeholder(label="Health Checkers view", id="health-checkers-view"),
+                Placeholder(label="Settings view", id="settings-view"),
+                initial="home-view",
+                id="main-content-switcher"
+            ),
+            log
+        )
+        return container
+
+
     def on_mount(self) -> None:
         """Set focus to the sidebar on mount."""
         self.query_one("#sidebar-list").focus()
         self.theme = "tokyo-night"
+
+        self.log_message("Toolbox TUI started.")
+
+    
+    def log_message(self, message: str, level: str = "info") -> None:
+        """Log a message to the log panel."""
+        log = self.query_one("#log", Log)
+        log.write(f"[{level.upper()}] {message}\n")
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        switcher = self.query_one("#main-content-switcher", ContentSwitcher)
+
+        match event.list_view.index:
+            case 0:
+                switcher.current = "home-view"
+            case 1:
+                switcher.current = "search-view"
+            case 2:
+                switcher.current = "scripts-view"
+            case 3:
+                switcher.current = "logs-view"
+            case 4:
+                switcher.current = "health-checkers-view"
+            case 5:
+                switcher.current = "settings-view"
+            case 6:
+                App.exit()
+        
