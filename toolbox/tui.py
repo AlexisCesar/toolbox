@@ -97,7 +97,7 @@ class ToolboxTUI(App):
             case 5:
                 switcher.current = "settings-view"
             case 6:
-                App.exit()
+                App.exit(self)
 
     def action_select_view(self, view_id: int) -> None:
         list_view = self.query_one("#sidebar-list")
