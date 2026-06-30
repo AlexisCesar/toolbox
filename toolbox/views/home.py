@@ -7,7 +7,16 @@ class Home(Static):
 
     def compose(self) -> ComposeResult:
         """Create the layout for the home view."""
-        yield Label("TODO: Add a cool ASCII art here", id="ascii-art")
+        yield Label("""
+         ___
+  ______//_\\\\______
+ /                 \\
+|________ _ ________|
+ |       |_|       |
+ |                 |
+ |                 |
+ |_________________| 
+        """, id="ascii-art")
         yield Label("Select an option from the sidebar to get started.\n\n"
                     + "First time using the Toolbox? Configure scripts and paths on the Settings tab.", id="home-instructions")
         yield Rule(line_style="dashed")
