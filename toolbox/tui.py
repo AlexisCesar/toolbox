@@ -2,6 +2,8 @@ from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, Log, Placeholder
 from toolbox.views.home import Home
+from toolbox.views.search import Search
+from toolbox.views.scripts import Scripts
 
 class ToolboxTUI(App):
     """A Textual-based TUI for the Toolbox application."""
@@ -53,8 +55,8 @@ class ToolboxTUI(App):
         container = Container(
             ContentSwitcher(
                 Home(id="home-view"),
-                Placeholder(label="Search view", id="search-view"),
-                Placeholder(label="Scripts view", id="scripts-view"),
+                Search(id="search-view"),
+                Scripts(id="scripts-view"),
                 Placeholder(label="Logs view", id="logs-view"),
                 Placeholder(label="Health Checkers view", id="health-checkers-view"),
                 Placeholder(label="Settings view", id="settings-view"),
