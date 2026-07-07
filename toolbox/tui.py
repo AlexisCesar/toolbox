@@ -4,6 +4,8 @@ from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, 
 from toolbox.views.home import Home
 from toolbox.views.search import Search
 from toolbox.views.scripts import Scripts
+from toolbox.utils.logger import Logger
+from toolbox.utils.config import config
 
 class ToolboxTUI(App):
     """A Textual-based TUI for the Toolbox application."""
@@ -19,6 +21,10 @@ class ToolboxTUI(App):
         ("e", "select_view(5)", "Settings"),
         ("q", "quit", "Quit")
     ]
+
+    def __init__(self):
+        super().__init__()
+        self.logger = Logger(self)
 
     def compose(self) -> ComposeResult:
         """Create the main layout for the TUI."""
@@ -56,7 +62,7 @@ class ToolboxTUI(App):
             ContentSwitcher(
                 Home(id="home-view"),
                 Search(id="search-view"),
-                Scripts(id="scripts-view"),
+                Scripts(logger=self.logger, id="scripts-view"),
                 Placeholder(label="Logs view", id="logs-view"),
                 Placeholder(label="Health Checkers view", id="health-checkers-view"),
                 Placeholder(label="Settings view", id="settings-view"),
@@ -69,17 +75,10 @@ class ToolboxTUI(App):
 
 
     def on_mount(self) -> None:
-        """Set focus to the sidebar on mount."""
         self.query_one("#sidebar-list").focus()
-        self.theme = "tokyo-night"
-
-        self.log_message("Toolbox TUI started.")
-
+        self.theme = config.theme
+        self.logger.info("Toolbox TUI started.")
     
-    def log_message(self, message: str, level: str = "info") -> None:
-        """Log a message to the log panel."""
-        log = self.query_one("#log", Log)
-        log.write(f"[{level.upper()}] {message}\n")
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Handle selection changes in the sidebar list view."""

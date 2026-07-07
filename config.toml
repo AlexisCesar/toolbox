@@ -1,0 +1,23 @@
+[paths]
+scripts = "/home/alexis/dev/scripts_folder_test_1"
+logs = "/home/alexis/dev/logs_folder_test_1"
+
+[ui]
+theme = "tokyo-night"
+
+# Health Checker - Services locations
+# In order to add a new service, use the following structure:
+# [[services]]
+# name = "service 1"
+# server = "localhost"
+# environment = "PROD"
+
+[[services]]
+name = "My Test Service 1"
+server = "localhost"
+environment = "dev"
+
+[[services]]
+name = "My Test Service 2"
+server = "localhost"
+environment = "dev"
