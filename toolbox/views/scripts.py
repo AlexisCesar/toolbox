@@ -1,4 +1,7 @@
+import subprocess
+
 from textual import Logger
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 
@@ -26,7 +29,7 @@ class Scripts(Static):
                         ".sql": "📊 SQL",
                         ".ps1": "</> Powershell Script"
                     }.get(file_path.suffix, "Unknown Type")
-                rows.append((file_path.name, "WIP", script_type, "Execute (not available)"))
+                rows.append((file_path.name, "WIP", script_type, "Execute"))
         
         yield Static(f"Reading scripts from: 📂 {config.scripts_dir}", id="scripts-label")
         with VerticalScroll():
@@ -47,8 +50,38 @@ class Scripts(Static):
         table.add_column("Action")
 
         for row in rows:
-            table.add_row(*row)
+            table.add_row(*row, key=row[0])
 
         table.sort(type_key)
         return table
     
+    
+    @on(DataTable.CellSelected)
+    def handle_cell_click(self, event: DataTable.CellSelected) -> None:
+        cell_value = event.value
+        if cell_value == "Execute":
+            table = self.query_one(DataTable)
+            row_data = table.get_row_at(event.coordinate.row)
+            script_name = row_data[0]
+            if script_name.endswith(".py"):
+                self.logger.info(f"Executing Python 🐍 script: {script_name}")
+                try:
+                    script_path = config.scripts_dir / script_name
+                    result = subprocess.run(["python", script_path], capture_output=True, text=True)
+                    self.logger.info(f"Script output: {result.stdout}")
+                    if result.stderr:
+                        self.logger.error(f"Script errors: {result.stderr}")
+                except Exception as e:
+                    self.logger.error(f"Failed to execute Python script: {e}")
+            elif script_name.endswith(".ps1"):
+                self.logger.info(f"Executing Powershell 📜 script: {script_name}")
+                try:
+                    script_path = config.scripts_dir / script_name
+                    result = subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path], capture_output=True, text=True)
+                    self.logger.info(f"Script output: {result.stdout}")
+                    if result.stderr:
+                        self.logger.error(f"Script errors: {result.stderr}")
+                except Exception as e:
+                    self.logger.error(f"Failed to execute Powershell script: {e}")
+            else:
+                self.logger.warn(f"Execution for this script type is not implemented yet.")

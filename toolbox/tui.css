@@ -45,13 +45,13 @@ ListItem.-highlight {
 }
 
 #main-content-switcher {
-    height: 85%;
+    height: 75%;
     border: round #1f2937;
     background: #020617;
 }
 
 #log {
-    height: 15%;
+    height: 25%;
     border: round #1f2937;
     background: #020617;
 }
