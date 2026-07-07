@@ -19,7 +19,6 @@ class Home(Static):
  |                 |
  |_________________| 
         """, id="ascii-art")
-            yield Label("Select an option from the sidebar to get started.\n\n"
-                        + "First time using the Toolbox? Configure scripts and paths on the Settings tab.", id="home-instructions")
             yield Rule(line_style="dashed")
-            yield Label("Dev log:", id="devlog")
+            yield Label("Select an option from the sidebar to get started.\n\n"
+                        + "First time using the Toolbox? Configure your paths and more on the Settings tab.", id="home-instructions")
