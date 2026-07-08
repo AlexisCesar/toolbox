@@ -16,6 +16,9 @@ class Logger:
     def error(self, message: str):
         self._write("ERROR", message)
 
+    def separator(self):
+        self._write("", "=" * 40)
+
     def _write(self, level: str, message: str):
         log = self.app.query_one("#log", Log)
         time = datetime.now().strftime("%H:%M:%S")

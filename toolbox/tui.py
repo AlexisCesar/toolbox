@@ -6,6 +6,7 @@ from toolbox.views.search import Search
 from toolbox.views.scripts import Scripts
 from toolbox.utils.logger import Logger
 from toolbox.utils.config import config
+import platform
 
 class ToolboxTUI(App):
     """A Textual-based TUI for the Toolbox application."""
@@ -28,10 +29,17 @@ class ToolboxTUI(App):
 
     def compose(self) -> ComposeResult:
         """Create the main layout for the TUI."""
+        os_icon = {
+            "Linux": "🐧 ",
+            "Darwin": "🍎 ",
+            "Windows": "🪟 "
+        }.get(platform.system(), " ❓ ")
+
         with Vertical(id="main-container"):
             with Horizontal(id="title-bar"):
                 yield Label("Toolbox TUI")
                 yield Label(" - v0.1.0", id="version")
+                yield Label(" - " + os_icon + platform.system(), id="os-info")
             with Horizontal(id="app-shell"):
                 with Vertical(id="sidebar"):
                     yield self._build_sidebar(id="sidebar-list")

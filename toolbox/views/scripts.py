@@ -1,5 +1,3 @@
-import subprocess
-
 from textual import Logger
 from textual import on
 from textual.app import ComposeResult
@@ -7,6 +5,9 @@ from textual.containers import VerticalScroll
 
 from toolbox.utils.config import config
 from toolbox.utils.logger import Logger
+from toolbox.utils.script_runner import ScriptRunner
+from toolbox.utils.confirm_dialog import ConfirmDialog
+
 from textual.widgets import DataTable, Static
 
 rows = []
@@ -16,19 +17,20 @@ class Scripts(Static):
     def __init__(self, logger: Logger, **kwargs):
         super().__init__(**kwargs)
         self.logger = logger
+        self.script_runner = ScriptRunner(logger=self.logger)
 
     def compose(self) -> ComposeResult:
         """Create the layout for the scripts view."""
         self.logger.info("Initializing scripts.")
         
         for file_path in config.scripts_dir.iterdir():
-            if file_path.is_file() and file_path.suffix in {".py", ".sh", ".sql", ".ps1"}:
+            if file_path.is_file() and file_path.suffix.lower() in {".py", ".sh", ".sql", ".ps1"}:
                 script_type = {
                         ".py": "🐍 Python Script",
                         ".sh": "🐚 Shell Script",
                         ".sql": "📊 SQL",
                         ".ps1": "</> Powershell Script"
-                    }.get(file_path.suffix, "Unknown Type")
+                    }.get(file_path.suffix.lower(), "Unknown Type")
                 rows.append((file_path.name, "WIP", script_type, "Execute"))
         
         yield Static(f"Reading scripts from: 📂 {config.scripts_dir}", id="scripts-label")
@@ -63,25 +65,9 @@ class Scripts(Static):
             table = self.query_one(DataTable)
             row_data = table.get_row_at(event.coordinate.row)
             script_name = row_data[0]
-            if script_name.endswith(".py"):
-                self.logger.info(f"Executing Python 🐍 script: {script_name}")
-                try:
-                    script_path = config.scripts_dir / script_name
-                    result = subprocess.run(["python", script_path], capture_output=True, text=True)
-                    self.logger.info(f"Script output: {result.stdout}")
-                    if result.stderr:
-                        self.logger.error(f"Script errors: {result.stderr}")
-                except Exception as e:
-                    self.logger.error(f"Failed to execute Python script: {e}")
-            elif script_name.endswith(".ps1"):
-                self.logger.info(f"Executing Powershell 📜 script: {script_name}")
-                try:
-                    script_path = config.scripts_dir / script_name
-                    result = subprocess.run(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path], capture_output=True, text=True)
-                    self.logger.info(f"Script output: {result.stdout}")
-                    if result.stderr:
-                        self.logger.error(f"Script errors: {result.stderr}")
-                except Exception as e:
-                    self.logger.error(f"Failed to execute Powershell script: {e}")
-            else:
-                self.logger.warn(f"Execution for this script type is not implemented yet.")
+            script_path = config.scripts_dir / script_name
+            self.app.push_screen(ConfirmDialog(f"Execute {script_name}?"), callback=lambda result: self.execute_script_callback(result, script_path))
+            
+    def execute_script_callback(self, result: bool, script_path) -> None:
+        if result:
+            self.script_runner.run(script_path)
