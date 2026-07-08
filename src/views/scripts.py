@@ -3,10 +3,10 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 
-from toolbox.utils.config import config
-from toolbox.utils.logger import Logger
-from toolbox.utils.script_runner import ScriptRunner
-from toolbox.utils.confirm_dialog import ConfirmDialog
+from src.utils.config import config
+from src.utils.logger import Logger
+from src.utils.script_runner import ScriptRunner
+from src.utils.confirm_dialog import ConfirmDialog
 
 from textual.widgets import DataTable, Static
 

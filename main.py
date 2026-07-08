@@ -1,4 +1,4 @@
-from toolbox.tui import ToolboxTUI
+from src.tui import ToolboxTUI
 
 
 def main() -> None:

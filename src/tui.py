@@ -1,11 +1,11 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, Log, Placeholder
-from toolbox.views.home import Home
-from toolbox.views.search import Search
-from toolbox.views.scripts import Scripts
-from toolbox.utils.logger import Logger
-from toolbox.utils.config import config
+from src.views.home import Home
+from src.views.search import Search
+from src.views.scripts import Scripts
+from src.utils.logger import Logger
+from src.utils.config import config
 import platform
 
 class ToolboxTUI(App):

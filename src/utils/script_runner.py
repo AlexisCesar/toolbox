@@ -1,4 +1,4 @@
-from toolbox.utils.logger import Logger
+from src.utils.logger import Logger
 from pathlib import Path
 import subprocess
 
