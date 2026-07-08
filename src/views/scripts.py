@@ -33,7 +33,7 @@ class Scripts(Static):
                     }.get(file_path.suffix.lower(), "Unknown Type")
                 rows.append((file_path.name, "WIP", script_type, "Execute"))
         
-        yield Static(f"Reading scripts from: 📂 {config.scripts_dir}", id="scripts-label")
+        yield Static(f"Reading scripts from: 📂 {config.scripts_dir.absolute()}", id="scripts-label")
         with VerticalScroll():
             yield self._build_scripts_datatable()
             

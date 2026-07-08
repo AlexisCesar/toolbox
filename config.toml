@@ -1,6 +1,6 @@
 [paths]
-scripts = "/home/alexis/dev/scripts_folder_test_1"
-logs = "/home/alexis/dev/logs_folder_test_1"
+scripts = "./scripts"
+logs = "./logs"
 
 [ui]
 theme = "tokyo-night"
