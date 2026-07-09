@@ -1,4 +1,5 @@
 from src.utils.logger import Logger
+from src.utils.config import config
 from pathlib import Path
 import subprocess
 
@@ -31,10 +32,14 @@ class ScriptRunner:
     def run_subprocess(self, command: list) -> None:
         """Run a subprocess command."""
         try:
-            result = subprocess.run(command, capture_output=True, text=True)
+            result = subprocess.run(command, capture_output=True, text=True, timeout=config.script_timeout)
             if result.returncode == 0:
                 self.logger.info(f"Script output:\n{result.stdout}")
             else:
                 self.logger.error(f"Script errors:\n{result.stderr}")
+        except subprocess.TimeoutExpired:
+            self.logger.error(f"Script execution timed out. Timeout is set to {config.script_timeout} seconds.")
+            self.logger.info("The script was probably waiting for user input, which is not supported yet." + 
+                             "\nIf that's not the case, consider increasing the timeout in config.toml if necessary.")
         except Exception as e:
             self.logger.error(f"Failed to execute script: {e}")

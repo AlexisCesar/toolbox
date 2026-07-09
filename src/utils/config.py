@@ -20,5 +20,9 @@ class Config:
     def theme(self) -> str:
         return self._data["ui"]["theme"]
 
+    @property
+    def script_timeout(self) -> float:
+        return float(self._data["scripts"]["timeout"])
+
 
 config = Config()

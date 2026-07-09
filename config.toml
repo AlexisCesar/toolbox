@@ -5,6 +5,9 @@ logs = "./logs"
 [ui]
 theme = "tokyo-night"
 
+[scripts]
+timeout = 5
+
 # Health Checker - Services locations
 # In order to add a new service, use the following structure:
 # [[services]]
