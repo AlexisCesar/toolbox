@@ -1,5 +1,5 @@
 from datetime import datetime
-from textual.widgets import Log
+from textual.widgets import Log, RichLog
 
 
 class Logger:
@@ -23,6 +23,12 @@ class Logger:
         self._write("SYSTEM", "=" * 40)
 
     def _write(self, level: str, message: str):
-        log = self.app.query_one("#log", Log)
+        log = self.app.query_one("#log", RichLog)
         time = datetime.now().strftime("%H:%M:%S")
-        log.write(f"[{level} - {time}] {message}\n")
+        log_level_style = {
+            "INFO": "blue",
+            "WARN": "yellow",
+            "ERROR": "red",
+        }.get(level, "white")
+        
+        log.write(f"[bold {log_level_style}][{level} - {time}] {message}")

@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, Log, Placeholder
+from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, Log, Placeholder, RichLog
 from src.views.home import Home
 from src.views.search import Search
 from src.views.scripts import Scripts
@@ -65,7 +65,7 @@ class ToolboxTUI(App):
     
     def _build_main_content(self) -> Container:
         """Create the main content area."""
-        log = Log(id="log")
+        log = RichLog(id="log", highlight=True, markup=True, wrap=True)
         container = Container(
             ContentSwitcher(
                 Home(id="home-view"),
