@@ -5,6 +5,7 @@ from textual.containers import VerticalScroll
 
 from src.utils.config import config
 from src.utils.logger import Logger
+from src.utils.script_inspection_dialog import ScriptInspectionDialog
 from src.utils.script_runner import ScriptRunner
 from src.utils.confirm_dialog import ConfirmDialog
 
@@ -31,7 +32,7 @@ class Scripts(Static):
                         ".sql": "📊 SQL",
                         ".ps1": "</> Powershell Script"
                     }.get(file_path.suffix.lower(), "Unknown Type")
-                rows.append((file_path.name, "WIP", script_type, "▶️  Run", "📟 Run - External Terminal"))
+                rows.append((file_path.name, "WIP", script_type, "▶️  Run", "📟 Run - External Terminal", "🔢 Run - With Parameters", "🔍 Open"))
         
         yield Static(f"Reading scripts from: 📂 {config.scripts_dir.absolute()}", id="scripts-label")
         with VerticalScroll():
@@ -51,6 +52,8 @@ class Scripts(Static):
         type_key = table.add_column("Type")
         table.add_column("Action")
         table.add_column("Action")
+        table.add_column("Action")
+        table.add_column("Inspect")
 
         for row in rows:
             table.add_row(*row, key=row[0])
@@ -74,6 +77,14 @@ class Scripts(Static):
             script_name = row_data[0]
             script_path = config.scripts_dir / script_name
             self.app.push_screen(ConfirmDialog(f"Run {script_name} in external terminal?"), callback=lambda result: self.run_external_terminal_callback(result, script_path))
+        elif cell_value == "🔢 Run - With Parameters":
+            self.logger.warn("Run with parameters is not implemented yet.")
+        elif cell_value == "🔍 Open":
+            table = self.query_one(DataTable)
+            row_data = table.get_row_at(event.coordinate.row)
+            script_name = row_data[0]
+            file_content = (config.scripts_dir / script_name).read_text()
+            self.app.push_screen(ScriptInspectionDialog(file_content, script_name))
 
     def execute_script_callback(self, result: bool, script_path) -> None:
         if result:

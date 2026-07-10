@@ -87,3 +87,7 @@ ConfirmDialog {
     height: 1fr;
     content-align: center middle;
 }
+
+#script-inspection-log {
+    background: #272822;
+}
