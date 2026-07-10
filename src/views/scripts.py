@@ -31,7 +31,7 @@ class Scripts(Static):
                         ".sql": "📊 SQL",
                         ".ps1": "</> Powershell Script"
                     }.get(file_path.suffix.lower(), "Unknown Type")
-                rows.append((file_path.name, "WIP", script_type, "Execute"))
+                rows.append((file_path.name, "WIP", script_type, "▶️  Run", "📟 Run - External Terminal"))
         
         yield Static(f"Reading scripts from: 📂 {config.scripts_dir.absolute()}", id="scripts-label")
         with VerticalScroll():
@@ -50,6 +50,7 @@ class Scripts(Static):
         table.add_columns("Script Name", "Description")
         type_key = table.add_column("Type")
         table.add_column("Action")
+        table.add_column("Action")
 
         for row in rows:
             table.add_row(*row, key=row[0])
@@ -61,13 +62,24 @@ class Scripts(Static):
     @on(DataTable.CellSelected)
     def handle_cell_click(self, event: DataTable.CellSelected) -> None:
         cell_value = event.value
-        if cell_value == "Execute":
+        if cell_value == "▶️  Run":
             table = self.query_one(DataTable)
             row_data = table.get_row_at(event.coordinate.row)
             script_name = row_data[0]
             script_path = config.scripts_dir / script_name
-            self.app.push_screen(ConfirmDialog(f"Execute {script_name}?"), callback=lambda result: self.execute_script_callback(result, script_path))
-            
+            self.app.push_screen(ConfirmDialog(f"Run {script_name}?"), callback=lambda result: self.execute_script_callback(result, script_path))
+        elif cell_value == "📟 Run - External Terminal":
+            table = self.query_one(DataTable)
+            row_data = table.get_row_at(event.coordinate.row)
+            script_name = row_data[0]
+            script_path = config.scripts_dir / script_name
+            self.app.push_screen(ConfirmDialog(f"Run {script_name} in external terminal?"), callback=lambda result: self.run_external_terminal_callback(result, script_path))
+
     def execute_script_callback(self, result: bool, script_path) -> None:
         if result:
             self.script_runner.run(script_path)
+            
+    def run_external_terminal_callback(self, result: bool, script_path) -> None:
+        if result:
+            self.logger.info(f"Running {script_path.name} in external terminal.")
+            self.script_runner.run(script_path, external_terminal=True)

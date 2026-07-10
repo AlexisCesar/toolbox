@@ -1,6 +1,8 @@
 from src.utils.logger import Logger
 from src.utils.config import config
 from pathlib import Path
+import platform
+import shlex
 import subprocess
 
 
@@ -11,7 +13,7 @@ class ScriptRunner:
         self.logger = logger
         
     
-    def run(self, script_path: str) -> None:
+    def run(self, script_path: str, external_terminal: bool = False) -> None:
         """Run a script based on its file extension."""
         script_path = Path(script_path)
         if not script_path.exists():
@@ -20,10 +22,16 @@ class ScriptRunner:
         self.logger.separator()
         if script_path.suffix.lower() == ".py":
             self.logger.info(f"Executing Python 🐍 script: {script_path.name}")
-            self.run_subprocess(["python", script_path])
+            if external_terminal:
+                self.run_in_external_terminal(["python", script_path])
+            else:
+                self.run_subprocess(["python", script_path])
         elif script_path.suffix.lower() == ".ps1":
             self.logger.info(f"Executing Powershell 📜 script: {script_path.name}")
-            self.run_subprocess(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path])
+            if external_terminal:
+                self.run_in_external_terminal(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path])
+            else:
+                self.run_subprocess(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path])
         else:
             self.logger.warn(f"Unsupported script type for file: {script_path.name}")
         self.logger.separator()
@@ -39,7 +47,42 @@ class ScriptRunner:
                 self.logger.error(f"Script errors:\n{result.stderr}")
         except subprocess.TimeoutExpired:
             self.logger.error(f"Script execution timed out. Timeout is set to {config.script_timeout} seconds.")
-            self.logger.info("The script was probably waiting for user input, which is not supported yet. " + 
+            self.logger.info("The script was probably waiting for user input. In this case you should use the 'Run - External Terminal' option." + 
                              "If that's not the case, consider increasing the timeout in config.toml if necessary.")
         except Exception as e:
             self.logger.error(f"Failed to execute script: {e}")
+    
+    
+    def run_in_external_terminal(self, command: list) -> None:
+        """Run a script in an external terminal."""
+        system = platform.system()
+
+        if system == "Windows":
+            command_str = subprocess.list2cmdline(command)
+
+            subprocess.Popen([
+                "cmd",
+                "/c",
+                "start",
+                "cmd",
+                "/k",
+                command_str,
+            ])
+
+        elif system == "Linux":
+            command_str = " ".join(shlex.quote(str(arg)) for arg in command)
+
+            subprocess.Popen([
+                "x-terminal-emulator",
+                "-e",
+                "bash",
+                "-c",
+                f"{command_str}; exec bash",
+            ])
+
+        elif system == "Darwin":
+            # TODO: Implement macOS support
+            raise NotImplementedError("macOS is not supported yet.")
+
+        else:
+            raise RuntimeError(f"Unsupported operating system: {system}")
