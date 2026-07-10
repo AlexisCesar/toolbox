@@ -47,8 +47,8 @@ class ScriptRunner:
                 self.logger.error(f"Script errors:\n{result.stderr}")
         except subprocess.TimeoutExpired:
             self.logger.error(f"Script execution timed out. Timeout is set to {config.script_timeout} seconds.")
-            self.logger.info("The script was probably waiting for user input. In this case you should use the 'Run - External Terminal' option." + 
-                             "If that's not the case, consider increasing the timeout in config.toml if necessary.")
+            self.logger.warn("The script was probably waiting for user input. In this case you should use the 'Run - External Terminal' option. " + 
+                             "If that's not the case, consider increasing the timeout in config.toml.")
         except Exception as e:
             self.logger.error(f"Failed to execute script: {e}")
     
