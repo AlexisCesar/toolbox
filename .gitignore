@@ -8,3 +8,19 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Vim
+# Swap
+[._]*.s[a-v][a-z]
+
+# Session
+Session.vim
+Sessionx.vim
+
+# Temporary
+.netrwhist
+*~
+# Auto-generated tag files
+tags
+# Persistent undo
+[._]*.un~
