@@ -32,7 +32,7 @@ class Scripts(Static):
                         ".sql": "📊 SQL",
                         ".ps1": "</> Powershell Script"
                     }.get(file_path.suffix.lower(), "Unknown Type")
-                rows.append((file_path.name, "WIP", script_type, "▶️  Run", "📟 Run - External Terminal", "🔢 Run - With Parameters", "🔍 Open"))
+                rows.append((file_path.name, "WIP", script_type, "▶️ Run", "📟 Run - External Terminal", "🔢 Run - With Parameters", "🔍 Open"))
         
         yield Static(f"Reading scripts from: 📂 {config.scripts_dir.absolute()}", id="scripts-label")
         with VerticalScroll():
@@ -65,7 +65,7 @@ class Scripts(Static):
     @on(DataTable.CellSelected)
     def handle_cell_click(self, event: DataTable.CellSelected) -> None:
         cell_value = event.value
-        if cell_value == "▶️  Run":
+        if cell_value == "▶️ Run":
             table = self.query_one(DataTable)
             row_data = table.get_row_at(event.coordinate.row)
             script_name = row_data[0]

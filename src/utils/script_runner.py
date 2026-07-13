@@ -32,6 +32,12 @@ class ScriptRunner:
                 self.run_in_external_terminal(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path])
             else:
                 self.run_subprocess(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path])
+        elif script_path.suffix.lower() == ".sh":
+            self.logger.info(f"Executing Shell 🐚 script: {script_path.name}")
+            if external_terminal:
+                self.run_in_external_terminal(["bash", script_path])
+            else:
+                self.run_subprocess(["bash", script_path])
         else:
             self.logger.warn(f"Unsupported script type for file: {script_path.name}")
         self.logger.separator()

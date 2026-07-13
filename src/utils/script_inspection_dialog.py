@@ -16,7 +16,7 @@ class ScriptInspectionDialog(ModalScreen[bool]):
     def compose(self) -> ComposeResult:
         log = RichLog(highlight=True, markup=True, id="script-inspection-log", wrap=True)
         log.can_focus = False
-        lexer = "python" if self.script_name.endswith(".py") else "powershell" if self.script_name.endswith(".ps1") else "sql" if self.script_name.endswith(".sql") else "text"
+        lexer = "python" if self.script_name.endswith(".py") else "powershell" if self.script_name.endswith(".ps1") else "sql" if self.script_name.endswith(".sql") else "bash" if self.script_name.endswith(".sh") else "text"
         log.write(Syntax(self.file_content, lexer=lexer, line_numbers=True, word_wrap=True, indent_guides=True, theme="monokai"))
         
         yield Label(f"Viewing {self.script_name}", id="script-inspection-title")
