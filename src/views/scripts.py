@@ -66,31 +66,45 @@ class Scripts(Static):
     def handle_cell_click(self, event: DataTable.CellSelected) -> None:
         cell_value = event.value
         if cell_value == "▶️ Run":
-            table = self.query_one(DataTable)
-            row_data = table.get_row_at(event.coordinate.row)
-            script_name = row_data[0]
-            script_path = config.scripts_dir / script_name
+            script_name = self.get_script_name_from_row(event.coordinate.row)
+            script_path = self.get_script_path(script_name)
             self.app.push_screen(ConfirmDialog(f"Run {script_name}?"), callback=lambda result: self.execute_script_callback(result, script_path))
         elif cell_value == "📟 Run - External Terminal":
-            table = self.query_one(DataTable)
-            row_data = table.get_row_at(event.coordinate.row)
-            script_name = row_data[0]
-            script_path = config.scripts_dir / script_name
+            script_name = self.get_script_name_from_row(event.coordinate.row)
+            script_path = self.get_script_path(script_name)
             self.app.push_screen(ConfirmDialog(f"Run {script_name} in external terminal?"), callback=lambda result: self.run_external_terminal_callback(result, script_path))
         elif cell_value == "🔢 Run - With Parameters":
-            self.logger.warn("Run with parameters is not implemented yet.")
+            script_name = self.get_script_name_from_row(event.coordinate.row)
+            script_path = self.get_script_path(script_name)
+            self.app.push_screen(ConfirmDialog(f"Run {script_name} with parameters?", askParameters=True), callback=lambda result: self.run_with_parameters_callback(result, script_path))
         elif cell_value == "🔍 Open":
-            table = self.query_one(DataTable)
-            row_data = table.get_row_at(event.coordinate.row)
-            script_name = row_data[0]
-            file_content = (config.scripts_dir / script_name).read_text()
+            script_name = self.get_script_name_from_row(event.coordinate.row)
+            file_content = (self.get_script_path(script_name)).read_text()
             self.app.push_screen(ScriptInspectionDialog(file_content, script_name))
+    
+    def get_script_name_from_row(self, row_index: int) -> str:
+        """Get the script name from the datatable row index."""
+        table = self.query_one(DataTable)
+        row_data = table.get_row_at(row_index)
+        return row_data[0]
+    
+    def get_script_path(self, script_name: str):
+        """Get the full path of the script."""
+        return config.scripts_dir / script_name
 
     def execute_script_callback(self, result: bool, script_path) -> None:
-        if result:
+        if result.confirmed:
             self.script_runner.run(script_path)
             
     def run_external_terminal_callback(self, result: bool, script_path) -> None:
-        if result:
+        if result.confirmed:
             self.logger.info(f"Running {script_path.name} in external terminal.")
             self.script_runner.run(script_path, external_terminal=True)
+    
+    def run_with_parameters_callback(self, result: bool, script_path) -> None:
+        if result.confirmed:
+            if not result.parameters:
+                self.logger.warn(f"No parameters provided. Running {script_path.name} without parameters.")
+            else:
+                self.logger.info(f"Running {script_path.name} with parameters: {result.parameters}")
+            self.script_runner.run(script_path, parameters=result.parameters)

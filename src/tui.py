@@ -12,7 +12,7 @@ class ToolboxTUI(App):
     """A Textual-based TUI for the Toolbox application."""
 
     ENABLE_COMMAND_PALETTE = False
-    CSS_PATH = "tui.css"
+    CSS_PATH = "tui.tcss"
     BINDINGS = [
         ("h", "select_view(0)", "Home"),
         ("s", "select_view(1)", "Search"),

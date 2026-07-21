@@ -13,31 +13,30 @@ class ScriptRunner:
         self.logger = logger
         
     
-    def run(self, script_path: str, external_terminal: bool = False) -> None:
+    def run(self, script_path: str, external_terminal: bool = False, parameters: str = "") -> None:
         """Run a script based on its file extension."""
         script_path = Path(script_path)
         if not script_path.exists():
             self.logger.error(f"Script {script_path} does not exist.")
             return
-        self.logger.separator()
         if script_path.suffix.lower() == ".py":
             self.logger.info(f"Executing Python 🐍 script: {script_path.name}")
             if external_terminal:
                 self.run_in_external_terminal(["python", script_path])
             else:
-                self.run_subprocess(["python", script_path])
+                self.run_subprocess(["python", script_path, *shlex.split(parameters)])
         elif script_path.suffix.lower() == ".ps1":
             self.logger.info(f"Executing Powershell 📜 script: {script_path.name}")
             if external_terminal:
                 self.run_in_external_terminal(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path])
             else:
-                self.run_subprocess(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path])
+                self.run_subprocess(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path, *shlex.split(parameters)])
         elif script_path.suffix.lower() == ".sh":
             self.logger.info(f"Executing Shell 🐚 script: {script_path.name}")
             if external_terminal:
                 self.run_in_external_terminal(["bash", script_path])
             else:
-                self.run_subprocess(["bash", script_path])
+                self.run_subprocess(["bash", script_path, *shlex.split(parameters)])
         else:
             self.logger.warn(f"Unsupported script type for file: {script_path.name}")
         self.logger.separator()

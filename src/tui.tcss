@@ -1,23 +1,7 @@
-Screen {
-    /*background: #000000;
-    color: #e2e8f0;*/
-}
-
-#main-container {
-    /*background: #000000;*/
-}
-
+/* Screen Structure */
 #title-bar {
     height: 7%;
     align: center middle;
-}
-
-#version {
-    /*color: #989aa0;*/
-}
-
-#app-shell {
-    /*background: #000000;*/
 }
 
 #sidebar {
@@ -27,17 +11,11 @@ Screen {
 
 #sidebar-list {
     padding: 1 1;
-    /*background: #000000;*/
 }
 
 .sidebar-item {
     padding: 1;
     margin: 0 0;
-}
-
-ListItem.-highlight {
-    /*background: #4f0ba7;
-    color: #ffffff;*/
 }
 
 #main-panel {
@@ -57,37 +35,43 @@ ListItem.-highlight {
 }
 
 Footer {
-    /* background: #000000;*/
     margin: 1 1;
     width: 100%;
 }
 
+/* Scripts View Styles */
 #scripts-label {
     padding: 1;
     background: #1f2937;
     color: #ffffff;
 }
 
-
+/* Confirm Dialog Styles */
 ConfirmDialog {
     align: center middle;
 }
 
 #dialog {
-    grid-size: 2;
-    padding: 1 2;
-    width: 50;
-    height: 10;
+    padding: 2;
+    width: 30%;
+    height: 40%;
     border: thick;
-    align: center middle;
 }
 
-#message {
-    column-span: 2;
-    height: 1fr;
-    content-align: center middle;
+#dialog-message {
+    text-align: center;
+    text-style: bold;
+    padding: 0 0 1 0;
 }
 
-#script-inspection-log {
-    background: #272822;
+#dialog-parameters {
+    margin: 1 0;
+}
+
+#dialog-buttons {
+    align: center bottom;
+}
+
+#dialog-confirm-yes {
+    margin: 0 10 0 0;
 }
