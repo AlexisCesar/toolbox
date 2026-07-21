@@ -1,6 +1,6 @@
 from textual.app import ComposeResult
 from textual.containers import Horizontal, VerticalScroll
-from textual.widgets import Label, Select, Select, Static
+from textual.widgets import Label, Select, Static
 
 RESOURCES = """Everything
 Scripts

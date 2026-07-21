@@ -75,3 +75,58 @@ ConfirmDialog {
 #dialog-confirm-yes {
     margin: 0 10 0 0;
 }
+
+/* Settings View Styles */
+#settings-title {
+    margin: 1 0 0 1;
+    text-style: bold;
+}
+
+#settings-subtitle {
+    margin: 0 0 1 1;
+    text-style: italic;
+}
+
+#paths-settings {
+    border: round #1f2937;
+    height: 80%;
+    padding: 1;
+}
+
+#theme-settings {
+    border: round #1f2937;
+    padding: 1;
+}
+
+#health-checkers-settings {
+    border: round #1f2937;
+    padding: 1;
+}
+
+#settings-directories-title {
+    margin: 0 0 1 0;
+    text-style: bold;
+}
+
+.settings-general-label-italic {
+    text-style: italic;
+    text-wrap: wrap;
+    color: #99c0fac9
+}
+
+#settings-directories-input {
+    margin: 1 -1;
+}
+
+#settings-directories-buttons {
+    margin: 1 0;
+}
+
+#settings-directories-change-button {
+    margin: 0 1 0 0;
+}
+
+#settings-theme-title {
+    margin: 0 0 1 0;
+    text-style: bold;
+}

@@ -8,6 +8,8 @@ from src.utils.logger import Logger
 from src.utils.config import config
 import platform
 
+from src.views.settings import Settings
+
 class ToolboxTUI(App):
     """A Textual-based TUI for the Toolbox application."""
 
@@ -73,7 +75,7 @@ class ToolboxTUI(App):
                 Scripts(logger=self.logger, id="scripts-view"),
                 Placeholder(label="Logs view", id="logs-view"),
                 Placeholder(label="Health Checkers view", id="health-checkers-view"),
-                Placeholder(label="Settings view", id="settings-view"),
+                Settings(logger=self.logger, id="settings-view"),
                 initial="home-view",
                 id="main-content-switcher"
             ),
