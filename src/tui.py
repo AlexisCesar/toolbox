@@ -4,6 +4,7 @@ from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, 
 from src.views.home import Home
 from src.views.search import Search
 from src.views.scripts import Scripts
+from src.views.notes import Notes
 from src.utils.logger import Logger
 from src.utils.config import config
 import platform
@@ -22,6 +23,7 @@ class ToolboxTUI(App):
         ("l", "select_view(3)", "Logs"),
         ("t", "select_view(4)", "Health Checkers"),
         ("e", "select_view(5)", "Settings"),
+        ("n", "select_view(6)", "Notes"),
         ("q", "quit", "Quit")
     ]
 
@@ -57,6 +59,7 @@ class ToolboxTUI(App):
             "📜 Scripts",
             "📝 Logs",
             "🏥 Health Checkers",
+            "📓 Notes",
             "🔧 Settings",
             "🚪 Quit"
         ]
@@ -76,6 +79,7 @@ class ToolboxTUI(App):
                 Placeholder(label="Logs view", id="logs-view"),
                 Placeholder(label="Health Checkers view", id="health-checkers-view"),
                 Settings(logger=self.logger, id="settings-view"),
+                Notes(logger=self.logger, id="notes-view"),
                 initial="home-view",
                 id="main-content-switcher"
             ),
@@ -106,8 +110,10 @@ class ToolboxTUI(App):
             case 4:
                 switcher.current = "health-checkers-view"
             case 5:
-                switcher.current = "settings-view"
+                switcher.current = "notes-view"
             case 6:
+                switcher.current = "settings-view"
+            case 7:
                 App.exit(self)
 
     def action_select_view(self, view_id: int) -> None:
