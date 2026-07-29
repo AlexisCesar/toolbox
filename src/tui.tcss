@@ -24,14 +24,12 @@
 
 #main-content-switcher {
     height: 75%;
-    border: round #1f2937;
-    background: #020617;
+    border: round #374558;
 }
 
 #log {
     height: 25%;
-    border: round #1f2937;
-    background: #020617;
+    border: round #374558;
 }
 
 Footer {
@@ -42,8 +40,7 @@ Footer {
 /* Scripts View Styles */
 #scripts-label {
     padding: 1;
-    background: #1f2937;
-    color: #ffffff;
+    text-style: bold;
 }
 
 /* Confirm Dialog Styles */
@@ -88,18 +85,8 @@ ConfirmDialog {
 }
 
 #paths-settings {
-    border: round #1f2937;
-    height: 80%;
-    padding: 1;
-}
-
-#theme-settings {
-    border: round #1f2937;
-    padding: 1;
-}
-
-#health-checkers-settings {
-    border: round #1f2937;
+    border: round #374558;
+    height: 70%;
     padding: 1;
 }
 
@@ -126,7 +113,17 @@ ConfirmDialog {
     margin: 0 1 0 0;
 }
 
+#theme-settings {
+    border: round #374558;
+    padding: 1;
+}
+
 #settings-theme-title {
     margin: 0 0 1 0;
     text-style: bold;
+}
+
+#health-checkers-settings {
+    border: round #374558;
+    padding: 1;
 }

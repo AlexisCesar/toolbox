@@ -1,5 +1,7 @@
 from pathlib import Path
+
 import tomllib
+import tomlkit
 
 
 class Config:
@@ -23,6 +25,17 @@ class Config:
     @property
     def script_timeout(self) -> float:
         return float(self._data["scripts"]["timeout"])
+    
+    def update(self, section: str, key: str, value):
+        self._data[section][key] = value
+
+        with open("config.toml", "r", encoding="utf-8") as f:
+            doc = tomlkit.parse(f.read())
+
+        doc[section][key] = value
+
+        with open("config.toml", "w", encoding="utf-8") as f:
+            f.write(tomlkit.dumps(doc))
 
 
 config = Config()

@@ -11,42 +11,51 @@ from src.utils.confirm_dialog import ConfirmDialog
 
 from textual.widgets import DataTable, Static
 
-rows = []
-
 class Scripts(Static):
     """Scripts view for the Toolbox TUI."""
     def __init__(self, logger: Logger, **kwargs):
         super().__init__(**kwargs)
         self.logger = logger
         self.script_runner = ScriptRunner(logger=self.logger)
+        self.rows = []
 
     def compose(self) -> ComposeResult:
         """Create the layout for the scripts view."""
+        yield Static("-", id="scripts-label")
+        with VerticalScroll():
+            yield DataTable(id="scripts-datatable", zebra_stripes=True)
+    
+    def on_mount(self) -> None:
         self.logger.info("Initializing scripts.")
+        self.update_scripts_list()
+        if not self.rows:
+            self.logger.warn("No scripts found in the directory.")
+        else:
+            self.logger.info(f"Scripts initialized with {len(self.rows)} scripts.")
         
+    def on_show(self) -> None:
+        self.update_scripts_list()
+        self.update_script_dir_label()
+        self.build_scripts_datatable()
+    
+    def update_script_dir_label(self) -> None:
+        self.query_one("#scripts-label", Static).content = f"Reading scripts from: 📂 {config.scripts_dir.absolute()}"
+    
+    def update_scripts_list(self) -> None:
+        self.rows = []
         for file_path in config.scripts_dir.iterdir():
             if file_path.is_file() and file_path.suffix.lower() in {".py", ".sh", ".sql", ".ps1"}:
                 script_type = {
-                        ".py": "🐍 Python Script",
-                        ".sh": "🐚 Shell Script",
-                        ".sql": "📊 SQL",
-                        ".ps1": "</> Powershell Script"
-                    }.get(file_path.suffix.lower(), "Unknown Type")
-                rows.append((file_path.name, "WIP", script_type, "▶️ Run", "📟 Run - External Terminal", "🔢 Run - With Parameters", "🔍 Open"))
-        
-        yield Static(f"Reading scripts from: 📂 {config.scripts_dir.absolute()}", id="scripts-label")
-        with VerticalScroll():
-            yield self._build_scripts_datatable()
-            
-        self.logger.info(f"Scripts initialized with {len(rows)} scripts.")
-    
+                    ".py": "🐍 Python Script",
+                    ".sh": "🐚 Shell Script",
+                    ".sql": "📊 SQL",
+                    ".ps1": "</> Powershell Script"
+                }.get(file_path.suffix.lower(), "Unknown Type")
+                self.rows.append((file_path.name, "WIP", script_type, "▶️ Run", "📟 Run - External Terminal", "🔢 Run - With Parameters", "🔍 Open"))
 
-    def _build_scripts_datatable(self):
-        if not rows:
-            self.logger.warn("No scripts found in the directory.")
-            
-        """Create a datatable for displaying scripts."""
-        table = DataTable(id="scripts-datatable", zebra_stripes=True)
+    def build_scripts_datatable(self):
+        table = self.query_one("#scripts-datatable", DataTable)
+        table.clear(columns=True)
 
         table.add_columns("Script Name", "Description")
         type_key = table.add_column("Type")
@@ -55,11 +64,10 @@ class Scripts(Static):
         table.add_column("Action")
         table.add_column("Inspect")
 
-        for row in rows:
+        for row in self.rows:
             table.add_row(*row, key=row[0])
 
         table.sort(type_key)
-        return table
     
     
     @on(DataTable.CellSelected)
