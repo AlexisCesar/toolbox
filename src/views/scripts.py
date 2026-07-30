@@ -4,6 +4,7 @@ from textual import Logger
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
+from rich.text import Text
 
 from src.utils.config import config
 from src.utils.logger import Logger
@@ -54,12 +55,12 @@ class Scripts(Static):
         for file_path in config.scripts_dir.iterdir():
             if file_path.is_file() and file_path.suffix.lower() in {".py", ".sh", ".sql", ".ps1"}:
                 script_type = {
-                    ".py": "🐍 Python Script",
-                    ".sh": "🐚 Shell Script",
-                    ".sql": "📊 SQL",
+                    ".py": "\U0001F40D Python Script",
+                    ".sh": "\U0001F41A Shell Script",
+                    ".sql": "\U0001F4DC SQL",
                     ".ps1": "</> Powershell Script"
                 }.get(file_path.suffix.lower(), "Unknown Type")
-                self.rows.append((file_path.name, scripts_descriptions.get(file_path.name, {}).get("description"), script_type, "▶️ Run", "📟 Run External", "🔢 Run With Parameters", "🔍 Open"))
+                self.rows.append((file_path.name, scripts_descriptions.get(file_path.name, {}).get("description"), script_type, "\U000025B6 Run", "\U0001F4DF Run External", "\U0001F522 Run With Parameters", "\U0001F50D Open"))
 
     def build_scripts_datatable(self):
         table = self.query_one("#scripts-datatable", DataTable)
@@ -74,27 +75,38 @@ class Scripts(Static):
         table.add_column("Inspect")
 
         for row in self.rows:
-            table.add_row(*row, key=row[0])
+            cells = list(row)
+            
+            cells = [f"\n{cell}\n" for cell in cells]
+            height = 3
+
+            desc_length = len(str(cells[1]))
+            if desc_length > 25:
+                height = 4
+                if desc_length > 40:
+                    cells[1] = cells[1][:40] + "..."
+
+            table.add_row(*cells, key=row[0], height=height)
 
         table.sort(type_key)
     
     
     @on(DataTable.CellSelected)
     def handle_cell_click(self, event: DataTable.CellSelected) -> None:
-        cell_value = event.value
-        if cell_value == "▶️ Run":
+        cell_value = str(event.value).strip()
+        if cell_value == "\U000025B6 Run":
             script_name = self.get_script_name_from_row(event.coordinate.row)
             script_path = self.get_script_path(script_name)
             self.app.push_screen(ConfirmDialog(f"Run {script_name}?"), callback=lambda result: self.execute_script_callback(result, script_path))
-        elif cell_value == "📟 Run External":
+        elif cell_value == "\U0001F4DF Run External":
             script_name = self.get_script_name_from_row(event.coordinate.row)
             script_path = self.get_script_path(script_name)
             self.app.push_screen(ConfirmDialog(f"Run {script_name} in external terminal?"), callback=lambda result: self.run_external_terminal_callback(result, script_path))
-        elif cell_value == "🔢 Run With Parameters":
+        elif cell_value == "\U0001F522 Run With Parameters":
             script_name = self.get_script_name_from_row(event.coordinate.row)
             script_path = self.get_script_path(script_name)
             self.app.push_screen(ConfirmDialog(f"Run {script_name} with parameters?", askParameters=True), callback=lambda result: self.run_with_parameters_callback(result, script_path))
-        elif cell_value == "🔍 Open":
+        elif cell_value == "\U0001F50D Open":
             script_name = self.get_script_name_from_row(event.coordinate.row)
             file_content = (self.get_script_path(script_name)).read_text()
             self.app.push_screen(ScriptInspectionDialog(file_content, script_name))
@@ -103,7 +115,7 @@ class Scripts(Static):
         """Get the script name from the datatable row index."""
         table = self.query_one(DataTable)
         row_data = table.get_row_at(row_index)
-        return row_data[0]
+        return str(row_data[0]).strip()
     
     def get_script_path(self, script_name: str):
         """Get the full path of the script."""
