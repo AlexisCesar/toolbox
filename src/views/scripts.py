@@ -1,5 +1,6 @@
 import tomllib
 
+import pyperclip
 from textual import Logger
 from textual import on
 from textual.app import ComposeResult
@@ -60,7 +61,17 @@ class Scripts(Static):
                     ".sql": "\U0001F4DC SQL",
                     ".ps1": "</> Powershell Script"
                 }.get(file_path.suffix.lower(), "Unknown Type")
-                self.rows.append((file_path.name, scripts_descriptions.get(file_path.name, {}).get("description"), script_type, "\U000025B6 Run", "\U0001F4DF Run External", "\U0001F522 Run With Parameters", "\U0001F50D Open"))
+                
+                action_1 = "\U000025B6 Run"
+                action_2 = "\U0001F4DF Run External"
+                action_3 = "\U0001F522 Run With Parameters"
+                
+                if file_path.suffix.lower() == ".sql":
+                    action_1 = "\U0001F4CB Copy"
+                    action_2 = ""
+                    action_3 = ""
+                    
+                self.rows.append((file_path.name, scripts_descriptions.get(file_path.name, {}).get("description"), script_type, action_1, action_2, action_3, "\U0001F50D Open"))
 
     def build_scripts_datatable(self):
         table = self.query_one("#scripts-datatable", DataTable)
@@ -110,6 +121,14 @@ class Scripts(Static):
             script_name = self.get_script_name_from_row(event.coordinate.row)
             file_content = (self.get_script_path(script_name)).read_text()
             self.app.push_screen(ScriptInspectionDialog(file_content, script_name))
+        elif cell_value == "\U0001F4CB Copy":
+            try:
+                script_name = self.get_script_name_from_row(event.coordinate.row)
+                file_content = (self.get_script_path(script_name)).read_text()
+                pyperclip.copy(file_content)
+                self.logger.info(f"Content of {script_name} copied to clipboard.")
+            except pyperclip.PyperclipException:
+                self.logger.error("Unable to access the clipboard. If you are using linux, you may need to install xclip or xsel (clipboard backend).")
     
     def get_script_name_from_row(self, row_index: int) -> str:
         """Get the script name from the datatable row index."""
