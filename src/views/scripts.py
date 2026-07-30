@@ -1,3 +1,5 @@
+import tomllib
+
 from textual import Logger
 from textual import on
 from textual.app import ComposeResult
@@ -42,6 +44,12 @@ class Scripts(Static):
         self.query_one("#scripts-label", Static).content = f"Reading scripts from: 📂 {config.scripts_dir.absolute()}"
     
     def update_scripts_list(self) -> None:
+        try:
+            with open(config.scripts_dir / "scripts_configuration.toml", "rb") as file:
+                scripts_descriptions = tomllib.load(file)
+        except FileNotFoundError:
+            self.logger.warn("Scripts configurations file not found.")
+            
         self.rows = []
         for file_path in config.scripts_dir.iterdir():
             if file_path.is_file() and file_path.suffix.lower() in {".py", ".sh", ".sql", ".ps1"}:
@@ -51,13 +59,14 @@ class Scripts(Static):
                     ".sql": "📊 SQL",
                     ".ps1": "</> Powershell Script"
                 }.get(file_path.suffix.lower(), "Unknown Type")
-                self.rows.append((file_path.name, "WIP", script_type, "▶️ Run", "📟 Run - External Terminal", "🔢 Run - With Parameters", "🔍 Open"))
+                self.rows.append((file_path.name, scripts_descriptions.get(file_path.name, {}).get("description"), script_type, "▶️ Run", "📟 Run External", "🔢 Run With Parameters", "🔍 Open"))
 
     def build_scripts_datatable(self):
         table = self.query_one("#scripts-datatable", DataTable)
         table.clear(columns=True)
 
-        table.add_columns("Script Name", "Description")
+        table.add_column("Script Name")
+        table.add_column("Description", width=25)
         type_key = table.add_column("Type")
         table.add_column("Action")
         table.add_column("Action")
@@ -77,11 +86,11 @@ class Scripts(Static):
             script_name = self.get_script_name_from_row(event.coordinate.row)
             script_path = self.get_script_path(script_name)
             self.app.push_screen(ConfirmDialog(f"Run {script_name}?"), callback=lambda result: self.execute_script_callback(result, script_path))
-        elif cell_value == "📟 Run - External Terminal":
+        elif cell_value == "📟 Run External":
             script_name = self.get_script_name_from_row(event.coordinate.row)
             script_path = self.get_script_path(script_name)
             self.app.push_screen(ConfirmDialog(f"Run {script_name} in external terminal?"), callback=lambda result: self.run_external_terminal_callback(result, script_path))
-        elif cell_value == "🔢 Run - With Parameters":
+        elif cell_value == "🔢 Run With Parameters":
             script_name = self.get_script_name_from_row(event.coordinate.row)
             script_path = self.get_script_path(script_name)
             self.app.push_screen(ConfirmDialog(f"Run {script_name} with parameters?", askParameters=True), callback=lambda result: self.run_with_parameters_callback(result, script_path))

@@ -20,19 +20,19 @@ class ScriptRunner:
             self.logger.error(f"Script {script_path} does not exist.")
             return
         if script_path.suffix.lower() == ".py":
-            self.logger.info(f"Executing Python 🐍 script: {script_path.name}")
+            self.logger.system(f"Executing Python 🐍 script: {script_path.name}")
             if external_terminal:
                 self.run_in_external_terminal(["python", script_path])
             else:
                 self.run_subprocess(["python", script_path, *shlex.split(parameters)])
         elif script_path.suffix.lower() == ".ps1":
-            self.logger.info(f"Executing Powershell 📜 script: {script_path.name}")
+            self.logger.system(f"Executing Powershell 📜 script: {script_path.name}")
             if external_terminal:
                 self.run_in_external_terminal(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path])
             else:
                 self.run_subprocess(["powershell", "-ExecutionPolicy", "Bypass", "-File", script_path, *shlex.split(parameters)])
         elif script_path.suffix.lower() == ".sh":
-            self.logger.info(f"Executing Shell 🐚 script: {script_path.name}")
+            self.logger.system(f"Executing Shell 🐚 script: {script_path.name}")
             if external_terminal:
                 self.run_in_external_terminal(["bash", script_path])
             else:
@@ -47,7 +47,7 @@ class ScriptRunner:
         try:
             result = subprocess.run(command, capture_output=True, text=True, timeout=config.script_timeout)
             if result.returncode == 0:
-                self.logger.info(f"Script output:\n{result.stdout}")
+                self.logger.system(f"Script output:\n{result.stdout}")
             else:
                 self.logger.error(f"Script errors:\n{result.stderr}")
         except subprocess.TimeoutExpired:
