@@ -127,3 +127,32 @@ ConfirmDialog {
     border: round #374558;
     padding: 1;
 }
+
+#viewer {
+    width: 1fr;
+    height: 1fr;
+
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+#file-title {
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+.icon-button {
+    height: 3;
+    padding: 0;
+    margin-right: 1;
+    content-align: center middle;
+}
+
+.icon-button:focus {
+    text-style: none;
+}
+
+#notes-container {
+    height: 90%;
+}
