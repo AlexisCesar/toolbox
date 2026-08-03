@@ -45,6 +45,7 @@ class Notes(Static):
         "open-file-button": "open_file",
         "refresh-file-button": "refresh_file",
         "save-button": "save_file",
+        "view-markdown-button": "view_markdown",
     }
 
     def __init__(self, logger: Logger, **kwargs):
@@ -72,6 +73,7 @@ class Notes(Static):
             yield Button("🔎 Open File", id="open-file-button", flat=True, classes="icon-button")            
             yield Button("🔄️ Refresh File", id="refresh-file-button", flat=True, classes="icon-button")  
             yield Button("💾 Save", id="save-button", flat=True, classes="icon-button") 
+            yield Button("📃 View Markdown", id="view-markdown-button", flat=True, classes="icon-button") 
            
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -118,6 +120,22 @@ class Notes(Static):
             self.load_selected_file(selected_path)
         except OSError as error:
             viewer.load_text(f"Não foi possível salvar o arquivo:\n\n{error}")
+
+    def action_view_markdown(self) -> None:
+        """Switches to the markdown viewer and loads the selected markdown file."""
+        selected_path = self.get_selected_path()
+        if selected_path is None:
+            self.show_message("Selecione um arquivo Markdown para visualizar.")
+            return
+
+        if selected_path.suffix.lower() not in {".md", ".markdown"}:
+            self.show_message("Selecione um arquivo Markdown (.md ou .markdown).")
+            return
+
+        if hasattr(self.app, "show_markdown_view"):
+            self.app.show_markdown_view(selected_path)
+        else:
+            self.logger.error("The current app does not implement markdown switching.")
 
     def get_selected_path(self) -> Path | None:
         """Retorna o arquivo selecionado na árvore, se houver um válido."""
