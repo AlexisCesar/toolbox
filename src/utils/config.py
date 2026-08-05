@@ -19,6 +19,10 @@ class Config:
         return Path(self._data["paths"]["logs"])
 
     @property
+    def notes_dir(self) -> Path:
+        return Path(self._data["paths"]["notes"])
+
+    @property
     def theme(self) -> str:
         return self._data["ui"]["theme"]
 

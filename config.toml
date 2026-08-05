@@ -1,6 +1,7 @@
 [paths]
 scripts = "./scripts"
 logs = "./logs"
+notes = "./notes"
 
 [ui]
 theme = "tokyo-night"

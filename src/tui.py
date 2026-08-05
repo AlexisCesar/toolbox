@@ -1,9 +1,13 @@
+from pathlib import Path
+
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, Log, Placeholder, RichLog
 from src.views.home import Home
+from src.views.markdown_view import MarkdownView
 from src.views.search import Search
 from src.views.scripts import Scripts
+from src.views.notes import Notes
 from src.utils.logger import Logger
 from src.utils.config import config
 import platform
@@ -21,7 +25,9 @@ class ToolboxTUI(App):
         ("c", "select_view(2)", "Scripts"),
         ("l", "select_view(3)", "Logs"),
         ("t", "select_view(4)", "Health Checkers"),
-        ("e", "select_view(5)", "Settings"),
+        ("n", "select_view(5)", "Notes"),
+        ("m", "select_view(6)", "Markdown Viewer"),
+        ("e", "select_view(7)", "Settings"),
         ("q", "quit", "Quit")
     ]
 
@@ -57,6 +63,8 @@ class ToolboxTUI(App):
             "📜 Scripts",
             "📝 Logs",
             "🏥 Health Checkers",
+            "📓 Notes",
+            "📖 Markdown Viewer",
             "🔧 Settings",
             "🚪 Quit"
         ]
@@ -76,6 +84,8 @@ class ToolboxTUI(App):
                 Placeholder(label="Logs view", id="logs-view"),
                 Placeholder(label="Health Checkers view", id="health-checkers-view"),
                 Settings(logger=self.logger, id="settings-view"),
+                Notes(logger=self.logger, id="notes-view"),
+                MarkdownView(logger=self.logger, id="markdow-viewer-view"),
                 initial="home-view",
                 id="main-content-switcher"
             ),
@@ -88,6 +98,13 @@ class ToolboxTUI(App):
         self.query_one("#sidebar-list").focus()
         self.theme = config.theme
         self.logger.info("Toolbox TUI started.")
+
+    def show_markdown_view(self, path: Path | None = None) -> None:
+        """Switch the main content to the markdown viewer and load the selected file."""
+        self.query_one("#sidebar-list", ListView).index = 6
+        switcher = self.query_one("#main-content-switcher", ContentSwitcher)
+        switcher.current = "markdow-viewer-view"
+        self.query_one("#markdow-viewer-view", MarkdownView).load_markdown(path)
     
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
@@ -106,8 +123,12 @@ class ToolboxTUI(App):
             case 4:
                 switcher.current = "health-checkers-view"
             case 5:
-                switcher.current = "settings-view"
+                switcher.current = "notes-view"
             case 6:
+                switcher.current = "markdow-viewer-view"
+            case 7:
+                switcher.current = "settings-view"
+            case 8:
                 App.exit(self)
 
     def action_select_view(self, view_id: int) -> None:
