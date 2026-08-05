@@ -46,10 +46,11 @@ class Scripts(Static):
         self.query_one("#scripts-label", Static).content = f"Reading scripts from: 📂 {config.scripts_dir.absolute()}"
     
     def update_scripts_list(self) -> None:
+        scripts_descriptions: dict[str, dict] = None
         try:
             with open(config.scripts_dir / "scripts_configuration.toml", "rb") as file:
                 scripts_descriptions = tomllib.load(file)
-        except FileNotFoundError:
+        except Exception:
             self.logger.warn("Scripts configurations file not found.")
             
         self.rows = []
@@ -70,8 +71,12 @@ class Scripts(Static):
                     action_1 = "\U0001F4CB Copy"
                     action_2 = ""
                     action_3 = ""
+                
+                script_desc = ""
+                if scripts_descriptions:
+                    script_desc = scripts_descriptions.get(file_path.name, {}).get("description", "")
                     
-                self.rows.append((file_path.name, scripts_descriptions.get(file_path.name, {}).get("description"), script_type, action_1, action_2, action_3, "\U0001F50D Open"))
+                self.rows.append((file_path.name, script_desc, script_type, action_1, action_2, action_3, "\U0001F50D Open"))
 
     def build_scripts_datatable(self):
         table = self.query_one("#scripts-datatable", DataTable)
