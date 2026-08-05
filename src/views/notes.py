@@ -7,6 +7,7 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, Static, DirectoryTree, TextArea
 from src.utils.config import config
+from src.utils.confirm_dialog import ConfirmDialog
 
 MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
 TEXT_EXTENSIONS = {
@@ -45,6 +46,7 @@ class Notes(Static):
         "refresh-file-button": "refresh_file",
         "save-button": "save_file",
         "view-markdown-button": "view_markdown",
+        "delete-button": "delete_file",
     }
 
     def __init__(self, logger: Logger, **kwargs):
@@ -73,6 +75,7 @@ class Notes(Static):
             yield Button("🔄️ Refresh File", id="refresh-file-button", flat=True, classes="icon-button")  
             yield Button("💾 Save", id="save-button", flat=True, classes="icon-button") 
             yield Button("📖 View Markdown", id="view-markdown-button", flat=True, classes="icon-button") 
+            yield Button("❌ Delete", id="delete-button", flat=True, classes="icon-button") 
     
     def on_show(self) -> None:
         self.action_refresh_folder(silent=True)
@@ -139,6 +142,32 @@ class Notes(Static):
             self.app.show_markdown_view(selected_path)
         else:
             self.logger.error("The current app does not implement markdown switching.")
+    
+    def action_delete_file(self) -> None:
+        """Deletes the selected file after user confirmation."""
+        selected_path = self.get_selected_path()
+        if selected_path is None:
+            self.show_message("Selecione um arquivo para excluir.")
+            return
+
+        self.app.push_screen(
+            ConfirmDialog(
+                f"Are you sure you want to delete the file:\n{selected_path.name}?",
+                confirmButtonText="Delete",
+                cancelButtonText="Cancel"
+            ),
+            callback=lambda result: self.confirm_delete_file(result, selected_path)
+        )
+    
+    def confirm_delete_file(self, confirmationResult: bool, path: Path) -> None:
+        if confirmationResult.confirmed:
+            try:
+                path.unlink()
+                self.logger.info(f"Deleted notes file: {path}")
+                self.action_refresh_folder(silent=True)
+                self.query_one("#viewer", TextArea).load_text("")
+            except OSError as error:
+                self.show_message(f"Could not delete the file:\n\n{error}")
 
     def get_selected_path(self) -> Path | None:
         """Retorna o arquivo selecionado na árvore, se houver um válido."""
