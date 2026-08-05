@@ -34,7 +34,8 @@ class MarkdownView(Static):
             else:
                 try:
                     content = Notes.read_text_file(path)
-                except (OSError, ValueError) as error:
-                    content = f"Não foi possível abrir o arquivo:\n\n{error}"
+                except Exception as error:
+                    content = f"Something went wrong while reading the file:\n\n{error}"
+                    self.logger.error(content)
 
         await markdown_viewer.document.update(content)

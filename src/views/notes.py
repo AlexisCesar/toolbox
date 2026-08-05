@@ -4,7 +4,7 @@ from pathlib import Path
 
 from textual import Logger
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.containers import Horizontal
 from textual.widgets import Button, Static, DirectoryTree, TextArea
 from src.utils.config import config
 from src.utils.confirm_dialog import ConfirmDialog
@@ -94,27 +94,27 @@ class Notes(Static):
         directory_tree.reload()
 
     def action_open_file(self) -> None:
-        """Abre o arquivo selecionado usando o aplicativo padrão do Windows."""
+        """Opens the selected file using the default Windows application."""
         selected_path = self.get_selected_path()
         if selected_path is None:
-            self.show_message("Selecione um arquivo para abrir.")
+            self.logger.warn("Select a file to open.")
             return
 
         try:
             os.startfile(selected_path)
             self.logger.info(f"Opened notes file with system default app: {selected_path}")
-        except OSError as error:
-            self.show_message(f"Não foi possível abrir o arquivo: {error}")
+        except Exception as error:
+            self.logger.error(f"Error occurred while trying to open the file: {error}")
 
     def action_refresh_file(self) -> None:
-        """Recarrega o arquivo selecionado no visualizador de texto."""
+        """Refreshes the selected file in the text viewer."""
         self.load_selected_file()
 
     def action_save_file(self) -> None:
-        """Salva o conteúdo do visualizador de texto no arquivo selecionado."""
+        """Saves the content of the text viewer to the selected file."""
         selected_path = self.get_selected_path()
         if selected_path is None:
-            self.show_message("Selecione um arquivo para salvar.")
+            self.logger.warn("Select a file to save.")
             return
 
         viewer = self.query_one("#viewer", TextArea)
@@ -124,18 +124,18 @@ class Notes(Static):
             selected_path.write_text(content, encoding="utf-8")
             self.logger.info(f"Saved notes file: {selected_path}")
             self.load_selected_file(selected_path)
-        except OSError as error:
-            viewer.load_text(f"Não foi possível salvar o arquivo:\n\n{error}")
+        except Exception as error:
+            viewer.load_text(f"Could not save the file:\n\n{error}")
 
     def action_view_markdown(self) -> None:
         """Switches to the markdown viewer and loads the selected markdown file."""
         selected_path = self.get_selected_path()
         if selected_path is None:
-            self.show_message("Selecione um arquivo Markdown para visualizar.")
+            self.logger.warn("Select a Markdown file to view.")
             return
 
         if selected_path.suffix.lower() not in {".md", ".markdown"}:
-            self.show_message("Selecione um arquivo Markdown (.md ou .markdown).")
+            self.logger.warn("Select a Markdown file (.md or .markdown).")
             return
 
         if hasattr(self.app, "show_markdown_view"):
@@ -147,7 +147,7 @@ class Notes(Static):
         """Deletes the selected file after user confirmation."""
         selected_path = self.get_selected_path()
         if selected_path is None:
-            self.show_message("Selecione um arquivo para excluir.")
+            self.logger.warn("Select a file to delete.")
             return
 
         self.app.push_screen(
@@ -167,10 +167,10 @@ class Notes(Static):
                 self.action_refresh_folder(silent=True)
                 self.query_one("#viewer", TextArea).load_text("")
             except OSError as error:
-                self.show_message(f"Could not delete the file:\n\n{error}")
+                self.logger.warn(f"Could not delete the file:\n\n{error}")
 
     def get_selected_path(self) -> Path | None:
-        """Retorna o arquivo selecionado na árvore, se houver um válido."""
+        """Returns the selected file in the tree, if a valid one exists."""
         directory_tree = self.query_one(NotesDirectoryTree)
         selected_node = directory_tree.cursor_node
 
@@ -180,34 +180,34 @@ class Notes(Static):
         selected_path = selected_node.data.path
 
         if selected_path.is_dir():
-            self.show_message("Selecione um arquivo, não uma pasta.")
+            self.logger.warn("Select a file, not a folder.")
             return None
 
         return selected_path
 
     def load_selected_file(self, path: Path | None = None) -> None:
-        """Carrega o arquivo selecionado no editor, permitindo reuso em open/refresh."""
+        """Loads the selected file in the editor, allowing reuse in open/refresh."""
         selected_path = path or self.get_selected_path()
         if selected_path is None:
-            self.show_message("Selecione um arquivo para abrir.")
+            self.logger.warn("Select a file to open.")
             return
 
         self.display_file(selected_path)
 
 
     def display_file(self, path: Path) -> None:
-        """Lê e mostra o conteúdo de um arquivo de texto no editor."""
+        """Reads and displays the content of a text file in the editor."""
         viewer = self.query_one("#viewer", TextArea)
 
         try:
             content = self.read_text_file(path)
         except (OSError, ValueError) as error:
-            viewer.load_text(f"Não foi possível abrir o arquivo:\n\n{error}")
+            viewer.load_text(f"Could not open the file:\n\n{error}")
             return
 
         viewer.load_text(content)
 
-        # Volta o visualizador para o início do arquivo.
+        # Return the viewer to the beginning of the file.
         viewer.cursor_location = (0, 0)
         viewer.scroll_cursor_visible(animate=False)
 
@@ -215,32 +215,32 @@ class Notes(Static):
         self,
         event: NotesDirectoryTree.FileSelected,
     ) -> None:
-        """Chamado quando um arquivo é selecionado."""
+        """Called when a file is selected."""
         self.display_file(event.path)
         
     @staticmethod
     def read_text_file(path: Path) -> str:
-        """Lê um arquivo de texto com validações básicas."""
+        """Reads a text file with basic validations."""
 
         file_size = path.stat().st_size
 
         if file_size > MAX_FILE_SIZE:
             raise ValueError(
-                f"O arquivo possui {file_size / 1024 / 1024:.1f} MB. "
-                "O limite configurado é 2 MB."
+                f"The file has {file_size / 1024 / 1024:.1f} MB. "
+                "The configured limit is 2 MB."
             )
 
         data = path.read_bytes()
 
-        # Suporte a arquivos UTF-16 com BOM.
+        # UTF-16 + BOM file support.
         if data.startswith((b"\xff\xfe", b"\xfe\xff")):
             return data.decode("utf-16")
 
-        # Arquivos binários normalmente possuem bytes nulos.
+        # Binary files usually have null bytes.
         if b"\x00" in data[:8192]:
-            raise ValueError("O arquivo parece ser binário.")
+            raise ValueError("The file appears to be binary.")
 
-        # UTF-8 é o padrão; CP1252 ajuda com arquivos antigos do Windows.
+        # UTF-8 is the default; CP1252 helps with old Windows files.
         for encoding in ("utf-8-sig", "cp1252"):
             try:
                 return data.decode(encoding)
