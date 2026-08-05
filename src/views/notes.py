@@ -138,8 +138,8 @@ class Notes(Static):
             self.logger.warn("Select a Markdown file (.md or .markdown).")
             return
 
-        if hasattr(self.app, "show_markdown_view"):
-            self.app.show_markdown_view(selected_path)
+        if hasattr(self.app, "show_markdown_preview"):
+            self.app.show_markdown_preview(selected_path)
         else:
             self.logger.error("The current app does not implement markdown switching.")
     

@@ -4,7 +4,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, Log, Placeholder, RichLog
 from src.views.home import Home
-from src.views.markdown_view import MarkdownView
+from src.views.markdown_view import MarkdownPreview
 from src.views.search import Search
 from src.views.scripts import Scripts
 from src.views.notes import Notes
@@ -64,7 +64,7 @@ class ToolboxTUI(App):
             "📝 Logs",
             "🏥 Health Checkers",
             "📓 Notes",
-            "📖 Markdown Viewer",
+            "📖 Markdown Preview",
             "🔧 Settings",
             "🚪 Quit"
         ]
@@ -85,7 +85,7 @@ class ToolboxTUI(App):
                 Placeholder(label="Health Checkers view", id="health-checkers-view"),
                 Settings(logger=self.logger, id="settings-view"),
                 Notes(logger=self.logger, id="notes-view"),
-                MarkdownView(logger=self.logger, id="markdow-viewer-view"),
+                MarkdownPreview(logger=self.logger, id="markdow-preview-view"),
                 initial="home-view",
                 id="main-content-switcher"
             ),
@@ -99,12 +99,12 @@ class ToolboxTUI(App):
         self.theme = config.theme
         self.logger.info("Toolbox TUI started.")
 
-    def show_markdown_view(self, path: Path | None = None) -> None:
+    def show_markdown_preview(self, path: Path | None = None) -> None:
         """Switch the main content to the markdown viewer and load the selected file."""
         self.query_one("#sidebar-list", ListView).index = 6
         switcher = self.query_one("#main-content-switcher", ContentSwitcher)
-        switcher.current = "markdow-viewer-view"
-        self.query_one("#markdow-viewer-view", MarkdownView).load_markdown(path)
+        switcher.current = "markdow-preview-view"
+        self.query_one("#markdow-preview-view", MarkdownPreview).load_markdown(path)
     
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
@@ -125,7 +125,7 @@ class ToolboxTUI(App):
             case 5:
                 switcher.current = "notes-view"
             case 6:
-                switcher.current = "markdow-viewer-view"
+                switcher.current = "markdow-preview-view"
             case 7:
                 switcher.current = "settings-view"
             case 8:

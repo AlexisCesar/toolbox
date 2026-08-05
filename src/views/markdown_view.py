@@ -8,8 +8,8 @@ from src.utils.logger import Logger
 from src.views.notes import Notes
 
 
-class MarkdownView(Static):
-    """A simple markdown view for the Toolbox TUI."""
+class MarkdownPreview(Static):
+    """A simple markdown viewer for the Toolbox TUI."""
 
     def __init__(self, logger: Logger, **kwargs):
         super().__init__(**kwargs)
