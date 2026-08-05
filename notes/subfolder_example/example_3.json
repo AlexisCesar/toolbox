@@ -1,0 +1,9 @@
+{
+    "info": "any readable file works not just .txt",
+    "theme": "dark",
+    "language": "en-US",
+    "autoSave": true,
+    "refreshInterval": 30,
+    "scriptsDirectory": "/home/scripts",
+    "logsDirectory": "/home/logs"
+}
