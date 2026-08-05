@@ -2,7 +2,6 @@ import os
 from typing import Iterable
 from pathlib import Path
 
-from rich.text import Text
 from textual import Logger
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
@@ -73,8 +72,10 @@ class Notes(Static):
             yield Button("🔎 Open File", id="open-file-button", flat=True, classes="icon-button")            
             yield Button("🔄️ Refresh File", id="refresh-file-button", flat=True, classes="icon-button")  
             yield Button("💾 Save", id="save-button", flat=True, classes="icon-button") 
-            yield Button("📃 View Markdown", id="view-markdown-button", flat=True, classes="icon-button") 
-           
+            yield Button("📖 View Markdown", id="view-markdown-button", flat=True, classes="icon-button") 
+    
+    def on_show(self) -> None:
+        self.action_refresh_folder(silent=True)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id
@@ -82,9 +83,11 @@ class Notes(Static):
         if action_name is not None:
             getattr(self, f"action_{action_name}")()
 
-    def action_refresh_folder(self) -> None:
-        self.logger.info("Refreshing notes directory tree...")
+    def action_refresh_folder(self, silent: bool = False) -> None:
+        if not silent:
+            self.logger.info("Refreshing notes directory tree...")
         directory_tree = self.query_one(NotesDirectoryTree)
+        directory_tree.path = config.notes_dir
         directory_tree.reload()
 
     def action_open_file(self) -> None:

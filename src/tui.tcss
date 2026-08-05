@@ -101,15 +101,24 @@ ConfirmDialog {
     color: #99c0fac9
 }
 
-#settings-directories-input {
+#settings-directories-scripts-input {
     margin: 1 -1;
 }
 
-#settings-directories-buttons {
-    margin: 1 0;
+#settings-directories-notes-input {
+    margin: 1 -1;
 }
 
-#settings-directories-change-button {
+.settings-directories-buttons {
+    margin: 1 0;
+    min-height: 3;
+}
+
+#settings-directories-scripts-change-button {
+    margin: 0 1 0 0;
+}
+
+#settings-directories-notes-change-button {
     margin: 0 1 0 0;
 }
 
@@ -128,6 +137,7 @@ ConfirmDialog {
     padding: 1;
 }
 
+/* Notes and MD Views Styles */
 #viewer {
     width: 1fr;
     height: 1fr;
