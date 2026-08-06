@@ -11,13 +11,14 @@ class ConfirmResult:
 
 class ConfirmDialog(ModalScreen[ConfirmResult]):
     """A reusable modal confirmation dialog."""
-    def __init__(self, message: str = "Are you sure?", askParameters: bool = False, confirmButtonText: str = "Yes", cancelButtonText: str = "No", parametersPlaceholder: str = "Enter parameters...") -> None:
+    def __init__(self, message: str = "Are you sure?", askParameters: bool = False, confirmButtonText: str = "Yes", cancelButtonText: str = "No", parametersPlaceholder: str = "Enter parameters...", initialValue: str = "") -> None:
         super().__init__()
         self.message = message
         self.askParameters = askParameters
         self.confirmButtonText = confirmButtonText
         self.cancelButtonText = cancelButtonText
         self.parametersPlaceholder = parametersPlaceholder
+        self.initialValue = initialValue
 
     def compose(self) -> ComposeResult:
         parameters = Input(placeholder=self.parametersPlaceholder, id="dialog-parameters")
@@ -34,6 +35,9 @@ class ConfirmDialog(ModalScreen[ConfirmResult]):
         
         if not self.askParameters:
             parameters.styles.display = "none"
+        
+        if self.initialValue:
+            parameters.value = self.initialValue
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         parameters = self.query_one("#dialog-parameters", Input).value

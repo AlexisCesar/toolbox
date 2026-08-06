@@ -170,6 +170,9 @@ class Settings(Static):
                                  
                         table = tomlkit.table()
                         table["description"] = ""
+                        
+                        if file_path.suffix.lower() != ".sql":
+                            table["latest_parameters"] = ""
 
                         doc[file_path.name] = table               
                 

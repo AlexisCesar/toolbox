@@ -3,21 +3,27 @@
 
 ["print_random_sum.py"]
 description = "Prints the sum of two random integers."
+latest_parameters = ""
 
 ["hello_in_bash.sh"]
 description = ""
+latest_parameters = ""
 
 ["Show-PSGreeting.ps1"]
 description = ""
+latest_parameters = ""
 
 ["select_everything.sql"]
 description = "Queries MyAwesomeTable table."
 
 ["print_message.py"]
 description = "Prints user input."
+latest_parameters = ""
 
 ["hello_from_python.py"]
 description = ""
+latest_parameters = ""
 
 ["parameter_subtraction.sh"]
 description = "Subtracts the second parameter from the first parameter."
+latest_parameters = "100 50"

@@ -6,6 +6,7 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
 from rich.text import Text
+import tomlkit
 
 from src.utils.config import config
 from src.utils.logger import Logger
@@ -38,20 +39,21 @@ class Scripts(Static):
             self.logger.info(f"Scripts initialized with {len(self.rows)} scripts.")
         
     def on_show(self) -> None:
-        self.update_scripts_list()
+        self.update_scripts_list(silent=True)
         self.update_script_dir_label()
         self.build_scripts_datatable()
     
     def update_script_dir_label(self) -> None:
         self.query_one("#scripts-label", Static).content = f"Reading scripts from: 📂 {config.scripts_dir.absolute()}"
     
-    def update_scripts_list(self) -> None:
-        scripts_descriptions: dict[str, dict] = None
+    def update_scripts_list(self, silent: bool = False) -> None:
+        scripts_configs: dict[str, dict] = None
         try:
             with open(config.scripts_dir / "scripts_configuration.toml", "rb") as file:
-                scripts_descriptions = tomllib.load(file)
+                scripts_configs = tomllib.load(file)
         except Exception:
-            self.logger.warn("Scripts configurations file not found.")
+            if not silent:
+                self.logger.warn("Scripts configurations file not found. Generate it in the Settings tab.")
             
         self.rows = []
         for file_path in config.scripts_dir.iterdir():
@@ -72,11 +74,11 @@ class Scripts(Static):
                     action_2 = ""
                     action_3 = ""
                 
-                script_desc = ""
-                if scripts_descriptions:
-                    script_desc = scripts_descriptions.get(file_path.name, {}).get("description", "")
+                script_description = ""
+                if scripts_configs:
+                    script_description = scripts_configs.get(file_path.name, {}).get("description", "")
                     
-                self.rows.append((file_path.name, script_desc, script_type, action_1, action_2, action_3, "\U0001F50D Open"))
+                self.rows.append((file_path.name, script_description, script_type, action_1, action_2, action_3, "\U0001F50D Open"))
 
     def build_scripts_datatable(self):
         table = self.query_one("#scripts-datatable", DataTable)
@@ -121,7 +123,13 @@ class Scripts(Static):
         elif cell_value == "\U0001F522 Run With Parameters":
             script_name = self.get_script_name_from_row(event.coordinate.row)
             script_path = self.get_script_path(script_name)
-            self.app.push_screen(ConfirmDialog(f"Run {script_name} with parameters?", askParameters=True), callback=lambda result: self.run_with_parameters_callback(result, script_path))
+            try:
+                with open(config.scripts_dir / "scripts_configuration.toml", "rb") as file:
+                    scripts_configs = tomllib.load(file)
+                    latest_parameters = scripts_configs.get(script_name, {}).get("latest_parameters", "")
+            except Exception:
+                latest_parameters = ""
+            self.app.push_screen(ConfirmDialog(f"Run {script_name} with parameters?", askParameters=True, initialValue=latest_parameters), callback=lambda result: self.run_with_parameters_callback(result, script_path))
         elif cell_value == "\U0001F50D Open":
             script_name = self.get_script_name_from_row(event.coordinate.row)
             file_content = (self.get_script_path(script_name)).read_text()
@@ -160,4 +168,17 @@ class Scripts(Static):
                 self.logger.warn(f"No parameters provided. Running {script_path.name} without parameters.")
             else:
                 self.logger.info(f"Running {script_path.name} with parameters: {result.parameters}")
+                self.save_script_parameters(script_path.name, result.parameters)
             self.script_runner.run(script_path, parameters=result.parameters)
+    
+    def save_script_parameters(self, script_name: str, parameters: str) -> None:
+        try:
+            with open(config.scripts_dir / "scripts_configuration.toml", "r") as f:
+                doc = tomlkit.parse(f.read())
+                if script_name not in doc:
+                    doc[script_name] = {}
+                doc[script_name]["latest_parameters"] = parameters
+                with open(config.scripts_dir / "scripts_configuration.toml", "w", encoding="utf-8") as f:
+                    f.write(tomlkit.dumps(doc))
+        except Exception as e:
+            self.logger.error(f"Failed to save parameters for {script_name}: {e}")
