@@ -10,3 +10,6 @@ dependencies = [
     "textual>=8.2.7",
     "tomlkit>=0.15.1",
 ]
+
+[project.scripts]
+toolboxtui = "main:main"
