@@ -28,7 +28,7 @@ class ScriptRunner:
         elif script_path.suffix.lower() == ".ps1":
             self.logger.system(f"Executing Powershell 📜 script: {script_path.name}")
             if external_terminal:
-                self.run_in_external_terminal(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(script_path)])
+                self.run_in_external_terminal([str(script_path)], script_extension=".ps1")
             else:
                 self.run_subprocess(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(script_path), *shlex.split(parameters)])
         elif script_path.suffix.lower() == ".sh":
@@ -58,21 +58,30 @@ class ScriptRunner:
             self.logger.error(f"Failed to execute script: {e}")
     
     
-    def run_in_external_terminal(self, command: list) -> None:
+    def run_in_external_terminal(self, command: list, script_extension: str) -> None:
         """Run a script in an external terminal."""
         system = platform.system()
 
         if system == "Windows":
-            command_str = subprocess.list2cmdline(command)
-
-            subprocess.Popen([
-                "cmd",
-                "/c",
-                "start",
-                "cmd",
-                "/k",
-                command_str,
-            ])
+            if script_extension.lower() == ".ps1":
+                subprocess.Popen([
+                    "powershell",
+                    "-NoExit",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    command[0],
+                ], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            else:
+                command_str = subprocess.list2cmdline(command)
+                subprocess.Popen([
+                    "cmd",
+                    "/c",
+                    "start",
+                    "cmd",
+                    "/k",
+                    command_str,
+                ])
 
         elif system == "Linux":
             command_str = " ".join(shlex.quote(str(arg)) for arg in command)
