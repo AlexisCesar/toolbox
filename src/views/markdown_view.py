@@ -14,15 +14,18 @@ class MarkdownPreview(Static):
     def __init__(self, logger: Logger, **kwargs):
         super().__init__(**kwargs)
         self.logger = logger
+        self.current_file = None
+        self.current_content = ""
 
     def compose(self) -> ComposeResult:
         """Create the layout for the markdown view."""
-        
+        yield Static("-", id="select-file-label")
         with Horizontal(id="markdown-container"):
             yield MarkdownViewer(id="markdown-viewer")
 
     def load_markdown(self, path: Path | None = None, content: str | None = None) -> None:
         """Load markdown content into the viewer."""
+        self.current_file = path.name
         self.run_worker(self._load_markdown(path, content), exclusive=True)
 
     async def _load_markdown(self, path: Path | None = None, content: str | None = None) -> None:
@@ -39,3 +42,10 @@ class MarkdownPreview(Static):
                     self.logger.error(content)
 
         await markdown_viewer.document.update(content)
+
+    def on_show(self) -> None:
+        label_text = f"Viewing file: 📃 {self.current_file}"
+        if not self.current_file:
+            label_text = "📃 No file selected. Open a file from the Notes menu."
+
+        self.query_one("#select-file-label", Static).content = label_text

@@ -82,10 +82,10 @@ class ToolboxTUI(App):
         container = Container(
             ContentSwitcher(
                 Home(id="home-view"),
-                Search(id="search-view"),
+                Placeholder(label="In Development",id="search-view"),
                 Scripts(logger=self.logger, id="scripts-view"),
-                Placeholder(label="Logs view", id="logs-view"),
-                Placeholder(label="Health Checkers view", id="health-checkers-view"),
+                Placeholder(label="In Development", id="logs-view"),
+                Placeholder(label="In Development", id="health-checkers-view"),
                 Settings(logger=self.logger, id="settings-view"),
                 Notes(logger=self.logger, id="notes-view"),
                 MarkdownPreview(logger=self.logger, id="markdow-preview-view"),

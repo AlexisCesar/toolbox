@@ -138,13 +138,8 @@ ConfirmDialog {
 }
 
 /* Notes and MD Views Styles */
-#viewer {
-    width: 1fr;
-    height: 1fr;
-
-    padding: 0;
-    margin: 0;
-    border: none;
+#notes-directory-tree-wrapper {
+    width: 35%;
 }
 
 #file-title {
@@ -169,6 +164,11 @@ ConfirmDialog {
 
 #notes-directory-tree {
     width: 30%;
+}
+
+#select-file-label {
+    padding: 1;
+    text-style: bold;
 }
 
 /* My Projects View Styles */

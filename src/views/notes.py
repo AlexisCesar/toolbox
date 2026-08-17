@@ -4,12 +4,54 @@ from pathlib import Path
 
 from textual import Logger
 from textual.app import ComposeResult
-from textual.containers import Horizontal
+from textual.containers import Horizontal, HorizontalScroll
 from textual.widgets import Button, Static, DirectoryTree, TextArea
 from src.utils.config import config
 from src.utils.confirm_dialog import ConfirmDialog
 
 MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
+
+SCRIPTS_EXTENSIONS = {
+    ".py",
+    ".c",
+    ".h",
+    ".cpp",
+    ".cc",
+    ".cxx",
+    ".hpp",
+    ".cs",
+    ".sh",
+    ".bash",
+    ".zsh",
+    ".fish",
+    ".ps1",
+    ".psm1",
+    ".psd1",
+    ".bat",
+    ".cmd",
+    ".rb",
+    ".pl",
+    ".pm",
+    ".php",
+    ".js",
+    ".mjs",
+    ".cjs",
+    ".ts",
+    ".lua",
+    ".r",
+    ".awk",
+    ".sql",
+    ".go",
+    ".rs",
+    ".kt",
+    ".kts",
+    ".java",
+    ".swift",
+    ".dart",
+    ".groovy",
+    ".makefile",
+}
+
 TEXT_EXTENSIONS = {
     ".txt",
     ".md",
@@ -21,6 +63,27 @@ TEXT_EXTENSIONS = {
     ".toml",
     ".log",
     ".csv",
+} | SCRIPTS_EXTENSIONS
+
+LANGUAGE_BY_EXTENSION = {
+    ".py": "python",
+    ".cs": "csharp",
+    ".sh": "bash",
+    ".ps1": "powershell",
+    ".rb": "ruby",
+    ".js": "javascript",
+    ".ts": "typescript",
+    ".json": "json",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+    ".toml": "toml",
+    ".sql": "sql",
+    ".c": "c",
+    ".cpp": "cpp",
+    ".lua": "lua",
+    ".rs": "rust",
+    ".go": "go",
+    ".java": "java",
 }
 
 class NotesDirectoryTree(DirectoryTree):
@@ -57,7 +120,8 @@ class Notes(Static):
         """Create the layout for the notes view."""
         
         with Horizontal(id="notes-container"):
-            yield NotesDirectoryTree(config.notes_dir, id="notes-directory-tree")
+            with HorizontalScroll(id="notes-directory-tree-wrapper"):
+                yield NotesDirectoryTree(config.notes_dir, id="notes-directory-tree")
               
             yield TextArea.code_editor(
                     "",
@@ -66,6 +130,7 @@ class Notes(Static):
                     show_cursor=False,
                     show_line_numbers=True,
                     soft_wrap=True,
+                    language=None
                 )
             
         with Horizontal():
@@ -206,10 +271,21 @@ class Notes(Static):
             return
 
         viewer.load_text(content)
+        self.update_highlight_based_on_file_type(viewer, path)
 
         # Return the viewer to the beginning of the file.
         viewer.cursor_location = (0, 0)
         viewer.scroll_cursor_visible(animate=False)
+    
+    def update_highlight_based_on_file_type(
+        self,
+        viewer: TextArea,
+        file_path: Path,
+    ) -> None:
+        viewer.language = LANGUAGE_BY_EXTENSION.get(
+            file_path.suffix.lower()
+        )
+            
 
     def on_directory_tree_file_selected(
         self,

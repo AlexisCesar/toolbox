@@ -5,7 +5,7 @@ notes = "./notes"
 projects = "./projects"
 
 [ui]
-theme = "tokyo-night"
+theme = "textual-dark"
 
 [scripts]
 timeout = 3

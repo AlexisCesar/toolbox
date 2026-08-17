@@ -29,6 +29,6 @@ class Logger:
             "INFO": "blue",
             "WARN": "yellow",
             "ERROR": "red",
-        }.get(level, "white")
+        }.get(level, "gray")
         
         log.write(f"[bold {log_level_style}][{level} - {time}] {message}")

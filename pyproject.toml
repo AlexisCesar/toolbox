@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "pyperclip>=1.11.0",
     "rich>=15.0.0",
-    "textual>=8.2.7",
+    "textual[syntax]>=8.2.7",
     "tomlkit>=0.15.1",
 ]
 
