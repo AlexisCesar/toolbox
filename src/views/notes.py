@@ -69,7 +69,7 @@ LANGUAGE_BY_EXTENSION = {
     ".py": "python",
     ".cs": "csharp",
     ".sh": "bash",
-    ".ps1": "powershell",
+    ".ps1": "pwsh",
     ".rb": "ruby",
     ".js": "javascript",
     ".ts": "typescript",
@@ -282,10 +282,12 @@ class Notes(Static):
         viewer: TextArea,
         file_path: Path,
     ) -> None:
-        viewer.language = LANGUAGE_BY_EXTENSION.get(
-            file_path.suffix.lower()
-        )
-            
+        try:
+            viewer.language = LANGUAGE_BY_EXTENSION.get(
+                file_path.suffix.lower()
+            )
+        except:
+            viewer.language = None
 
     def on_directory_tree_file_selected(
         self,

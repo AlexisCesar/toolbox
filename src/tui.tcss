@@ -162,10 +162,6 @@ ConfirmDialog {
     height: 90%;
 }
 
-#notes-directory-tree {
-    width: 30%;
-}
-
 #select-file-label {
     padding: 1;
     text-style: bold;
