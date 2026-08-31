@@ -121,7 +121,7 @@ class Notes(Static):
         content = viewer.text
 
         try:
-            selected_path.write_text(content, encoding="utf-8")
+            selected_path.write_bytes(content.encode("utf-8"))
             self.logger.info(f"Saved notes file: {selected_path}")
             self.load_selected_file(selected_path)
         except Exception as error:

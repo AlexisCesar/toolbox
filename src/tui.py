@@ -8,6 +8,7 @@ from src.views.markdown_view import MarkdownPreview
 from src.views.search import Search
 from src.views.scripts import Scripts
 from src.views.notes import Notes
+from src.views.my_projects import MyProjects
 from src.utils.logger import Logger
 from src.utils.config import config
 import platform
@@ -27,7 +28,8 @@ class ToolboxTUI(App):
         ("t", "select_view(4)", "Health Checkers"),
         ("n", "select_view(5)", "Notes"),
         ("m", "select_view(6)", "Markdown Viewer"),
-        ("e", "select_view(7)", "Settings"),
+        ("p", "select_view(7)", "My Projects"),
+        ("e", "select_view(8)", "Settings"),
         ("q", "quit", "Quit")
     ]
 
@@ -65,6 +67,7 @@ class ToolboxTUI(App):
             "🏥 Health Checkers",
             "📓 Notes",
             "📖 Markdown Preview",
+            "📂 My Projects",
             "🔧 Settings",
             "🚪 Quit"
         ]
@@ -86,6 +89,7 @@ class ToolboxTUI(App):
                 Settings(logger=self.logger, id="settings-view"),
                 Notes(logger=self.logger, id="notes-view"),
                 MarkdownPreview(logger=self.logger, id="markdow-preview-view"),
+                MyProjects(logger=self.logger, id="my-projects-view"),
                 initial="home-view",
                 id="main-content-switcher"
             ),
@@ -102,6 +106,7 @@ class ToolboxTUI(App):
     def show_markdown_preview(self, path: Path | None = None) -> None:
         """Switch the main content to the markdown viewer and load the selected file."""
         self.query_one("#sidebar-list", ListView).index = 6
+
         switcher = self.query_one("#main-content-switcher", ContentSwitcher)
         switcher.current = "markdow-preview-view"
         self.query_one("#markdow-preview-view", MarkdownPreview).load_markdown(path)
@@ -127,8 +132,10 @@ class ToolboxTUI(App):
             case 6:
                 switcher.current = "markdow-preview-view"
             case 7:
-                switcher.current = "settings-view"
+                switcher.current = "my-projects-view"
             case 8:
+                switcher.current = "settings-view"
+            case 9:
                 App.exit(self)
 
     def action_select_view(self, view_id: int) -> None:

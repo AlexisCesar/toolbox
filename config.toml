@@ -2,6 +2,7 @@
 scripts = "./scripts"
 logs = "./logs"
 notes = "./notes"
+projects = "./projects"
 
 [ui]
 theme = "tokyo-night"

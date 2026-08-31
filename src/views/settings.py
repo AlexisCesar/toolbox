@@ -45,6 +45,7 @@ class Settings(Static):
         with VerticalScroll(id="paths-settings"):
             yield from self.build_scripts_path_settings()
             yield from self.build_notes_path_settings()
+            yield from self.build_projects_path_settings()
     
     def build_scripts_path_settings(self) -> ComposeResult:
         """Build the scripts path settings section of the settings view."""
@@ -64,6 +65,14 @@ class Settings(Static):
         yield Input(placeholder="/example/notes", disabled=True, id="settings-directories-notes-input")
         with Horizontal(classes="settings-directories-buttons"):
             yield Button(label="Change Directory", id="settings-directories-notes-change-button")
+    
+    def build_projects_path_settings(self) -> ComposeResult:
+        """Build the projects path settings section of the settings view."""
+        yield Label("Projects Directory")
+        yield Label("Path to the folder containing your project solutions.", classes="settings-general-label-italic")
+        yield Input(placeholder="/example/projects", disabled=True, id="settings-directories-projects-input")
+        with Horizontal(classes="settings-directories-buttons"):
+            yield Button(label="Change Directory", id="settings-directories-projects-change-button")
     
     def build_theme_settings(self) -> ComposeResult:
         """Build the theme settings section of the settings view."""
@@ -86,6 +95,7 @@ class Settings(Static):
     def update_fields(self) -> None:
         self.query_one("#settings-directories-scripts-input", Input).value = str(config.scripts_dir.absolute())
         self.query_one("#settings-directories-notes-input", Input).value = str(config.notes_dir.absolute())
+        self.query_one("#settings-directories-projects-input", Input).value = str(config.projects_dir.absolute())
         self.query_one("#settings-theme-select", Select).value = str(config.theme)
         
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -113,6 +123,13 @@ class Settings(Static):
                                                confirmButtonText="Save",
                                                cancelButtonText="Cancel",
                                                parametersPlaceholder="Enter new path (e.g. /myfolder/mynotes)..."), callback=lambda result: self.change_notes_dir(result))
+        
+        if event.button.id == "settings-directories-projects-change-button":
+            self.app.push_screen(ConfirmDialog(f"Change projects directory:",
+                                               askParameters=True,
+                                               confirmButtonText="Save",
+                                               cancelButtonText="Cancel",
+                                               parametersPlaceholder="Enter new path (e.g. /myfolder/myprojects)..."), callback=lambda result: self.change_projects_dir(result))
     
     def change_scripts_dir(self, confirmationResult: bool):
         if confirmationResult.confirmed:
@@ -136,6 +153,19 @@ class Settings(Static):
                     self.logger.info(f"Updating notes path to \"{confirmationResult.parameters}\".")
                     config.update("paths", "notes", confirmationResult.parameters)
                     self.logger.info("Notes path updated successfully.");
+                    self.update_fields()
+                else:
+                    self.logger.error(f"\"{confirmationResult.parameters}\" is an invalid path.")
+
+    def change_projects_dir(self, confirmationResult: bool):
+        if confirmationResult.confirmed:
+            if not confirmationResult.parameters:
+                self.logger.warn(f"No path was provided. Keeping the current one.")
+            else:
+                if self.validate_directory(confirmationResult.parameters):
+                    self.logger.info(f"Updating projects path to \"{confirmationResult.parameters}\".")
+                    config.update("paths", "projects", confirmationResult.parameters)
+                    self.logger.info("Projects path updated successfully.");
                     self.update_fields()
                 else:
                     self.logger.error(f"\"{confirmationResult.parameters}\" is an invalid path.")
