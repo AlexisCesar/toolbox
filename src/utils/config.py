@@ -23,6 +23,10 @@ class Config:
         return Path(self._data["paths"]["notes"])
 
     @property
+    def projects_dir(self) -> Path:
+        return Path(self._data["paths"]["projects"])
+
+    @property
     def theme(self) -> str:
         return self._data["ui"]["theme"]
 

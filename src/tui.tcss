@@ -166,3 +166,17 @@ ConfirmDialog {
 #notes-container {
     height: 90%;
 }
+
+#notes-directory-tree {
+    width: 30%;
+}
+
+/* My Projects View Styles */
+#projects-label {
+    padding: 1;
+    text-style: bold;
+}
+
+#settings-directories-projects-input {
+    margin: 1 -1;
+}
