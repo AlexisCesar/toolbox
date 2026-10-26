@@ -11,6 +11,7 @@ import tomlkit
 from src.utils.config import config
 from src.utils.logger import Logger
 from src.utils.script_inspection_dialog import ScriptInspectionDialog
+from src.utils.script_editor_dialog import ScriptEditorDialog
 from src.utils.script_runner import ScriptRunner
 from src.utils.confirm_dialog import ConfirmDialog
 
@@ -78,7 +79,7 @@ class Scripts(Static):
                 if scripts_configs:
                     script_description = scripts_configs.get(file_path.name, {}).get("description", "")
                     
-                self.rows.append((file_path.name, script_description, script_type, action_1, action_2, action_3, "\U0001F50D Open"))
+                self.rows.append((file_path.name, script_description, script_type, action_1, action_2, action_3, "\U0001F50D Open", "✏️ Edit"))
 
     def build_scripts_datatable(self):
         table = self.query_one("#scripts-datatable", DataTable)
@@ -91,6 +92,7 @@ class Scripts(Static):
         table.add_column("Action")
         table.add_column("Action")
         table.add_column("Inspect")
+        table.add_column("Edit")
 
         for row in self.rows:
             cells = list(row)
@@ -134,6 +136,18 @@ class Scripts(Static):
             script_name = self.get_script_name_from_row(event.coordinate.row)
             file_content = (self.get_script_path(script_name)).read_text()
             self.app.push_screen(ScriptInspectionDialog(file_content, script_name))
+        elif cell_value == "✏️ Edit":
+            script_name = self.get_script_name_from_row(event.coordinate.row)
+            script_path = self.get_script_path(script_name)
+            try:
+                file_content = script_path.read_text()
+            except OSError as error:
+                self.logger.error(f"Could not open {script_name} for editing: {error}")
+                return
+            self.app.push_screen(
+                ScriptEditorDialog(script_path, file_content),
+                callback=lambda saved: self.on_script_edit_closed(saved, script_name),
+            )
         elif cell_value == "\U0001F4CB Copy":
             try:
                 script_name = self.get_script_name_from_row(event.coordinate.row)
@@ -152,6 +166,10 @@ class Scripts(Static):
     def get_script_path(self, script_name: str):
         """Get the full path of the script."""
         return config.scripts_dir / script_name
+
+    def on_script_edit_closed(self, saved: bool, script_name: str) -> None:
+        if saved:
+            self.logger.info(f"Saved script: {script_name}")
 
     def execute_script_callback(self, result: bool, script_path) -> None:
         if result.confirmed:

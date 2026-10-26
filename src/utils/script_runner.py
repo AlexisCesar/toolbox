@@ -22,7 +22,9 @@ class ScriptRunner:
         if script_path.suffix.lower() == ".py":
             self.logger.system(f"Executing Python 🐍 script: {script_path.name}")
             if external_terminal:
-                self.run_in_external_terminal(["python", str(script_path)])
+                self.run_in_external_terminal(
+                    ["python", str(script_path)], script_extension=script_path.suffix
+                )
             else:
                 self.run_subprocess(["python", str(script_path), *shlex.split(parameters)])
         elif script_path.suffix.lower() == ".ps1":
@@ -34,7 +36,9 @@ class ScriptRunner:
         elif script_path.suffix.lower() == ".sh":
             self.logger.system(f"Executing Shell 🐚 script: {script_path.name}")
             if external_terminal:
-                self.run_in_external_terminal(["bash", str(script_path)])
+                self.run_in_external_terminal(
+                    ["bash", str(script_path)], script_extension=script_path.suffix
+                )
             else:
                 self.run_subprocess(["bash", str(script_path), *shlex.split(parameters)])
         else:

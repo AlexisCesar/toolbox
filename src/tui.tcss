@@ -43,6 +43,70 @@ Footer {
     text-style: bold;
 }
 
+/* Script Editor Dialog Styles */
+ScriptEditorDialog {
+    align: center middle;
+}
+
+#script-editor-dialog {
+    width: 85%;
+    height: 85%;
+    padding: 1 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#script-editor-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#script-editor-content {
+    height: 1fr;
+}
+
+#script-editor-status {
+    color: $error;
+    min-height: 1;
+}
+
+#script-editor-buttons {
+    height: 3;
+    align: right middle;
+}
+
+#script-editor-save {
+    margin-right: 1;
+}
+
+/* Script Inspection Dialog Styles */
+ScriptInspectionDialog {
+    align: center middle;
+}
+
+#script-inspection-dialog {
+    width: 85%;
+    height: 85%;
+    padding: 1 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#script-inspection-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#script-inspection-content {
+    height: 1fr;
+}
+
+#script-inspection-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
 /* Confirm Dialog Styles */
 ConfirmDialog {
     align: center middle;
