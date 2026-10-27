@@ -8,6 +8,14 @@
 - Remove obsolete code and imports when changing a feature.
 - Follow the conventions already used by the project and its Python tooling.
 
+## Python and Textual
+
+- Write Python that follows the project's configured version and tooling in `pyproject.toml`, with type hints and small, focused functions where they clarify behavior.
+- Prefer standard-library facilities such as `pathlib` for filesystem paths and handle expected I/O errors explicitly.
+- Build terminal interfaces with Textual's native widgets, containers, events, screens, and modal screens. Follow existing Textual interaction patterns instead of manually drawing or handling terminal input.
+- Keep UI updates on the Textual event loop; use Textual workers for I/O that would otherwise block user interaction.
+- Check the installed Textual API and nearby project examples before introducing a new widget or interaction pattern.
+
 ## Tests
 
 - Add unit tests for every new feature, covering its expected behavior and relevant edge cases.
