@@ -1,14 +1,14 @@
 import tomllib
+from collections import Counter
+from pathlib import Path
 
 import pyperclip
-from textual import Logger
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import VerticalScroll
-from rich.text import Text
 import tomlkit
 
-from src.utils.config import config
+from src.utils.config import config, iter_script_files
 from src.utils.logger import Logger
 from src.utils.script_inspection_dialog import ScriptInspectionDialog
 from src.utils.script_editor_dialog import ScriptEditorDialog
@@ -17,6 +17,22 @@ from src.utils.confirm_dialog import ConfirmDialog
 
 from textual.widgets import DataTable, Static
 
+
+def format_scripts_directory_label(scripts_dir: Path, depth: int) -> str:
+    label = f"Reading scripts from: 📂 {Path(scripts_dir).absolute()}"
+    if depth > 0:
+        label += f" (with a depth of {depth} subfolders)"
+    return label
+
+
+def format_script_display_name(script_path: Path, scripts_dir: Path) -> str:
+    relative_path = Path(script_path).relative_to(scripts_dir)
+    depth = len(relative_path.parts) - 1
+    if depth == 0:
+        return relative_path.name
+    return f"📁 ({depth}) {relative_path.name}"
+
+
 class Scripts(Static):
     """Scripts view for the Toolbox TUI."""
     def __init__(self, logger: Logger, **kwargs):
@@ -24,6 +40,7 @@ class Scripts(Static):
         self.logger = logger
         self.script_runner = ScriptRunner(logger=self.logger)
         self.rows = []
+        self.script_paths: dict[str, str] = {}
 
     def compose(self) -> ComposeResult:
         """Create the layout for the scripts view."""
@@ -33,6 +50,7 @@ class Scripts(Static):
     
     def on_mount(self) -> None:
         self.logger.info("Initializing scripts.")
+        self.update_script_dir_label()
         self.update_scripts_list()
         if not self.rows:
             self.logger.warn("No scripts found in the directory.")
@@ -45,7 +63,9 @@ class Scripts(Static):
         self.build_scripts_datatable()
     
     def update_script_dir_label(self) -> None:
-        self.query_one("#scripts-label", Static).content = f"Reading scripts from: 📂 {config.scripts_dir.absolute()}"
+        self.query_one("#scripts-label", Static).content = format_scripts_directory_label(
+            config.scripts_dir, config.scripts_depth
+        )
     
     def update_scripts_list(self, silent: bool = False) -> None:
         scripts_configs: dict[str, dict] = None
@@ -57,8 +77,18 @@ class Scripts(Static):
                 self.logger.warn("Scripts configurations file not found. Generate it in the Settings tab.")
             
         self.rows = []
-        for file_path in config.scripts_dir.iterdir():
-            if file_path.is_file() and file_path.suffix.lower() in {".py", ".sh", ".sql", ".ps1"}:
+        self.script_paths = {}
+        script_files = sorted(iter_script_files(config.scripts_dir, config.scripts_depth))
+        display_names = [format_script_display_name(path, config.scripts_dir) for path in script_files]
+        display_name_counts = Counter(display_names)
+
+        for file_path, display_name in zip(script_files, display_names):
+            script_name = file_path.relative_to(config.scripts_dir).as_posix()
+            if file_path.is_file():
+                if display_name_counts[display_name] > 1:
+                    parent_path = file_path.parent.relative_to(config.scripts_dir).as_posix()
+                    display_name = f"{display_name} — {parent_path}"
+                self.script_paths[display_name] = script_name
                 script_type = {
                     ".py": "\U0001F40D Python Script",
                     ".sh": "\U0001F41A Shell Script",
@@ -77,9 +107,10 @@ class Scripts(Static):
                 
                 script_description = ""
                 if scripts_configs:
-                    script_description = scripts_configs.get(file_path.name, {}).get("description", "")
+                    script_config = scripts_configs.get(script_name, scripts_configs.get(file_path.name, {}))
+                    script_description = script_config.get("description", "")
                     
-                self.rows.append((file_path.name, script_description, script_type, action_1, action_2, action_3, "\U0001F50D Open", "✏️ Edit"))
+                self.rows.append((display_name, script_description, script_type, action_1, action_2, action_3, "\U0001F50D Open", "✏️ Edit"))
 
     def build_scripts_datatable(self):
         table = self.query_one("#scripts-datatable", DataTable)
@@ -128,7 +159,9 @@ class Scripts(Static):
             try:
                 with open(config.scripts_dir / "scripts_configuration.toml", "rb") as file:
                     scripts_configs = tomllib.load(file)
-                    latest_parameters = scripts_configs.get(script_name, {}).get("latest_parameters", "")
+                    script_key = self.get_script_path(script_name).relative_to(config.scripts_dir).as_posix()
+                    script_config = scripts_configs.get(script_key, scripts_configs.get(Path(script_key).name, {}))
+                    latest_parameters = script_config.get("latest_parameters", "")
             except Exception:
                 latest_parameters = ""
             self.app.push_screen(ConfirmDialog(f"Run {script_name} with parameters?", askParameters=True, initialValue=latest_parameters), callback=lambda result: self.run_with_parameters_callback(result, script_path))
@@ -165,7 +198,8 @@ class Scripts(Static):
     
     def get_script_path(self, script_name: str):
         """Get the full path of the script."""
-        return config.scripts_dir / script_name
+        relative_path = self.script_paths.get(script_name, script_name)
+        return config.scripts_dir / relative_path
 
     def on_script_edit_closed(self, saved: bool, script_name: str) -> None:
         if saved:
@@ -186,7 +220,7 @@ class Scripts(Static):
                 self.logger.warn(f"No parameters provided. Running {script_path.name} without parameters.")
             else:
                 self.logger.info(f"Running {script_path.name} with parameters: {result.parameters}")
-                self.save_script_parameters(script_path.name, result.parameters)
+                self.save_script_parameters(script_path.relative_to(config.scripts_dir).as_posix(), result.parameters)
             self.script_runner.run(script_path, parameters=result.parameters)
     
     def save_script_parameters(self, script_name: str, parameters: str) -> None:

@@ -9,6 +9,7 @@ theme = "textual-dark"
 
 [scripts]
 timeout = 3
+depth = 0
 
 # Health Checker - Services locations
 # In order to add a new service, use the following structure:

@@ -1,12 +1,13 @@
 import tomlkit
 
-from tomlkit import array, comment, document, nl, table
+from tomlkit import comment, document, nl
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, Input, Label, Select, Static
+from textual import on
 from pathlib import Path
 
-from src.utils.config import config
+from src.utils.config import config, iter_script_files
 from src.utils.logger import Logger
 from src.utils.confirm_dialog import ConfirmDialog
 
@@ -53,6 +54,9 @@ class Settings(Static):
         yield Label("Scripts Directory")
         yield Label("Path to the folder containing your scripts.", classes="settings-general-label-italic")
         yield Input(placeholder="/example/scripts", disabled=True, id="settings-directories-scripts-input")
+        yield Label("Scripts Folder Depth")
+        yield Label("Include scripts from subfolders up to this depth (0–5).", classes="settings-general-label-italic")
+        yield Select(((str(depth), depth) for depth in range(config.MAX_SCRIPTS_DEPTH + 1)), id="settings-scripts-depth-select")
         yield Static(SCRIPTS_DESC_INSTRUCTIONS, classes="settings-general-label-italic")
         with Horizontal(classes="settings-directories-buttons"):
             yield Button(label="Change Directory", id="settings-directories-scripts-change-button")
@@ -97,6 +101,16 @@ class Settings(Static):
         self.query_one("#settings-directories-notes-input", Input).value = str(config.notes_dir.absolute())
         self.query_one("#settings-directories-projects-input", Input).value = str(config.projects_dir.absolute())
         self.query_one("#settings-theme-select", Select).value = str(config.theme)
+        self.query_one("#settings-scripts-depth-select", Select).value = config.scripts_depth
+
+    @on(Select.Changed, "#settings-scripts-depth-select")
+    def on_scripts_depth_changed(self, event: Select.Changed) -> None:
+        if event.value is Select.BLANK:
+            return
+        depth = int(event.value)
+        if depth != config.scripts_depth:
+            config.update("scripts", "depth", depth)
+            self.logger.info(f"Scripts folder depth changed to {depth}.")
         
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "settings-theme-apply-button":
@@ -194,17 +208,16 @@ class Settings(Static):
                 doc.add(comment("This file controls configurations such as descriptions of scripts shown in the Toolbox."))
                 doc.add(comment("To regenerate this file, use the settings tab in the Toolbox."))
                 
-                for file_path in config.scripts_dir.iterdir():
-                    if file_path.is_file() and file_path.suffix.lower() in {".py", ".sh", ".sql", ".ps1"}:
-                        doc.add(nl())
-                                 
-                        table = tomlkit.table()
-                        table["description"] = ""
-                        
-                        if file_path.suffix.lower() != ".sql":
-                            table["latest_parameters"] = ""
+                for file_path in sorted(iter_script_files(config.scripts_dir, config.scripts_depth)):
+                    script_name = file_path.relative_to(config.scripts_dir).as_posix()
+                    doc.add(nl())
 
-                        doc[file_path.name] = table               
+                    script_table = tomlkit.table()
+                    script_table["description"] = ""
+                    if file_path.suffix.lower() != ".sql":
+                        script_table["latest_parameters"] = ""
+
+                    doc[script_name] = script_table
                 
                 f.write(tomlkit.dumps(doc))
                 

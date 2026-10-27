@@ -13,6 +13,8 @@
 - Add unit tests for every new feature, covering its expected behavior and relevant edge cases.
 - Run the test suite after adding or changing functionality to confirm the new behavior works and existing features continue to pass.
 - When a test cannot be run, document the reason and the remaining verification needed.
+- Organize tests under `tests/unit` and `tests/integration`.
+- Keep `.gitkeep` files only in otherwise empty folders, and remove them as soon as a folder contains another file.
 
 ## Language
 
