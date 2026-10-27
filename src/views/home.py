@@ -15,7 +15,7 @@ LOGO_ASCII_ART = """[bold #ff5f00]
 
 INSTRUCTIONS = """[bold]Select an option from the sidebar to get started.[/bold]
 
-First time using the Toolbox? Configure your directories, theme and more on the [bold #5f5fff]Settings[/bold #5f5fff] tab.
+First time using the Toolbox? Configure your directories, log folders, theme and more on the [bold #5f5fff]Settings[/bold #5f5fff] tab.
 
 [bold]Tips:[/bold]
 
@@ -24,6 +24,8 @@ First time using the Toolbox? Configure your directories, theme and more on the 
 - Generating a [u]scripts configuration file[/u] through the [bold #5f5fff]Settings[/bold #5f5fff] tab enable script parameter history. Trust me, it's very helpful!
 
 - You can edit and save text/script files using the [bold #5f5fff]Notes[/bold #5f5fff] tab.
+
+- Add local or network log folders in [bold #5f5fff]Settings[/bold #5f5fff], then open them from the [bold #5f5fff]Logs[/bold #5f5fff] tab. Log files open at their latest entries.
 """
 
 class Home(Static):

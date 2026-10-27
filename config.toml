@@ -1,6 +1,5 @@
 [paths]
 scripts = "./scripts"
-logs = "./logs"
 notes = "./notes"
 projects = "./projects"
 
@@ -27,3 +26,11 @@ environment = "dev"
 name = "My Test Service 2"
 server = "localhost"
 environment = "dev"
+
+[[logs]]
+name = "Application_01_logs"
+location = "./logs/application_01_logs"
+
+[[logs]]
+name = "Application 02"
+location = "./logs/application_02_logs"

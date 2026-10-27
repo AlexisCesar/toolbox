@@ -3,13 +3,14 @@ import tomlkit
 from tomlkit import comment, document, nl
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical, VerticalScroll
-from textual.widgets import Button, Input, Label, Select, Static
+from textual.widgets import Button, DataTable, Input, Label, Select, Static
 from textual import on
 from pathlib import Path
 
 from src.utils.config import config, iter_script_files, normalize_directory_path
 from src.utils.logger import Logger
 from src.utils.confirm_dialog import ConfirmDialog
+from src.utils.log_config_dialog import LogConfigDialog, LogFolder
 
 
 THEMES = """nord
@@ -33,13 +34,14 @@ class Settings(Static):
         """Create the layout for the settings view."""
         with VerticalScroll():
             yield Label("Settings", id="settings-title")
-            yield Label("Configure your theme, paths, and services.", id="settings-subtitle")
-            with Horizontal():
-                with Vertical():
+            yield Label("Configure your theme, paths, logs, and services.", id="settings-subtitle")
+            with Horizontal(id="settings-columns"):
+                with Vertical(id="settings-left-column"):
                     yield from self.build_path_settings()
                     yield from self.build_theme_settings()
-                with Vertical():
-                    yield from self.build_health_checkers_settings()
+                with Vertical(id="settings-right-column"):
+                    yield from self.build_logs_settings()
+                    yield Container(id="settings-secondary-config")
     
     def build_path_settings(self) -> ComposeResult:
         """Build the path settings section of the settings view."""
@@ -86,9 +88,15 @@ class Settings(Static):
                 yield Select(id="settings-theme-select", options=((line, line) for line in THEMES))
                 yield Button(label="Apply", id="settings-theme-apply-button")
     
-    def build_health_checkers_settings(self) -> ComposeResult:
-        """Build the health checkers settings section of the settings view."""
-        yield Container(id="health-checkers-settings")
+    def build_logs_settings(self) -> ComposeResult:
+        """Build the log folders configuration section."""
+        with Vertical(id="settings-logs-settings"):
+            yield Label("Logs", id="settings-logs-title")
+            yield DataTable(id="settings-logs-table", zebra_stripes=True, cursor_type="row")
+            with Horizontal(id="settings-logs-buttons"):
+                yield Button("Add", id="settings-logs-add")
+                yield Button("Edit", id="settings-logs-edit")
+                yield Button("Remove", id="settings-logs-remove", variant="error")
     
     def on_mount(self) -> None:
         self.update_fields()
@@ -102,6 +110,15 @@ class Settings(Static):
         self.query_one("#settings-directories-projects-input", Input).value = str(config.projects_dir.absolute())
         self.query_one("#settings-theme-select", Select).value = str(config.theme)
         self.query_one("#settings-scripts-depth-select", Select).value = config.scripts_depth
+        self.refresh_logs_table()
+
+    def refresh_logs_table(self) -> None:
+        table = self.query_one("#settings-logs-table", DataTable)
+        table.clear(columns=True)
+        table.add_column("Name")
+        table.add_column("Folder")
+        for index, entry in enumerate(config.logs):
+            table.add_row(entry["name"], entry["location"], key=str(index))
 
     @on(Select.Changed, "#settings-scripts-depth-select")
     def on_scripts_depth_changed(self, event: Select.Changed) -> None:
@@ -144,6 +161,91 @@ class Settings(Static):
                                                confirmButtonText="Save",
                                                cancelButtonText="Cancel",
                                                parametersPlaceholder="Enter new path (e.g. /myfolder/myprojects)..."), callback=lambda result: self.change_projects_dir(result))
+
+        if event.button.id == "settings-logs-add":
+            self.open_log_editor()
+
+        if event.button.id == "settings-logs-edit":
+            self.open_log_editor(self.selected_log_index())
+
+        if event.button.id == "settings-logs-remove":
+            self.confirm_remove_log(self.selected_log_index())
+
+    def selected_log_index(self) -> int | None:
+        entries = config.logs
+        table = self.query_one("#settings-logs-table", DataTable)
+        index = table.cursor_row
+        if index is None or not 0 <= index < len(entries):
+            self.logger.warn("Select a configured log folder first.")
+            return None
+        return index
+
+    def open_log_editor(self, index: int | None = None) -> None:
+        initial = None
+        if index is not None:
+            entry = config.logs[index]
+            initial = LogFolder(name=entry["name"], location=entry["location"])
+
+        self.app.push_screen(
+            LogConfigDialog(logger=self.logger, initial=initial),
+            callback=lambda result: self.save_log_folder(result, index),
+        )
+
+    def save_log_folder(self, result: LogFolder | None, index: int | None) -> None:
+        if result is None:
+            return
+
+        entries = config.logs
+        entry = {"name": result.name, "location": result.location}
+        if index is None:
+            entries.append(entry)
+            log_message = f"Added log folder '{result.name}' at '{result.location}'."
+        elif 0 <= index < len(entries):
+            entries[index] = entry
+            log_message = f"Updated log folder '{result.name}' at '{result.location}'."
+        else:
+            self.logger.warn("The selected log folder is no longer configured.")
+            return
+
+        try:
+            config.update_logs(entries)
+        except OSError as error:
+            self.logger.error(f"Could not save log folder configuration: {error}")
+            return
+        self.logger.info(log_message)
+        self.refresh_logs_table()
+
+    def confirm_remove_log(self, index: int | None) -> None:
+        if index is None:
+            return
+
+        entry = config.logs[index]
+        self.app.push_screen(
+            ConfirmDialog(
+                f"Remove the log folder '{entry['name']}'?",
+                confirmButtonText="Remove",
+                cancelButtonText="Cancel",
+            ),
+            callback=lambda result: self.remove_log_folder(result.confirmed, index),
+        )
+
+    def remove_log_folder(self, confirmed: bool, index: int) -> None:
+        if not confirmed:
+            return
+
+        entries = config.logs
+        if not 0 <= index < len(entries):
+            self.logger.warn("The selected log folder is no longer configured.")
+            return
+
+        removed = entries.pop(index)
+        try:
+            config.update_logs(entries)
+        except OSError as error:
+            self.logger.error(f"Could not save log folder configuration: {error}")
+            return
+        self.logger.info(f"Removed log folder '{removed['name']}'.")
+        self.refresh_logs_table()
     
     def change_scripts_dir(self, confirmationResult: bool):
         if confirmationResult.confirmed:

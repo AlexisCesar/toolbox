@@ -1,0 +1,29 @@
+
+2026-10-10 08:00:00.012 [main] INFO  application 02 - Application starting...
+2026-10-10 08:00:00.245 [main] INFO  application 02 - Database connection established successfully
+2026-10-10 08:00:00.512 [main] INFO  application 02 - HTTP server started on port 8081
+2026-10-10 08:00:00.513 [main] INFO  application 02 - Application started successfully
+
+2026-10-10 08:15:22.104 [http-nio-8081-exec-1] INFO  application 02 - Incoming request: GET /api/health
+2026-10-10 08:15:22.108 [http-nio-8081-exec-1] INFO  application 02 - Request completed: GET /api/health status=200 duration=4ms
+
+2026-10-10 09:30:14.221 [http-nio-8081-exec-2] DEBUG application 02 - Processing customerId=2048
+2026-10-10 09:30:14.255 [http-nio-8081-exec-2] INFO  application 02 - Customer retrieved successfully customerId=2048
+
+2026-10-10 10:42:01.520 [http-nio-8081-exec-3] WARN  application 02 - Slow response detected endpoint=/api/reports duration=1850ms
+2026-10-10 10:42:01.525 [http-nio-8081-exec-3] INFO  application 02 - Request completed: GET /api/reports status=200 duration=1855ms
+
+2026-10-10 11:18:45.310 [http-nio-8081-exec-4] ERROR application 02 - Database query failed operation=findCustomer error="Connection timeout"
+2026-10-10 11:18:45.520 [http-nio-8081-exec-4] INFO  application 02 - Database connection restored successfully
+
+2026-10-10 13:05:10.002 [http-nio-8081-exec-5] INFO  application 02 - Incoming request: POST /api/orders
+2026-10-10 13:05:10.045 [http-nio-8081-exec-5] INFO  application 02 - Order created successfully orderId=ORD-20261010-001
+2026-10-10 13:05:10.050 [http-nio-8081-exec-5] INFO  application 02 - Request completed: POST /api/orders status=201 duration=48ms
+
+2026-10-10 15:20:33.112 [scheduler-1] INFO  application 02 - Starting scheduled task: syncExternalData
+2026-10-10 15:20:34.004 [scheduler-1] WARN  application 02 - External API latency above threshold duration=892ms
+2026-10-10 15:20:34.110 [scheduler-1] INFO  application 02 - Data synchronization completed recordsProcessed=86
+
+2026-10-10 17:45:00.000 [monitor-1] INFO  application 02 - System metrics cpuUsage=38.2% memoryUsage=64.5% activeThreads=12
+2026-10-10 18:00:00.000 [monitor-1] INFO  application 02 - Health check status=UP database=UP externalApi=UP
+2026-10-10 18:30:00.000 [main] INFO  application 02 - Application running normally uptime=37800s
