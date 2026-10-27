@@ -5,7 +5,7 @@ import tomllib
 import tomlkit
 
 
-SCRIPT_EXTENSIONS = {".py", ".sh", ".sql", ".ps1"}
+SCRIPT_EXTENSIONS = {".py", ".sh", ".sql", ".ps1", ".bat", ".cmd"}
 
 
 def iter_script_files(scripts_dir: Path, depth: int):

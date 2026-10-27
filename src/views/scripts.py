@@ -93,7 +93,9 @@ class Scripts(Static):
                     ".py": "\U0001F40D Python Script",
                     ".sh": "\U0001F41A Shell Script",
                     ".sql": "\U0001F4DC SQL",
-                    ".ps1": "</> Powershell Script"
+                    ".ps1": "</> Powershell Script",
+                    ".bat": "▣ Windows Batch Script",
+                    ".cmd": "▣ Windows Command Script",
                 }.get(file_path.suffix.lower(), "Unknown Type")
                 
                 action_1 = "\U000025B6 Run"

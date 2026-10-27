@@ -7,16 +7,17 @@ def test_script_files_respect_configured_depth(tmp_path) -> None:
     level_one_script = tmp_path / "one" / "nested.sh"
     level_two_script = tmp_path / "one" / "two" / "deep.sql"
     unsupported_file = tmp_path / "one" / "readme.txt"
-    for path in (root_script, level_one_script, level_two_script, unsupported_file):
+    batch_script = tmp_path / "run.bat"
+    for path in (root_script, level_one_script, level_two_script, unsupported_file, batch_script):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("", encoding="utf-8")
 
     def relative_paths(depth: int) -> list[str]:
         return sorted(path.relative_to(tmp_path).as_posix() for path in iter_script_files(tmp_path, depth))
 
-    assert relative_paths(0) == ["root.py"]
-    assert relative_paths(1) == ["one/nested.sh", "root.py"]
-    assert relative_paths(5) == ["one/nested.sh", "one/two/deep.sql", "root.py"]
+    assert relative_paths(0) == ["root.py", "run.bat"]
+    assert relative_paths(1) == ["one/nested.sh", "root.py", "run.bat"]
+    assert relative_paths(5) == ["one/nested.sh", "one/two/deep.sql", "root.py", "run.bat"]
 
 
 def test_scripts_depth_defaults_and_clamps_to_supported_range() -> None:

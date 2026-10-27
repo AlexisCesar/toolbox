@@ -41,6 +41,19 @@ class ScriptRunner:
                 )
             else:
                 self.run_subprocess(["bash", str(script_path), *shlex.split(parameters)])
+        elif script_path.suffix.lower() in {".bat", ".cmd"}:
+            if platform.system() != "Windows":
+                self.logger.warn(
+                    f"Windows batch scripts cannot run on {platform.system()}: {script_path.name}"
+                )
+                self.logger.separator()
+                return
+            self.logger.system(f"Executing Windows batch script: {script_path.name}")
+            command = ["cmd", "/c", str(script_path), *shlex.split(parameters, posix=False)]
+            if external_terminal:
+                self.run_in_external_terminal(command, script_extension=script_path.suffix)
+            else:
+                self.run_subprocess(command)
         else:
             self.logger.warn(f"Unsupported script type for file: {script_path.name}")
         self.logger.separator()
