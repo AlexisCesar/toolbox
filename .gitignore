@@ -9,6 +9,24 @@ wheels/
 # Virtual environments
 .venv
 
+# Python tooling caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.uv-cache/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
 # Vim
 # Swap
 [._]*.s[a-v][a-z]
