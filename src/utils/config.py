@@ -40,8 +40,12 @@ class Config:
         return Path(self._data["paths"]["scripts"])
 
     @property
-    def logs_dir(self) -> Path:
-        return Path(self._data["paths"]["logs"])
+    def logs(self) -> list[dict[str, str]]:
+        """Return the configured log folders."""
+        return [
+            {"name": str(entry["name"]), "location": str(entry["location"])}
+            for entry in self._data.get("logs", [])
+        ]
 
     @property
     def notes_dir(self) -> Path:
@@ -78,6 +82,27 @@ class Config:
 
         with open("config.toml", "w", encoding="utf-8") as f:
             f.write(tomlkit.dumps(doc))
+
+    def update_logs(self, entries: list[dict[str, str]]) -> None:
+        """Replace configured log folders and persist them as TOML array tables."""
+        normalized_entries = [
+            {"name": str(entry["name"]), "location": str(entry["location"])}
+            for entry in entries
+        ]
+        with open("config.toml", "r", encoding="utf-8") as f:
+            doc = tomlkit.parse(f.read())
+
+        log_tables = tomlkit.aot()
+        for entry in normalized_entries:
+            log_table = tomlkit.table()
+            log_table["name"] = entry["name"]
+            log_table["location"] = entry["location"]
+            log_tables.append(log_table)
+        doc["logs"] = log_tables
+
+        with open("config.toml", "w", encoding="utf-8") as f:
+            f.write(tomlkit.dumps(doc))
+        self._data["logs"] = normalized_entries
 
 
 config = Config()

@@ -2,13 +2,14 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, Log, Placeholder, RichLog
+from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, Placeholder, RichLog
 from src.views.home import Home
 from src.views.markdown_view import MarkdownPreview
 from src.views.search import Search
 from src.views.scripts import Scripts
 from src.views.notes import Notes
 from src.views.my_projects import MyProjects
+from src.views.logs import Logs
 from src.utils.logger import Logger
 from src.utils.config import config
 import platform
@@ -84,7 +85,7 @@ class ToolboxTUI(App):
                 Home(id="home-view"),
                 Placeholder(label="In Development",id="search-view"),
                 Scripts(logger=self.logger, id="scripts-view"),
-                Placeholder(label="In Development", id="logs-view"),
+                Logs(logger=self.logger, id="logs-view"),
                 Placeholder(label="In Development", id="health-checkers-view"),
                 Settings(logger=self.logger, id="settings-view"),
                 Notes(logger=self.logger, id="notes-view"),
@@ -114,6 +115,9 @@ class ToolboxTUI(App):
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Handle selection changes in the sidebar list view."""
+        if event.list_view.id != "sidebar-list":
+            return
+
         switcher = self.query_one("#main-content-switcher", ContentSwitcher)
 
         match event.list_view.index:

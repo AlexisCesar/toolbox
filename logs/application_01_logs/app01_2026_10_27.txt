@@ -1,0 +1,66 @@
+2026-10-27 08:00:00.012 [main] INFO  application 01 - Application starting...
+2026-10-27 08:00:00.145 [main] INFO  application 01 - Loading configuration from application.yml
+2026-10-27 08:00:00.231 [main] INFO  application 01 - Environment: development
+2026-10-27 08:00:00.389 [main] INFO  application 01 - Database connection established successfully
+2026-10-27 08:00:00.512 [main] INFO  application 01 - HTTP server started on port 8080
+2026-10-27 08:00:00.513 [main] INFO  application 01 - Application started successfully in 2.481 seconds
+
+2026-10-27 08:01:12.104 [http-nio-8080-exec-1] INFO  application 01 - Incoming request: GET /api/health
+2026-10-27 08:01:12.108 [http-nio-8080-exec-1] INFO  application 01 - Request completed: GET /api/health status=200 duration=4ms
+2026-10-27 08:02:05.220 [http-nio-8080-exec-2] INFO  application 01 - Incoming request: GET /api/users
+2026-10-27 08:02:05.251 [http-nio-8080-exec-2] INFO  application 01 - Request completed: GET /api/users status=200 duration=31ms
+2026-10-27 08:03:44.810 [http-nio-8080-exec-3] DEBUG application 01 - Fetching user details for userId=1042
+2026-10-27 08:03:44.845 [http-nio-8080-exec-3] INFO  application 01 - User details retrieved successfully userId=1042
+2026-10-27 08:04:10.015 [http-nio-8080-exec-4] INFO  application 01 - Incoming request: POST /api/auth/login
+2026-10-27 08:04:10.092 [http-nio-8080-exec-4] INFO  application 01 - Authentication successful userId=1042
+2026-10-27 08:04:10.094 [http-nio-8080-exec-4] INFO  application 01 - Request completed: POST /api/auth/login status=200 duration=79ms
+
+2026-10-27 08:05:22.411 [scheduler-1] DEBUG application 01 - Starting scheduled task: cleanupExpiredSessions
+2026-10-27 08:05:22.450 [scheduler-1] INFO  application 01 - Expired sessions cleanup completed removed=12 duration=39ms
+2026-10-27 08:06:00.001 [scheduler-2] INFO  application 01 - Starting scheduled task: syncExternalData
+2026-10-27 08:06:02.520 [scheduler-2] WARN  application 01 - External API response time exceeded threshold duration=2519ms threshold=2000ms
+2026-10-27 08:06:02.621 [scheduler-2] INFO  application 01 - Scheduled task completed: syncExternalData recordsProcessed=248
+
+2026-10-27 08:07:14.102 [http-nio-8080-exec-5] INFO  application 01 - Incoming request: POST /api/orders
+2026-10-27 08:07:14.130 [http-nio-8080-exec-5] DEBUG application 01 - Validating order payload
+2026-10-27 08:07:14.142 [http-nio-8080-exec-5] INFO  application 01 - Order created successfully orderId=ORD-20261027-001
+2026-10-27 08:07:14.146 [http-nio-8080-exec-5] INFO  application 01 - Request completed: POST /api/orders status=201 duration=44ms
+
+2026-10-27 08:08:33.502 [http-nio-8080-exec-6] INFO  application 01 - Incoming request: GET /api/reports/daily
+2026-10-27 08:08:35.604 [http-nio-8080-exec-6] WARN  application 01 - Slow request detected endpoint=/api/reports/daily duration=2102ms
+2026-10-27 08:08:35.610 [http-nio-8080-exec-6] INFO  application 01 - Request completed: GET /api/reports/daily status=200 duration=2108ms
+
+2026-10-27 08:09:01.002 [http-nio-8080-exec-7] INFO  application 01 - Incoming request: GET /api/products/9999
+2026-10-27 08:09:01.020 [http-nio-8080-exec-7] WARN  application 01 - Product not found productId=9999
+2026-10-27 08:09:01.021 [http-nio-8080-exec-7] INFO  application 01 - Request completed: GET /api/products/9999 status=404 duration=19ms
+
+2026-10-27 08:10:15.300 [http-nio-8080-exec-8] INFO  application 01 - Incoming request: POST /api/payments
+2026-10-27 08:10:15.341 [http-nio-8080-exec-8] ERROR application 01 - Payment processing failed transactionId=TX-847291 reason="Gateway timeout"
+2026-10-27 08:10:15.343 [http-nio-8080-exec-8] INFO  application 01 - Request completed: POST /api/payments status=502 duration=43ms
+
+2026-10-27 08:10:16.101 [retry-worker-1] WARN  application 01 - Retrying failed payment transactionId=TX-847291 attempt=1 maxAttempts=3
+2026-10-27 08:10:17.205 [retry-worker-1] INFO  application 01 - Payment processed successfully transactionId=TX-847291 attempt=2
+2026-10-27 08:11:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=42.5% memoryUsage=68.2% activeThreads=18
+2026-10-27 08:12:00.000 [monitor-1] WARN  application 01 - Memory usage approaching threshold memoryUsage=84.7% threshold=85.0%
+2026-10-27 08:13:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=37.1% memoryUsage=72.4% activeThreads=16
+
+2026-10-27 08:14:05.421 [http-nio-8080-exec-9] ERROR application 01 - Database query failed operation=findActiveUsers error="Connection temporarily unavailable"
+2026-10-27 08:14:05.423 [http-nio-8080-exec-9] WARN  application 01 - Database connection retry attempt=1 maxAttempts=3
+2026-10-27 08:14:05.650 [http-nio-8080-exec-9] INFO  application 01 - Database connection restored successfully
+2026-10-27 08:14:05.682 [http-nio-8080-exec-9] INFO  application 01 - Request completed: GET /api/users/active status=200 duration=261ms
+
+2026-10-27 08:15:30.012 [http-nio-8080-exec-10] INFO  application 01 - Incoming request: DELETE /api/cache/products
+2026-10-27 08:15:30.030 [http-nio-8080-exec-10] INFO  application 01 - Cache invalidated successfully cacheName=products
+2026-10-27 08:15:30.031 [http-nio-8080-exec-10] INFO  application 01 - Request completed: DELETE /api/cache/products status=204 duration=19ms
+
+2026-10-27 08:17:42.102 [http-nio-8080-exec-11] WARN  application 01 - Rate limit threshold reached clientId=client-204 requestsPerMinute=120
+2026-10-27 08:17:42.103 [http-nio-8080-exec-11] INFO  application 01 - Request completed: GET /api/search status=429 duration=2ms
+
+2026-10-27 08:20:00.001 [scheduler-1] INFO  application 01 - Starting scheduled task: databaseHealthCheck
+2026-10-27 08:20:00.019 [scheduler-1] INFO  application 01 - Database health check passed latency=18ms
+2026-10-27 08:25:00.000 [monitor-1] INFO  application 01 - Health check status=UP database=UP cache=UP externalApi=UP
+2026-10-27 08:30:00.000 [main] INFO  application 01 - Application running normally uptime=1800s
+2026-10-27 08:30:01.004 [shutdown-hook] INFO  application 01 - Shutdown signal received
+2026-10-27 08:30:01.010 [main] INFO  application 01 - Closing database connections
+2026-10-27 08:30:01.025 [main] INFO  application 01 - Stopping background workers
+2026-10-27 08:30:01.101 [main] INFO  application 01 - Application stopped successfully

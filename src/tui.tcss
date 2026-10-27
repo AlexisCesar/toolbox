@@ -148,6 +148,17 @@ ConfirmDialog {
     text-style: italic;
 }
 
+#settings-columns {
+    height: 1fr;
+    min-height: 26;
+}
+
+#settings-left-column,
+#settings-right-column {
+    width: 1fr;
+    height: 100%;
+}
+
 #paths-settings {
     border: round #374558;
     height: 70%;
@@ -196,9 +207,36 @@ ConfirmDialog {
     text-style: bold;
 }
 
-#health-checkers-settings {
+#settings-logs-settings {
+    height: 1fr;
+    min-height: 12;
     border: round #374558;
-    padding: 1;
+    padding: 0 1;
+}
+
+#settings-secondary-config {
+    height: 1fr;
+    min-height: 12;
+    border: round #374558;
+    margin-top: 1;
+}
+
+#settings-logs-title {
+    text-style: bold;
+    margin: 0;
+}
+
+#settings-logs-table {
+    height: 1fr;
+    min-height: 3;
+}
+
+#settings-logs-buttons {
+    height: 3;
+}
+
+#settings-logs-buttons Button {
+    margin-right: 1;
 }
 
 /* Notes and MD Views Styles */
@@ -239,4 +277,120 @@ ConfirmDialog {
 
 #settings-directories-projects-input {
     margin: 1 -1;
+}
+
+/* Logs View and Dialogs */
+#logs-title {
+    padding: 1;
+    text-style: bold;
+}
+
+#logs-subtitle {
+    margin: 0 1 1 1;
+    text-style: italic;
+}
+
+#logs-entries {
+    height: 1fr;
+    padding: 0 1;
+}
+
+.logs-entry {
+    height: 5;
+    border: round #374558;
+    padding: 0 1;
+    margin-bottom: 1;
+    align: left middle;
+}
+
+.logs-entry-name {
+    width: 25%;
+    content-align: left middle;
+    text-style: bold;
+}
+
+.logs-entry-location {
+    width: 1fr;
+    content-align: left middle;
+    text-wrap: nowrap;
+}
+
+.logs-entry Button {
+    width: 14;
+}
+
+LogFilesDialog,
+LogFileDialog,
+LogConfigDialog {
+    align: center middle;
+}
+
+#log-files-dialog,
+#log-file-dialog {
+    width: 85%;
+    height: 85%;
+    padding: 1 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#log-files-title,
+#log-file-title,
+#log-config-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#log-files-location,
+#log-file-location {
+    color: #99c0fac9;
+    margin-bottom: 1;
+}
+
+#log-files-list {
+    height: 1fr;
+    border: round #374558;
+}
+
+#log-files-status {
+    min-height: 1;
+    color: $warning;
+}
+
+#log-files-buttons,
+#log-file-buttons,
+#log-config-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#log-files-buttons Button,
+#log-file-buttons Button,
+#log-config-buttons Button {
+    margin-left: 1;
+}
+
+#log-file-content {
+    height: 1fr;
+    border: round #374558;
+}
+
+#log-config-dialog {
+    width: 70%;
+    height: auto;
+    max-height: 80%;
+    padding: 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+.log-config-label {
+    margin-top: 1;
+}
+
+#log-config-error {
+    min-height: 1;
+    color: $error;
+    margin-top: 1;
 }

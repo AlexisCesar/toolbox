@@ -1,0 +1,133 @@
+
+2026-10-26 08:00:00.018 [main] INFO  application 01 - Application starting...
+2026-10-26 08:00:00.126 [main] INFO  application 01 - Loading configuration from application.yml
+2026-10-26 08:00:00.207 [main] INFO  application 01 - Environment: development
+2026-10-26 08:00:00.355 [main] INFO  application 01 - Database connection established successfully
+2026-10-26 08:00:00.492 [main] INFO  application 01 - Cache service initialized successfully
+2026-10-26 08:00:00.608 [main] INFO  application 01 - HTTP server started on port 8080
+2026-10-26 08:00:00.609 [main] INFO  application 01 - Application started successfully in 2.315 seconds
+
+2026-10-26 08:01:05.102 [http-nio-8080-exec-1] INFO  application 01 - Incoming request: GET /api/health
+2026-10-26 08:01:05.106 [http-nio-8080-exec-1] INFO  application 01 - Request completed: GET /api/health status=200 duration=4ms
+2026-10-26 08:02:18.221 [http-nio-8080-exec-2] INFO  application 01 - Incoming request: GET /api/users
+2026-10-26 08:02:18.258 [http-nio-8080-exec-2] INFO  application 01 - Request completed: GET /api/users status=200 duration=37ms
+2026-10-26 08:03:41.774 [http-nio-8080-exec-3] DEBUG application 01 - Fetching user details for userId=1038
+2026-10-26 08:03:41.809 [http-nio-8080-exec-3] INFO  application 01 - User details retrieved successfully userId=1038
+
+2026-10-26 08:04:12.010 [http-nio-8080-exec-4] INFO  application 01 - Incoming request: POST /api/auth/login
+2026-10-26 08:04:12.045 [http-nio-8080-exec-4] DEBUG application 01 - Validating authentication credentials
+2026-10-26 08:04:12.091 [http-nio-8080-exec-4] INFO  application 01 - Authentication successful userId=1038
+2026-10-26 08:04:12.095 [http-nio-8080-exec-4] INFO  application 01 - Request completed: POST /api/auth/login status=200 duration=85ms
+
+2026-10-26 08:05:00.002 [scheduler-1] INFO  application 01 - Starting scheduled task: cleanupExpiredSessions
+2026-10-26 08:05:00.041 [scheduler-1] INFO  application 01 - Expired sessions cleanup completed removed=8 duration=39ms
+2026-10-26 08:06:00.000 [scheduler-2] INFO  application 01 - Starting scheduled task: syncExternalData
+2026-10-26 08:06:01.220 [scheduler-2] INFO  application 01 - External API connection established responseTime=1220ms
+2026-10-26 08:06:01.489 [scheduler-2] INFO  application 01 - Scheduled task completed: syncExternalData recordsProcessed=192
+
+2026-10-26 08:07:24.114 [http-nio-8080-exec-5] INFO  application 01 - Incoming request: POST /api/orders
+2026-10-26 08:07:24.131 [http-nio-8080-exec-5] DEBUG application 01 - Validating order payload
+2026-10-26 08:07:24.150 [http-nio-8080-exec-5] INFO  application 01 - Order created successfully orderId=ORD-20261026-001
+2026-10-26 08:07:24.155 [http-nio-8080-exec-5] INFO  application 01 - Request completed: POST /api/orders status=201 duration=41ms
+
+2026-10-26 08:09:10.322 [http-nio-8080-exec-6] INFO  application 01 - Incoming request: GET /api/products
+2026-10-26 08:09:10.340 [http-nio-8080-exec-6] DEBUG application 01 - Loading products from cache
+2026-10-26 08:09:10.342 [http-nio-8080-exec-6] INFO  application 01 - Cache hit cacheName=products entries=145
+2026-10-26 08:09:10.345 [http-nio-8080-exec-6] INFO  application 01 - Request completed: GET /api/products status=200 duration=23ms
+
+2026-10-26 08:10:45.601 [http-nio-8080-exec-7] INFO  application 01 - Incoming request: GET /api/reports/daily
+2026-10-26 08:10:47.802 [http-nio-8080-exec-7] WARN  application 01 - Slow request detected endpoint=/api/reports/daily duration=2201ms
+2026-10-26 08:10:47.809 [http-nio-8080-exec-7] INFO  application 01 - Request completed: GET /api/reports/daily status=200 duration=2208ms
+
+2026-10-26 08:12:03.114 [http-nio-8080-exec-8] INFO  application 01 - Incoming request: POST /api/payments
+2026-10-26 08:12:03.152 [http-nio-8080-exec-8] INFO  application 01 - Payment initiated transactionId=TX-846120
+2026-10-26 08:12:03.304 [http-nio-8080-exec-8] INFO  application 01 - Payment processed successfully transactionId=TX-846120
+2026-10-26 08:12:03.309 [http-nio-8080-exec-8] INFO  application 01 - Request completed: POST /api/payments status=200 duration=195ms
+
+2026-10-26 08:14:22.401 [http-nio-8080-exec-9] WARN  application 01 - Invalid request payload endpoint=/api/users
+2026-10-26 08:14:22.405 [http-nio-8080-exec-9] INFO  application 01 - Request completed: POST /api/users status=400 duration=4ms
+
+2026-10-26 08:16:35.120 [http-nio-8080-exec-10] ERROR application 01 - Database query failed operation=findOrdersByDate error="Query execution timeout"
+2026-10-26 08:16:35.125 [http-nio-8080-exec-10] WARN  application 01 - Retrying database query attempt=1 maxAttempts=3
+2026-10-26 08:16:35.341 [http-nio-8080-exec-10] INFO  application 01 - Database query completed successfully operation=findOrdersByDate
+2026-10-26 08:16:35.349 [http-nio-8080-exec-10] INFO  application 01 - Request completed: GET /api/orders status=200 duration=229ms
+
+2026-10-26 08:20:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=31.2% memoryUsage=59.8% activeThreads=14
+2026-10-26 08:25:00.000 [monitor-1] INFO  application 01 - Health check status=UP database=UP cache=UP externalApi=UP
+2026-10-26 08:30:15.512 [http-nio-8080-exec-11] INFO  application 01 - Incoming request: DELETE /api/cache/users
+2026-10-26 08:30:15.528 [http-nio-8080-exec-11] INFO  application 01 - Cache invalidated successfully cacheName=users
+2026-10-26 08:30:15.531 [http-nio-8080-exec-11] INFO  application 01 - Request completed: DELETE /api/cache/users status=204 duration=19ms
+
+2026-10-26 09:02:44.201 [http-nio-8080-exec-12] INFO  application 01 - Incoming request: GET /api/search
+2026-10-26 09:02:44.230 [http-nio-8080-exec-12] INFO  application 01 - Search completed query="active users" results=27 duration=29ms
+2026-10-26 09:02:44.235 [http-nio-8080-exec-12] INFO  application 01 - Request completed: GET /api/search status=200 duration=34ms
+
+2026-10-26 09:15:10.501 [scheduler-3] INFO  application 01 - Starting scheduled task: refreshProductCatalog
+2026-10-26 09:15:11.302 [scheduler-3] WARN  application 01 - External API response time exceeded threshold duration=1801ms threshold=1500ms
+2026-10-26 09:15:11.550 [scheduler-3] INFO  application 01 - Product catalog refreshed successfully updated=48 unchanged=97
+
+2026-10-26 09:30:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=45.8% memoryUsage=71.3% activeThreads=19
+2026-10-26 09:45:30.100 [http-nio-8080-exec-13] INFO  application 01 - Incoming request: GET /api/orders/ORD-20261026-001
+2026-10-26 09:45:30.121 [http-nio-8080-exec-13] INFO  application 01 - Order retrieved successfully orderId=ORD-20261026-001
+2026-10-26 09:45:30.125 [http-nio-8080-exec-13] INFO  application 01 - Request completed: GET /api/orders/ORD-20261026-001 status=200 duration=25ms
+
+2026-10-26 10:00:00.000 [scheduler-1] INFO  application 01 - Starting scheduled task: databaseHealthCheck
+2026-10-26 10:00:00.017 [scheduler-1] INFO  application 01 - Database health check passed latency=17ms
+2026-10-26 10:15:42.220 [http-nio-8080-exec-14] WARN  application 01 - Rate limit threshold approaching clientId=client-187 requestsPerMinute=95 threshold=100
+2026-10-26 10:15:42.240 [http-nio-8080-exec-14] INFO  application 01 - Request completed: GET /api/search status=200 duration=20ms
+
+2026-10-26 10:30:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=39.4% memoryUsage=66.1% activeThreads=17
+2026-10-26 11:00:00.000 [scheduler-2] INFO  application 01 - Starting scheduled task: archiveOldEvents
+2026-10-26 11:00:00.440 [scheduler-2] INFO  application 01 - Event archive completed archived=356 duration=440ms
+2026-10-26 11:30:00.000 [monitor-1] INFO  application 01 - Health check status=UP database=UP cache=UP externalApi=UP
+
+2026-10-26 12:05:10.002 [http-nio-8080-exec-15] INFO  application 01 - Incoming request: POST /api/auth/refresh
+2026-10-26 12:05:10.025 [http-nio-8080-exec-15] INFO  application 01 - Authentication token refreshed successfully userId=1038
+2026-10-26 12:05:10.029 [http-nio-8080-exec-15] INFO  application 01 - Request completed: POST /api/auth/refresh status=200 duration=27ms
+
+2026-10-26 13:00:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=28.9% memoryUsage=61.7% activeThreads=15
+2026-10-26 13:20:14.001 [http-nio-8080-exec-16] ERROR application 01 - External service request failed service=notification-api error="Connection reset by peer"
+2026-10-26 13:20:14.010 [http-nio-8080-exec-16] WARN  application 01 - Notification delivery queued for retry notificationId=NTF-50981
+2026-10-26 13:20:14.012 [http-nio-8080-exec-16] INFO  application 01 - Request completed: POST /api/notifications status=202 duration=11ms
+
+2026-10-26 13:20:15.100 [retry-worker-1] WARN  application 01 - Retrying notification delivery notificationId=NTF-50981 attempt=1 maxAttempts=3
+2026-10-26 13:20:15.450 [retry-worker-1] INFO  application 01 - Notification delivered successfully notificationId=NTF-50981 attempt=1
+
+2026-10-26 14:00:00.000 [scheduler-1] INFO  application 01 - Starting scheduled task: cleanupTemporaryFiles
+2026-10-26 14:00:00.290 [scheduler-1] INFO  application 01 - Temporary file cleanup completed removed=64 duration=290ms
+2026-10-26 14:30:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=34.6% memoryUsage=63.5% activeThreads=16
+
+2026-10-26 15:10:55.200 [http-nio-8080-exec-17] INFO  application 01 - Incoming request: GET /api/products/9999
+2026-10-26 15:10:55.218 [http-nio-8080-exec-17] WARN  application 01 - Product not found productId=9999
+2026-10-26 15:10:55.220 [http-nio-8080-exec-17] INFO  application 01 - Request completed: GET /api/products/9999 status=404 duration=20ms
+
+2026-10-26 16:00:00.000 [monitor-1] INFO  application 01 - Health check status=UP database=UP cache=UP externalApi=UP
+2026-10-26 16:30:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=41.1% memoryUsage=69.2% activeThreads=18
+2026-10-26 17:00:00.000 [scheduler-2] INFO  application 01 - Starting scheduled task: dailyStatistics
+2026-10-26 17:00:00.820 [scheduler-2] INFO  application 01 - Daily statistics generated requests=18432 errors=17 avgResponseTime=42ms
+
+2026-10-26 17:30:00.000 [monitor-1] WARN  application 01 - Memory usage approaching threshold memoryUsage=82.1% threshold=85.0%
+2026-10-26 17:32:10.150 [monitor-1] INFO  application 01 - Memory usage returned to normal memoryUsage=74.6%
+
+2026-10-26 18:00:00.000 [scheduler-1] INFO  application 01 - Starting scheduled task: databaseHealthCheck
+2026-10-26 18:00:00.019 [scheduler-1] INFO  application 01 - Database health check passed latency=19ms
+2026-10-26 18:30:00.000 [monitor-1] INFO  application 01 - Health check status=UP database=UP cache=UP externalApi=UP
+
+2026-10-26 19:00:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=25.7% memoryUsage=58.9% activeThreads=12
+2026-10-26 19:45:22.110 [http-nio-8080-exec-18] INFO  application 01 - Incoming request: GET /api/health
+2026-10-26 19:45:22.113 [http-nio-8080-exec-18] INFO  application 01 - Request completed: GET /api/health status=200 duration=3ms
+
+2026-10-26 20:00:00.000 [scheduler-3] INFO  application 01 - Starting scheduled task: syncExternalData
+2026-10-26 20:00:01.102 [scheduler-3] INFO  application 01 - External data synchronization completed recordsProcessed=205 duration=1102ms
+
+2026-10-26 21:00:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=19.2% memoryUsage=54.3% activeThreads=9
+2026-10-26 21:30:00.000 [scheduler-1] INFO  application 01 - Starting scheduled task: cleanupExpiredSessions
+2026-10-26 21:30:00.033 [scheduler-1] INFO  application 01 - Expired sessions cleanup completed removed=15 duration=33ms
+
+2026-10-26 22:00:00.000 [monitor-1] INFO  application 01 - Health check status=UP database=UP cache=UP externalApi=UP
+2026-10-26 22:30:00.000 [monitor-1] INFO  application 01 - System metrics cpuUsage=14.8% memoryUsage=49.1% activeThreads=7
+
+2026-10-26 23:00:00.000 [scheduler-2] INFO  application 01 - Starting scheduled task: dailyBackup
+2026-10-26 23:00:01.420 [scheduler-2] INFO  application 01 - Database backup completed successfully size=248MB duration=1420ms
+2026-10-26 23:30:00.000 [monitor-1] INFO  application 01 - Health check status=UP database=UP cache=UP externalApi=UP
+2026-10-26 23:59:59.900 [main] INFO  application 01 - Daily operations completed successfully date=2026-10-26
