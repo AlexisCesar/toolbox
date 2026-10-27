@@ -115,6 +115,8 @@ class Notes(Static):
     def __init__(self, logger: Logger, **kwargs):
         super().__init__(**kwargs)
         self.logger = logger
+        self.current_file_path: Path | None = None
+        self.saved_content: str | None = None
 
     def compose(self) -> ComposeResult:
         """Create the layout for the notes view."""
@@ -176,21 +178,21 @@ class Notes(Static):
         self.load_selected_file()
 
     def action_save_file(self) -> None:
-        """Saves the content of the text viewer to the selected file."""
-        selected_path = self.get_selected_path()
-        if selected_path is None:
-            self.logger.warn("Select a file to save.")
+        """Saves the content of the text viewer to the currently opened file."""
+        file_path = self.current_file_path
+        if file_path is None:
+            self.logger.warn("Open a file before saving.")
             return
 
         viewer = self.query_one("#viewer", TextArea)
         content = viewer.text
 
         try:
-            selected_path.write_bytes(content.encode("utf-8"))
-            self.logger.info(f"Saved notes file: {selected_path}")
-            self.load_selected_file(selected_path)
+            file_path.write_bytes(content.encode("utf-8"))
+            self.saved_content = content
+            self.logger.info(f"Saved notes file: {file_path}")
         except Exception as error:
-            viewer.load_text(f"Could not save the file:\n\n{error}")
+            self.logger.error(f"Could not save notes file {file_path}: {error}")
 
     def action_view_markdown(self) -> None:
         """Switches to the markdown viewer and loads the selected markdown file."""
@@ -267,10 +269,14 @@ class Notes(Static):
         try:
             content = self.read_text_file(path)
         except (OSError, ValueError) as error:
+            self.current_file_path = None
+            self.saved_content = None
             viewer.load_text(f"Could not open the file:\n\n{error}")
             return
 
         viewer.load_text(content)
+        self.current_file_path = path
+        self.saved_content = content
         self.update_highlight_based_on_file_type(viewer, path)
 
         # Return the viewer to the beginning of the file.
@@ -294,7 +300,60 @@ class Notes(Static):
         event: NotesDirectoryTree.FileSelected,
     ) -> None:
         """Called when a file is selected."""
+        if event.path == self.current_file_path:
+            return
+
+        viewer = self.query_one("#viewer", TextArea)
+        if (
+            self.current_file_path is not None
+            and self.saved_content is not None
+            and viewer.text != self.saved_content
+        ):
+            self.logger.warn(
+                f"Unsaved changes detected in {self.current_file_path}."
+            )
+            self.app.push_screen(
+                ConfirmDialog(
+                    f"Discard unsaved changes to {self.current_file_path.name}?",
+                    confirmButtonText="Discard",
+                    cancelButtonText="Keep Editing",
+                ),
+                callback=lambda result: self.confirm_file_selection(
+                    result, event.path
+                ),
+            )
+            return
+
         self.display_file(event.path)
+
+    def confirm_file_selection(
+        self,
+        confirmation_result,
+        selected_path: Path,
+    ) -> None:
+        """Open a selected file only after unsaved changes are discarded."""
+        if confirmation_result.confirmed:
+            self.display_file(selected_path)
+            return
+
+        self.restore_current_file_selection()
+
+    def restore_current_file_selection(self) -> None:
+        """Restore the tree cursor to the file that remains open in the viewer."""
+        if self.current_file_path is None:
+            return
+
+        directory_tree = self.query_one(NotesDirectoryTree)
+        nodes = [directory_tree.root]
+        while nodes:
+            node = nodes.pop()
+            if (
+                node.data is not None
+                and node.data.path == self.current_file_path
+            ):
+                directory_tree.move_cursor(node)
+                return
+            nodes.extend(node.children)
         
     @staticmethod
     def read_text_file(path: Path) -> str:

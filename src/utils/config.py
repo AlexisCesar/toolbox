@@ -8,6 +8,11 @@ import tomlkit
 SCRIPT_EXTENSIONS = {".py", ".sh", ".sql", ".ps1", ".bat", ".cmd"}
 
 
+def normalize_directory_path(path: str) -> str:
+    """Use forward slashes for directory paths entered in settings."""
+    return path.replace("\\", "/")
+
+
 def iter_script_files(scripts_dir: Path, depth: int):
     """Yield supported script files up to the configured subdirectory depth."""
     scripts_dir = Path(scripts_dir)
