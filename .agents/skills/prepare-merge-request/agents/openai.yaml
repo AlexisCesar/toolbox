@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prepare Merge Request"
+  short_description: "Sync, consolidate, test, and open a merge request"
+  default_prompt: "Use $prepare-merge-request to prepare this branch for a merge request."
