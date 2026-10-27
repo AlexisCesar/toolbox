@@ -7,7 +7,7 @@ from textual.widgets import Button, Input, Label, Select, Static
 from textual import on
 from pathlib import Path
 
-from src.utils.config import config, iter_script_files
+from src.utils.config import config, iter_script_files, normalize_directory_path
 from src.utils.logger import Logger
 from src.utils.confirm_dialog import ConfirmDialog
 
@@ -150,39 +150,42 @@ class Settings(Static):
             if not confirmationResult.parameters:
                 self.logger.warn(f"No path was provided. Keeping the current one.")
             else:
-                if self.validate_directory(confirmationResult.parameters):
-                    self.logger.info(f"Updating scripts path to \"{confirmationResult.parameters}\".")
-                    config.update("paths", "scripts", confirmationResult.parameters)
+                path = normalize_directory_path(confirmationResult.parameters)
+                if self.validate_directory(path):
+                    self.logger.info(f"Updating scripts path to \"{path}\".")
+                    config.update("paths", "scripts", path)
                     self.logger.info("Scripts path updated successfully.");
                     self.update_fields()
                 else:
-                    self.logger.error(f"\"{confirmationResult.parameters}\" is an invalid path.")
+                    self.logger.error(f"\"{path}\" is an invalid path.")
     
     def change_notes_dir(self, confirmationResult: bool):
         if confirmationResult.confirmed:
             if not confirmationResult.parameters:
                 self.logger.warn(f"No path was provided. Keeping the current one.")
             else:
-                if self.validate_directory(confirmationResult.parameters):
-                    self.logger.info(f"Updating notes path to \"{confirmationResult.parameters}\".")
-                    config.update("paths", "notes", confirmationResult.parameters)
+                path = normalize_directory_path(confirmationResult.parameters)
+                if self.validate_directory(path):
+                    self.logger.info(f"Updating notes path to \"{path}\".")
+                    config.update("paths", "notes", path)
                     self.logger.info("Notes path updated successfully.");
                     self.update_fields()
                 else:
-                    self.logger.error(f"\"{confirmationResult.parameters}\" is an invalid path.")
+                    self.logger.error(f"\"{path}\" is an invalid path.")
 
     def change_projects_dir(self, confirmationResult: bool):
         if confirmationResult.confirmed:
             if not confirmationResult.parameters:
                 self.logger.warn(f"No path was provided. Keeping the current one.")
             else:
-                if self.validate_directory(confirmationResult.parameters):
-                    self.logger.info(f"Updating projects path to \"{confirmationResult.parameters}\".")
-                    config.update("paths", "projects", confirmationResult.parameters)
+                path = normalize_directory_path(confirmationResult.parameters)
+                if self.validate_directory(path):
+                    self.logger.info(f"Updating projects path to \"{path}\".")
+                    config.update("paths", "projects", path)
                     self.logger.info("Projects path updated successfully.");
                     self.update_fields()
                 else:
-                    self.logger.error(f"\"{confirmationResult.parameters}\" is an invalid path.")
+                    self.logger.error(f"\"{path}\" is an invalid path.")
 
     def validate_directory(self, path: str) -> bool:
         p = Path(path).expanduser()
