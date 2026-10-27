@@ -5,3 +5,6 @@ With UV installed, run:
 
 Then:
 ```uv run python main.py```
+
+Run the unit tests with:
+```uv run pytest```

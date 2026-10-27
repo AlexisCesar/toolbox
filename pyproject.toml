@@ -26,5 +26,10 @@ dependencies = [
     "tree-sitter-yaml>=0.7.2",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+]
+
 [project.scripts]
 toolboxtui = "main:main"
