@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 
-from textual.widgets import ContentSwitcher, Input, TextArea
+from textual.widgets import Button, ContentSwitcher, Input, ListItem, TextArea
 
 from src.tui import ToolboxTUI
 from src.utils.config import config
@@ -33,13 +33,24 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
 
             assert isinstance(app.screen, LogFilesDialog)
             assert len(app.screen.files) == 1
+            assert app.screen.query_one("#log-files-open", Button).variant == "success"
+            assert app.screen.query_one("#log-files-close", Button).variant == "primary"
+            await pilot.click(ListItem, offset=(2, 1))
+            await pilot.pause()
+            assert isinstance(app.screen, LogFilesDialog)
+            assert app.query_one("#main-content-switcher", ContentSwitcher).current == "logs-view"
             await pilot.click("#log-files-open")
             await pilot.pause()
 
             assert isinstance(app.screen, LogFileDialog)
+            assert app.screen.query_one("#log-file-close", Button).variant == "primary"
             viewer = app.screen.query_one("#log-file-content", TextArea)
             assert viewer.text == "older entry\nlatest entry"
             assert viewer.cursor_location == (1, len("latest entry"))
+            await pilot.click("#log-file-close", offset=(1, 1))
+            await pilot.pause()
+            assert app.screen.id == "_default"
+            assert app.query_one("#main-content-switcher", ContentSwitcher).current == "logs-view"
 
     asyncio.run(run_workflow())
 

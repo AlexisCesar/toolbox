@@ -13,6 +13,7 @@ def iter_log_files(directory: Path) -> list[Path]:
             if path.is_file() and path.suffix.lower() in LOG_FILE_EXTENSIONS
         ),
         key=lambda path: path.name.casefold(),
+        reverse=True,
     )
 
 

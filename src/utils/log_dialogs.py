@@ -26,8 +26,8 @@ class LogFilesDialog(ModalScreen[Path | None]):
             yield ListView(id="log-files-list")
             yield Static("", id="log-files-status")
             with Horizontal(id="log-files-buttons"):
-                yield Button("Open", variant="primary", id="log-files-open")
-                yield Button("Close", id="log-files-close")
+                yield Button("Open", variant="success", id="log-files-open")
+                yield Button("Close", variant="primary", id="log-files-close")
 
     async def on_mount(self) -> None:
         try:
@@ -51,10 +51,6 @@ class LogFilesDialog(ModalScreen[Path | None]):
                 "No supported log files were found in this folder."
             )
             self.query_one("#log-files-open", Button).disabled = True
-
-    def on_list_view_selected(self, event: ListView.Selected) -> None:
-        if event.list_view.id == "log-files-list" and event.index is not None:
-            self.open_selected_file(event.index)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "log-files-open":
@@ -83,7 +79,7 @@ class LogFileDialog(ModalScreen[None]):
             yield Static(str(self.path), id="log-file-location")
             yield TextArea("", id="log-file-content", read_only=True, show_line_numbers=True)
             with Horizontal(id="log-file-buttons"):
-                yield Button("Close", id="log-file-close")
+                yield Button("Close", variant="primary", id="log-file-close")
 
     def on_mount(self) -> None:
         viewer = self.query_one("#log-file-content", TextArea)

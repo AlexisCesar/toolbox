@@ -11,13 +11,17 @@ def test_iter_log_files_includes_supported_types_and_skips_other_files(
     (tmp_path / "app.LOG").write_text("latest", encoding="utf-8")
     (tmp_path / "details.txt").write_text("details", encoding="utf-8")
     (tmp_path / "events.jsonl").write_text("{}", encoding="utf-8")
+    (tmp_path / "2001-01-02.log").write_text("newer", encoding="utf-8")
+    (tmp_path / "2001-01-01.log").write_text("older", encoding="utf-8")
     (tmp_path / "screenshot.png").write_bytes(b"image")
     (tmp_path / "subfolder").mkdir()
 
     assert [path.name for path in iter_log_files(tmp_path)] == [
-        "app.LOG",
-        "details.txt",
         "events.jsonl",
+        "details.txt",
+        "app.LOG",
+        "2001-01-02.log",
+        "2001-01-01.log",
     ]
 
 

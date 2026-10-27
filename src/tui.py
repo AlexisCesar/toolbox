@@ -115,6 +115,9 @@ class ToolboxTUI(App):
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Handle selection changes in the sidebar list view."""
+        if event.list_view.id != "sidebar-list":
+            return
+
         switcher = self.query_one("#main-content-switcher", ContentSwitcher)
 
         match event.list_view.index:
