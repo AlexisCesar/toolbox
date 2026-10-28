@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -5,12 +6,17 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Label, ListItem, ListView, Static, TextArea
 
-from src.utils.log_files import iter_log_files, read_log_text
+from src.utils.log_files import (
+    DEFAULT_TAIL_BYTES,
+    is_text_log_file,
+    iter_log_entries,
+    read_log_tail,
+)
 from src.utils.logger import Logger
 
 
 class LogFilesDialog(ModalScreen[Path | None]):
-    """Show the supported log files in a configured folder."""
+    """Show directory entries and allow opening text logs from the folder."""
 
     def __init__(self, name: str, directory: Path, logger: Logger) -> None:
         super().__init__()
@@ -24,20 +30,23 @@ class LogFilesDialog(ModalScreen[Path | None]):
             yield Label(f"Log files — {self.log_name}", id="log-files-title")
             yield Static(str(self.directory), id="log-files-location")
             yield ListView(id="log-files-list")
-            yield Static("", id="log-files-status")
+            yield Static("Loading folder contents…", id="log-files-status")
             with Horizontal(id="log-files-buttons"):
                 yield Button("Open", variant="success", id="log-files-open")
                 yield Button("Close", variant="primary", id="log-files-close")
 
-    async def on_mount(self) -> None:
+    def on_mount(self) -> None:
+        self.query_one("#log-files-open", Button).disabled = True
+        self.run_worker(self.load_files(), name="load-log-folder", exclusive=True)
+
+    async def load_files(self) -> None:
         try:
-            self.files = iter_log_files(self.directory)
+            self.files = await asyncio.to_thread(iter_log_entries, self.directory)
         except OSError as error:
             self.logger.error(f"Could not read log folder {self.directory}: {error}")
             self.query_one("#log-files-status", Static).update(
                 f"Could not read this folder: {error}"
             )
-            self.query_one("#log-files-open", Button).disabled = True
             return
 
         file_list = self.query_one("#log-files-list", ListView)
@@ -46,23 +55,53 @@ class LogFilesDialog(ModalScreen[Path | None]):
                 *(ListItem(Label(path.name)) for path in self.files)
             )
             file_list.index = 0
+            self.query_one("#log-files-status", Static).update(
+                f"{len(self.files)} items. Select an entry and choose Open."
+            )
+            self.query_one("#log-files-open", Button).disabled = False
         else:
             self.query_one("#log-files-status", Static).update(
-                "No supported log files were found in this folder."
+                "This folder is empty."
             )
-            self.query_one("#log-files-open", Button).disabled = True
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "log-files-open":
             file_list = self.query_one("#log-files-list", ListView)
             if file_list.index is not None:
-                self.open_selected_file(file_list.index)
+                self.query_one("#log-files-open", Button).disabled = True
+                self.run_worker(
+                    self.open_selected_file(file_list.index),
+                    name="validate-log-file",
+                    exclusive=True,
+                )
         elif event.button.id == "log-files-close":
             self.dismiss(None)
 
-    def open_selected_file(self, index: int) -> None:
-        if 0 <= index < len(self.files):
-            self.dismiss(self.files[index])
+    async def open_selected_file(self, index: int) -> None:
+        if not 0 <= index < len(self.files):
+            return
+
+        path = self.files[index]
+        self.query_one("#log-files-status", Static).update("Checking selected item…")
+        try:
+            is_log_file = await asyncio.to_thread(is_text_log_file, path)
+        except OSError as error:
+            self.logger.error(f"Could not access selected log file {path}: {error}")
+            self.query_one("#log-files-status", Static).update(
+                f"Could not access this item: {error}"
+            )
+            self.query_one("#log-files-open", Button).disabled = False
+            return
+
+        if not is_log_file:
+            self.logger.warn(f"Selected log entry is not a regular text file: {path}")
+            self.query_one("#log-files-status", Static).update(
+                "This item is not a regular text file, or it appears to be binary."
+            )
+            self.query_one("#log-files-open", Button).disabled = False
+            return
+
+        self.dismiss(path)
 
 
 class LogFileDialog(ModalScreen[None]):
@@ -82,9 +121,15 @@ class LogFileDialog(ModalScreen[None]):
                 yield Button("Close", variant="primary", id="log-file-close")
 
     def on_mount(self) -> None:
+        self.query_one("#log-file-content", TextArea).load_text(
+            "Loading the latest log entries…"
+        )
+        self.run_worker(self.load_log(), name="load-log-file", exclusive=True)
+
+    async def load_log(self) -> None:
         viewer = self.query_one("#log-file-content", TextArea)
         try:
-            content = read_log_text(self.path)
+            content = await asyncio.to_thread(read_log_tail, self.path)
         except (OSError, ValueError) as error:
             self.logger.error(f"Could not open log file {self.path}: {error}")
             viewer.load_text(f"Could not open this log file:\n\n{error}")
@@ -96,7 +141,9 @@ class LogFileDialog(ModalScreen[None]):
         last_column = len(lines[last_line]) if lines else 0
         viewer.cursor_location = (last_line, last_column)
         viewer.scroll_cursor_visible(animate=False)
-        self.logger.info(f"Opened log file: {self.path}")
+        self.logger.info(
+            f"Opened log file: {self.path} (read up to {DEFAULT_TAIL_BYTES:,} trailing bytes)"
+        )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "log-file-close":

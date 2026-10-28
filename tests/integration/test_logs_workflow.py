@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 
-from textual.widgets import Button, ContentSwitcher, Input, ListItem, TextArea
+from textual.widgets import Button, Input, ListItem, TextArea
 
 from src.tui import ToolboxTUI
 from src.utils.config import config
@@ -16,7 +16,7 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
     log_folder = tmp_path / "application logs"
     log_folder.mkdir()
     (log_folder / "application.log").write_text("older entry\nlatest entry", encoding="utf-8")
-    (log_folder / "image.png").write_bytes(b"not a log")
+    (log_folder / "image.png").write_bytes(b"\x89PNG\r\n\x1a\nimage")
     monkeypatch.setitem(
         config._data,
         "logs",
@@ -26,21 +26,35 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
     async def run_workflow() -> None:
         app = ToolboxTUI()
         async with app.run_test(size=(120, 40)) as pilot:
-            app.query_one("#main-content-switcher", ContentSwitcher).current = "logs-view"
+            await pilot.press("l")
             await pilot.pause()
             await pilot.click("#logs-open-0")
             await pilot.pause()
 
             assert isinstance(app.screen, LogFilesDialog)
-            assert len(app.screen.files) == 1
+            assert len(app.screen.files) == 2
+            file_list = app.screen.query_one("#log-files-list")
+            assert [path.name for path in app.screen.files] == [
+                "image.png",
+                "application.log",
+            ]
             assert app.screen.query_one("#log-files-open", Button).variant == "success"
             assert app.screen.query_one("#log-files-close", Button).variant == "primary"
             await pilot.click(ListItem, offset=(2, 1))
             await pilot.pause()
             assert isinstance(app.screen, LogFilesDialog)
-            assert app.query_one("#main-content-switcher", ContentSwitcher).current == "logs-view"
+            assert app.query_one("#main-content-switcher").current == "logs-view"
+            file_list.index = 0
             await pilot.click("#log-files-open")
-            await pilot.pause()
+            await pilot.pause(0.1)
+            assert isinstance(app.screen, LogFilesDialog)
+            assert "appears to be binary" in str(
+                app.screen.query_one("#log-files-status").content
+            )
+
+            file_list.index = 1
+            await pilot.click("#log-files-open")
+            await pilot.pause(0.1)
 
             assert isinstance(app.screen, LogFileDialog)
             assert app.screen.query_one("#log-file-close", Button).variant == "primary"
@@ -50,7 +64,7 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
             await pilot.click("#log-file-close", offset=(1, 1))
             await pilot.pause()
             assert app.screen.id == "_default"
-            assert app.query_one("#main-content-switcher", ContentSwitcher).current == "logs-view"
+            assert app.query_one("#main-content-switcher").current == "logs-view"
 
     asyncio.run(run_workflow())
 

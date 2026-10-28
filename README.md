@@ -42,9 +42,12 @@ name = "Application X v2"
 location = 'C:\dev\my_projects\application_x_v2\logs\'
 ```
 
-The Logs tab lists the configured folders, filters to supported text log types
-(`.log`, `.txt`, `.out`, `.err`, `.trace`, `.jsonl`, and `.ndjson`), and opens a
-selected file at its latest entries.
+The Logs tab lists the configured folders and shows their entries in descending
+name order. It accepts logs with any filename, including rotated or extensionless
+logs, and checks a small content sample when you open an entry to reject common
+binary formats such as images and videos. Folder scans and file reads run in the
+background, and the viewer starts with up to the last 256 KiB of the file so
+large remote logs do not need to be read in full.
 
 Configure HTTP endpoint and TCP connection health checks in Settings. HTTP checks
 use a URL; TCP checks use `host:port`. Checks run immediately when the Health
