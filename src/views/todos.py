@@ -51,33 +51,33 @@ class Todos(Static):
             yield ProgressBar(total=1, show_eta=False, id="todos-progress")
             yield DataTable(id="todos-table", zebra_stripes=True, cursor_type="row")
             with Horizontal(id="todos-controls"):
-                yield Button("➕ New task", id="todos-add", flat=True, classes="icon-button")
-                yield Button("↳ Sub-item", id="todos-add-child", flat=True, classes="icon-button")
-                yield Button("✏️ Edit", id="todos-edit", flat=True, classes="icon-button")
-                yield Button("✅ Done", id="todos-toggle", flat=True, classes="icon-button")
+                yield Button("\u2795 New task", id="todos-add", flat=True, classes="icon-button")
+                yield Button("\u21B3 Sub-item", id="todos-add-child", flat=True, classes="icon-button")
+                yield Button("\u270F\uFE0F Edit", id="todos-edit", flat=True, classes="icon-button")
+                yield Button("\u2705 Done", id="todos-toggle", flat=True, classes="icon-button")
                 yield Button(
-                    "⏸ Pause",
+                    "\u23F8 Pause",
                     tooltip="Pause or resume the selected item",
                     id="todos-pause",
                     flat=True,
                     classes="icon-button",
                 )
                 yield Button(
-                    "❌ Delete",
+                    "\u274C Delete",
                     variant="error",
                     id="todos-delete",
                     flat=True,
                     classes="icon-button",
                 )
                 yield Button(
-                    "⬆ Move up",
+                    "\u2B06 Move up",
                     tooltip="Move the selected item up",
                     id="todos-up",
                     flat=True,
                     classes="icon-button",
                 )
                 yield Button(
-                    "⬇ Move down",
+                    "\u2B07 Move down",
                     tooltip="Move the selected item down",
                     id="todos-down",
                     flat=True,
@@ -125,21 +125,21 @@ class Todos(Static):
 
         for item in self.visible_items:
             is_sub_item = item.parent_id is not None
-            title = f"  ↳ {item.title}" if is_sub_item else item.title
+            title = f"  \u21B3 {item.title}" if is_sub_item else item.title
             task_label = f"{title}\n{item.description}" if item.description else title
             if item.completed:
-                status = "✓ Done"
+                status = "\u2713 Done"
             elif item.paused:
-                status = "Ⅱ Paused"
+                status = "\u2161 Paused"
             else:
-                status = "○ Pending"
-            priority_emoji = "💀" if (
+                status = "\u25CB Pending"
+            priority_emoji = "\U0001F480" if (
                 item.priority == "high"
                 and getattr(self.app, "theme", None) == HALLOWEEN_THEME
-            ) else "🔴"
+            ) else "\U0001F534"
             priority_text = {
-                "low": Text("🟢 Low", style="green"),
-                "medium": Text("🟡 Medium", style="yellow"),
+                "low": Text("\U0001F7E2 Low", style="green"),
+                "medium": Text("\U0001F7E1 Medium", style="yellow"),
                 "high": Text(f"{priority_emoji} High", style="red"),
             }[item.priority]
             try:

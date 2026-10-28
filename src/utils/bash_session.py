@@ -5,10 +5,14 @@ from pathlib import Path
 from queue import Empty, Queue
 import select
 import shutil
+import socket
 import subprocess
 import sys
 from threading import Event
 from typing import Callable
+
+
+SELECT_TIMEOUT_SECONDS = 1.0
 
 
 def find_bash() -> Path:
@@ -69,17 +73,34 @@ class BashSession:
         self._operations: Queue[tuple[str, object]] = Queue()
         self._stop = Event()
         self.finished = Event()
+        self._wake_reader, self._wake_writer = socket.socketpair()
+        self._wake_reader.setblocking(False)
+        self._wake_writer.setblocking(False)
 
     def write(self, text: str) -> None:
         # Small writes let the worker drain echoed output during large pastes.
         for offset in range(0, len(text), 256):
             self._operations.put(("write", text[offset:offset + 256]))
+        self._wake_worker()
 
     def resize(self, rows: int, columns: int) -> None:
         self._operations.put(("resize", (max(1, rows), max(1, columns))))
+        self._wake_worker()
 
     def stop(self) -> None:
         self._stop.set()
+        self._wake_worker()
+
+    def _wake_worker(self) -> None:
+        if self.finished.is_set():
+            return
+        try:
+            self._wake_writer.send(b"x")
+        except BlockingIOError:
+            pass
+        except OSError:
+            if not self.finished.is_set():
+                raise
 
     def run(
         self, on_started: Callable[[Path], None], on_output: Callable[[str], None]
@@ -95,9 +116,17 @@ class BashSession:
             while not self._stop.is_set():
                 self._apply_operations(process)
                 reader = process.fileobj if sys.platform == "win32" else process.fd
-                ready, _, _ = select.select([reader], [], [], 0.05)
-                if ready:
-                    on_output(process.read(65536))
+                readers = [reader, self._wake_reader]
+                ready, _, _ = select.select(
+                    readers, [], [], SELECT_TIMEOUT_SECONDS
+                )
+                if self._wake_reader in ready:
+                    self._drain_wakeup()
+                    self._apply_operations(process)
+                if reader in ready:
+                    output = process.read(65536)
+                    if output:
+                        on_output(output)
                 elif not self._is_alive(process):
                     break
         except EOFError:
@@ -107,7 +136,17 @@ class BashSession:
                 if process is not None:
                     self._close_process(process)
             finally:
+                self._wake_reader.close()
+                self._wake_writer.close()
                 self.finished.set()
+
+    def _drain_wakeup(self) -> None:
+        while True:
+            try:
+                if not self._wake_reader.recv(4096):
+                    return
+            except BlockingIOError:
+                return
 
     def _apply_operations(self, process) -> None:
         # Bound each batch so a large paste cannot starve output or shutdown.

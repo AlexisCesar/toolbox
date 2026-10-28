@@ -19,7 +19,7 @@ from textual.widgets import DataTable, Static
 
 
 def format_scripts_directory_label(scripts_dir: Path, depth: int) -> str:
-    label = f"Reading scripts from: 📂 {Path(scripts_dir).absolute()}"
+    label = f"Reading scripts from: \U0001F4C2 {Path(scripts_dir).absolute()}"
     if depth > 0:
         label += f" (with a depth of {depth} subfolders)"
     return label
@@ -30,7 +30,7 @@ def format_script_display_name(script_path: Path, scripts_dir: Path) -> str:
     depth = len(relative_path.parts) - 1
     if depth == 0:
         return relative_path.name
-    return f"📁 ({depth}) {relative_path.name}"
+    return f"\U0001F4C1 ({depth}) {relative_path.name}"
 
 
 class Scripts(Static):
@@ -94,11 +94,11 @@ class Scripts(Static):
                     ".sh": "\U0001F41A Shell Script",
                     ".sql": "\U0001F4DC SQL",
                     ".ps1": "</> Powershell Script",
-                    ".bat": "▣ Windows Batch Script",
-                    ".cmd": "▣ Windows Command Script",
+                    ".bat": "\u25A3 Windows Batch Script",
+                    ".cmd": "\u25A3 Windows Command Script",
                 }.get(file_path.suffix.lower(), "Unknown Type")
                 
-                action_1 = "\U000025B6 Run"
+                action_1 = "\u25B6 Run"
                 action_2 = "\U0001F4DF Run External"
                 action_3 = "\U0001F522 Run With Parameters"
                 
@@ -112,7 +112,7 @@ class Scripts(Static):
                     script_config = scripts_configs.get(script_name, scripts_configs.get(file_path.name, {}))
                     script_description = script_config.get("description", "")
                     
-                self.rows.append((display_name, script_description, script_type, action_1, action_2, action_3, "\U0001F50D Open", "✏️ Edit"))
+                self.rows.append((display_name, script_description, script_type, action_1, action_2, action_3, "\U0001F50D Open", "\u270F\uFE0F Edit"))
 
     def build_scripts_datatable(self):
         table = self.query_one("#scripts-datatable", DataTable)
@@ -147,7 +147,7 @@ class Scripts(Static):
     @on(DataTable.CellSelected)
     def handle_cell_click(self, event: DataTable.CellSelected) -> None:
         cell_value = str(event.value).strip()
-        if cell_value == "\U000025B6 Run":
+        if cell_value == "\u25B6 Run":
             script_name = self.get_script_name_from_row(event.coordinate.row)
             script_path = self.get_script_path(script_name)
             self.app.push_screen(ConfirmDialog(f"Run {script_name}?"), callback=lambda result: self.execute_script_callback(result, script_path))
@@ -171,7 +171,7 @@ class Scripts(Static):
             script_name = self.get_script_name_from_row(event.coordinate.row)
             file_content = (self.get_script_path(script_name)).read_text()
             self.app.push_screen(ScriptInspectionDialog(file_content, script_name))
-        elif cell_value == "✏️ Edit":
+        elif cell_value == "\u270F\uFE0F Edit":
             script_name = self.get_script_name_from_row(event.coordinate.row)
             script_path = self.get_script_path(script_name)
             try:

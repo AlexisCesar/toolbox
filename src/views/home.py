@@ -1,6 +1,7 @@
 from src.utils.seasonal_theme import (
     CHRISTMAS_THEME,
     HALLOWEEN_THEME,
+    is_christmas_season,
     is_halloween_season,
     is_theme_available,
 )
@@ -47,11 +48,20 @@ class Home(Static):
 
     def instructions(self) -> str:
         """Return the home guidance with seasonal information when available."""
-        if not is_halloween_season():
+        seasonal_tips = []
+        if is_halloween_season():
+            seasonal_tips.append(
+                "- \U0001F383 The Halloween theme is available in Settings from October 1 through November 10."
+            )
+        if is_christmas_season():
+            seasonal_tips.append(
+                "- \U0001F384 The Christmas theme is available in Settings throughout December."
+            )
+        if not seasonal_tips:
             return INSTRUCTIONS
         return INSTRUCTIONS.replace(
             "[bold]Tips:[/bold]",
-            "[bold]Tips:[/bold]\n\n- 🎃 The Halloween theme is available in Settings from October 1 through November 10.",
+            "[bold]Tips:[/bold]\n\n" + "\n\n".join(seasonal_tips),
             1,
         )
 
@@ -61,7 +71,7 @@ class Home(Static):
             return LOGO_ASCII_ART.replace(
                 "|_________________| [/bold #ff5f00]",
                 "|_________________|[/bold #ff5f00] [#888888]"
-                "🧛 Witching you a spooktacular Halloween! 🐈‍⬛[/#888888]",
+                "\U0001F9DB Witching you a spooktacular Halloween![/#888888]",
             )
         if theme_name == CHRISTMAS_THEME:
             return LOGO_ASCII_ART.replace(
@@ -69,7 +79,7 @@ class Home(Static):
             ).replace(
                 "|_________________| [/bold #ff5f00]",
                 "|_________________|[/bold #f8fafc] [#d1fae5]"
-                "🎁 Wishing you a Merry Christmas![/#d1fae5]",
+                "\U0001F381 Wishing you a Merry Christmas![/#d1fae5]",
             )
         else:
             return LOGO_ASCII_ART

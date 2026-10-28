@@ -70,6 +70,10 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
             )
             assert app.screen.query_one("#log-file-close", Button).variant == "primary"
             viewer = app.screen.query_one("#log-file-content", TextArea)
+            for _ in range(40):
+                if viewer.text == "older entry\nlatest entry":
+                    break
+                await pilot.pause(0.05)
             assert viewer.text == "older entry\nlatest entry"
             assert viewer.cursor_location == (1, len("latest entry"))
             await pilot.click("#log-file-close", offset=(1, 1))

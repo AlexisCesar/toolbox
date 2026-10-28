@@ -137,12 +137,12 @@ class Notes(Static):
             
         with Horizontal():
             
-            yield Button("🔃 Refresh Folder", id="refresh-folder-button", flat=True, classes="icon-button")
-            yield Button("🔎 Open File", id="open-file-button", flat=True, classes="icon-button")            
-            yield Button("🔄️ Refresh File", id="refresh-file-button", flat=True, classes="icon-button")  
-            yield Button("💾 Save", id="save-button", flat=True, classes="icon-button") 
-            yield Button("📖 View Markdown", id="view-markdown-button", flat=True, classes="icon-button") 
-            yield Button("❌ Delete", id="delete-button", flat=True, classes="icon-button") 
+            yield Button("\U0001F503 Refresh Folder", id="refresh-folder-button", flat=True, classes="icon-button")
+            yield Button("\U0001F50E Open File", id="open-file-button", flat=True, classes="icon-button")
+            yield Button("\U0001F504\uFE0F Refresh File", id="refresh-file-button", flat=True, classes="icon-button")
+            yield Button("\U0001F4BE Save", id="save-button", flat=True, classes="icon-button")
+            yield Button("\U0001F4D6 View Markdown", id="view-markdown-button", flat=True, classes="icon-button")
+            yield Button("\u274C Delete", id="delete-button", flat=True, classes="icon-button")
     
     def on_show(self) -> None:
         self.action_refresh_folder(silent=True)

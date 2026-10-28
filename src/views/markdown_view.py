@@ -44,8 +44,8 @@ class MarkdownPreview(Static):
         await markdown_viewer.document.update(content)
 
     def on_show(self) -> None:
-        label_text = f"Viewing file: 📃 {self.current_file}"
+        label_text = f"Viewing file: \U0001F4C3 {self.current_file}"
         if not self.current_file:
-            label_text = "📃 No file selected. Open a file from the Notes menu."
+            label_text = "\U0001F4C3 No file selected. Open a file from the Notes menu."
 
         self.query_one("#select-file-label", Static).content = label_text

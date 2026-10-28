@@ -1,7 +1,26 @@
 import pytest
+from rich.segment import Segment
+from rich.style import Style
 from textual import events
+from textual.geometry import Size
+from textual.strip import Strip
 
 from src.utils.bash_terminal import BashTerminal, character_style, key_sequence
+
+
+def _legacy_render_line(terminal: BashTerminal, y: int) -> Strip:
+    screen = terminal.terminal_screen
+    segments = []
+    cursor = screen.cursor
+    for x in range(screen.columns):
+        character = screen.buffer[y][x]
+        style = terminal.rich_style + character_style(character)
+        if terminal.has_focus and not cursor.hidden and (x, y) == (cursor.x, cursor.y):
+            style += Style(reverse=True)
+        segments.append(Segment(character.data, style))
+    return Strip(segments, screen.columns).crop_extend(
+        0, terminal.size.width, terminal.rich_style
+    )
 
 
 @pytest.mark.parametrize(
@@ -29,6 +48,29 @@ def test_terminal_applies_ansi_colors_cursor_movement_and_unicode() -> None:
     terminal.feed("\x1b[2J\x1b[Hclear")
     assert screen.display[0].rstrip() == "clear"
     assert not screen.display[1].strip()
+
+
+def test_render_line_coalesces_segments_without_changing_cells_or_cursor_style(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(BashTerminal, "size", property(lambda _: Size(60, 12)))
+    terminal = BashTerminal()
+    terminal.terminal_screen.resize(lines=12, columns=80)
+    terminal.feed("\x1b[31mred\x1b[0m plain 界 \x1b[1;34mblue\x1b[0m")
+    terminal.terminal_screen.cursor.x = 1
+    terminal.terminal_screen.cursor.y = 0
+    terminal.has_focus = True
+
+    expected = _legacy_render_line(terminal, 0)
+    actual = terminal.render_line(0)
+
+    assert actual.text == expected.text
+    assert actual.cell_length == expected.cell_length
+    assert list(Segment.simplify(actual._segments)) == list(
+        Segment.simplify(expected._segments)
+    )
+    assert any(segment.style.reverse for segment in actual._segments)
+    assert len(actual._segments) < len(expected._segments)
 
 
 def test_terminal_replies_to_cursor_position_queries(monkeypatch) -> None:

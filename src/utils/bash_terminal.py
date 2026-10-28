@@ -148,12 +148,20 @@ class BashTerminal(Widget, can_focus=True):
         screen = self.terminal_screen
         if y >= screen.lines:
             return Strip.blank(self.size.width, self.rich_style)
-        segments = []
+        segments: list[Segment] = []
+        text: list[str] = []
+        segment_style: Style | None = None
         cursor = screen.cursor
         for x in range(screen.columns):
             character = screen.buffer[y][x]
             style = self.rich_style + character_style(character)
             if self.has_focus and not cursor.hidden and (x, y) == (cursor.x, cursor.y):
                 style += Style(reverse=True)
-            segments.append(Segment(character.data, style))
+            if segment_style is not None and style != segment_style:
+                segments.append(Segment("".join(text), segment_style))
+                text.clear()
+            segment_style = style
+            text.append(character.data)
+        if text and segment_style is not None:
+            segments.append(Segment("".join(text), segment_style))
         return Strip(segments, screen.columns).crop_extend(0, self.size.width, self.rich_style)
