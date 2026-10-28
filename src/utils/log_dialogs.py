@@ -8,8 +8,7 @@ from textual.widgets import Button, Label, ListItem, ListView, Static, TextArea
 
 from src.utils.log_files import (
     DEFAULT_TAIL_BYTES,
-    LOG_FILE_EXTENSIONS,
-    is_supported_log_file,
+    is_text_log_file,
     iter_log_entries,
     read_log_tail,
 )
@@ -17,7 +16,7 @@ from src.utils.logger import Logger
 
 
 class LogFilesDialog(ModalScreen[Path | None]):
-    """Show the supported log files in a configured folder."""
+    """Show directory entries and allow opening text logs from the folder."""
 
     def __init__(self, name: str, directory: Path, logger: Logger) -> None:
         super().__init__()
@@ -84,17 +83,8 @@ class LogFilesDialog(ModalScreen[Path | None]):
 
         path = self.files[index]
         self.query_one("#log-files-status", Static).update("Checking selected item…")
-        if path.suffix.lower() not in LOG_FILE_EXTENSIONS:
-            supported_extensions = ", ".join(sorted(LOG_FILE_EXTENSIONS))
-            self.logger.warn(f"Unsupported log file type selected: {path}")
-            self.query_one("#log-files-status", Static).update(
-                f"Unsupported file type. Supported types: {supported_extensions}."
-            )
-            self.query_one("#log-files-open", Button).disabled = False
-            return
-
         try:
-            is_log_file = await asyncio.to_thread(is_supported_log_file, path)
+            is_log_file = await asyncio.to_thread(is_text_log_file, path)
         except OSError as error:
             self.logger.error(f"Could not access selected log file {path}: {error}")
             self.query_one("#log-files-status", Static).update(
@@ -104,9 +94,9 @@ class LogFilesDialog(ModalScreen[Path | None]):
             return
 
         if not is_log_file:
-            self.logger.warn(f"Selected log entry is not a regular file: {path}")
+            self.logger.warn(f"Selected log entry is not a regular text file: {path}")
             self.query_one("#log-files-status", Static).update(
-                "This item is not a regular file."
+                "This item is not a regular text file, or it appears to be binary."
             )
             self.query_one("#log-files-open", Button).disabled = False
             return

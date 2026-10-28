@@ -16,7 +16,7 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
     log_folder = tmp_path / "application logs"
     log_folder.mkdir()
     (log_folder / "application.log").write_text("older entry\nlatest entry", encoding="utf-8")
-    (log_folder / "image.png").write_bytes(b"not a log")
+    (log_folder / "image.png").write_bytes(b"\x89PNG\r\n\x1a\nimage")
     monkeypatch.setitem(
         config._data,
         "logs",
@@ -48,7 +48,7 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
             await pilot.click("#log-files-open")
             await pilot.pause(0.1)
             assert isinstance(app.screen, LogFilesDialog)
-            assert "Unsupported file type" in str(
+            assert "appears to be binary" in str(
                 app.screen.query_one("#log-files-status").content
             )
 

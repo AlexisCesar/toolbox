@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from src.utils.log_files import (
-    is_supported_log_file,
+    is_text_log_file,
     iter_log_entries,
     read_log_tail,
     read_log_text,
@@ -18,7 +18,7 @@ def test_iter_log_entries_lists_all_items_without_filtering_extensions(
     (tmp_path / "events.jsonl").write_text("{}", encoding="utf-8")
     (tmp_path / "2001-01-02.log").write_text("newer", encoding="utf-8")
     (tmp_path / "2001-01-01.log").write_text("older", encoding="utf-8")
-    (tmp_path / "screenshot.png").write_bytes(b"image")
+    (tmp_path / "screenshot.png").write_bytes(b"\x89PNG\r\n\x1a\nimage")
     (tmp_path / "subfolder").mkdir()
 
     assert [path.name for path in iter_log_entries(tmp_path)] == [
@@ -32,19 +32,28 @@ def test_iter_log_entries_lists_all_items_without_filtering_extensions(
     ]
 
 
-def test_is_supported_log_file_requires_allowed_extension_and_regular_file(
+def test_is_text_log_file_accepts_rotated_and_extensionless_logs_and_rejects_binary(
     tmp_path: Path,
 ) -> None:
-    valid_file = tmp_path / "application.LOG"
-    valid_file.write_text("log", encoding="utf-8")
-    unsupported_file = tmp_path / "image.png"
-    unsupported_file.write_bytes(b"image")
-    log_named_directory = tmp_path / "directory.log"
-    log_named_directory.mkdir()
+    regular_log = tmp_path / "application.LOG"
+    regular_log.write_text("log", encoding="utf-8")
+    rotated_log = tmp_path / "app01.log.20261027"
+    rotated_log.write_text("yesterday's log", encoding="utf-8")
+    extensionless_log = tmp_path / "app02-2026-10-27"
+    extensionless_log.write_text("another log", encoding="utf-8")
+    image_file = tmp_path / "image.png"
+    image_file.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00\x01\x02" * 20)
+    video_file = tmp_path / "clip"
+    video_file.write_bytes(b"\x00\x00\x00\x18ftypmp42" + b"video" * 20)
+    directory = tmp_path / "directory"
+    directory.mkdir()
 
-    assert is_supported_log_file(valid_file)
-    assert not is_supported_log_file(unsupported_file)
-    assert not is_supported_log_file(log_named_directory)
+    assert is_text_log_file(regular_log)
+    assert is_text_log_file(rotated_log)
+    assert is_text_log_file(extensionless_log)
+    assert not is_text_log_file(image_file)
+    assert not is_text_log_file(video_file)
+    assert not is_text_log_file(directory)
 
 
 def test_read_log_text_supports_utf8_bom_and_legacy_windows_text(
