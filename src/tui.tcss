@@ -37,6 +37,49 @@ Footer {
     width: 100%;
 }
 
+/* Bash View Styles */
+#bash-title {
+    width: 1fr;
+    height: 3;
+    content-align: left middle;
+    text-style: bold;
+}
+
+#bash-subtitle {
+    margin: 0 1;
+    height: auto;
+    text-style: italic;
+}
+
+#bash-controls {
+    height: 3;
+    margin: 0 1;
+}
+
+#bash-controls Button {
+    margin-right: 1;
+    min-width: 14;
+    width: 14;
+}
+
+#bash-status {
+    margin: 0 1;
+    height: auto;
+    max-height: 4;
+}
+
+#bash-terminal {
+    height: 1fr;
+    min-height: 5;
+    margin: 0 1;
+    border: round #374558;
+    overflow: hidden hidden;
+}
+
+#bash-terminal:focus {
+    border: round $accent;
+}
+
 /* Scripts View Styles */
 #scripts-label {
     padding: 1;

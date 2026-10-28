@@ -9,6 +9,26 @@ Then:
 Run the test suite with:
 ```uv run pytest```
 
+The Bash tab (sidebar shortcut `b`) opens a persistent interactive Bash session
+inside Toolbox, starting in the directory where Toolbox was launched. Commands,
+`cd`, variables, aliases, history, Tab completion, and interactive input use the
+same shell until it exits or you select **Stop session**. Switching tabs keeps
+the session running; closing Toolbox stops it. Select **New session** after a
+session ends to start again.
+
+Use `Ctrl+C` to interrupt a command, `Ctrl+D` or `exit` to end Bash, and `Ctrl+G`
+to return keyboard focus to the sidebar. While the terminal has focus, letters
+and Tab go to Bash instead of Toolbox navigation. Scroll with the mouse wheel
+or `Shift+PageUp` / `Shift+PageDown` (up to 2,000 lines of output history).
+
+Bash must be installed: on Linux/macOS it is found on `PATH`; on Windows,
+install Git for Windows (its usual installation paths are detected). For a
+custom installation, set `TOOLBOX_BASH` to the full executable path before
+launching Toolbox. Windows uses ConPTY via pywinpty; Linux/macOS use a native
+PTY. Dependencies are installed by `uv sync`. Terminal emulation supports common
+ANSI output and keyboard interaction; advanced terminal protocols and mouse
+interaction inside terminal programs are not supported.
+
 The Scripts view scans the configured scripts directory. Set `scripts.depth` in
 `config.toml` to include subfolders (from `0` for the root directory only to
 `5`); this value can also be changed in the Settings tab.

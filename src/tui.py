@@ -11,6 +11,7 @@ from src.views.notes import Notes
 from src.views.my_projects import MyProjects
 from src.views.logs import Logs
 from src.views.health_checks import HealthChecks
+from src.views.bash import Bash
 from src.utils.logger import Logger
 from src.utils.config import config
 import platform
@@ -32,6 +33,7 @@ class ToolboxTUI(App):
         ("m", "select_view(6)", "Markdown Viewer"),
         ("p", "select_view(7)", "My Projects"),
         ("e", "select_view(8)", "Settings"),
+        ("b", "select_view(9)", "Bash"),
         ("q", "quit", "Quit")
     ]
 
@@ -71,6 +73,7 @@ class ToolboxTUI(App):
             "📖 Markdown Preview",
             "📂 My Projects",
             "🔧 Settings",
+            "🐚 Bash",
             "🚪 Quit"
         ]
         list_view = ListView(*[ListItem(Label(item), classes="sidebar-item") for item in list_items], id=id)
@@ -92,6 +95,7 @@ class ToolboxTUI(App):
                 Notes(logger=self.logger, id="notes-view"),
                 MarkdownPreview(logger=self.logger, id="markdow-preview-view"),
                 MyProjects(logger=self.logger, id="my-projects-view"),
+                Bash(logger=self.logger, id="bash-view"),
                 initial="home-view",
                 id="main-content-switcher"
             ),
@@ -141,6 +145,8 @@ class ToolboxTUI(App):
             case 8:
                 switcher.current = "settings-view"
             case 9:
+                switcher.current = "bash-view"
+            case 10:
                 App.exit(self)
 
     def action_select_view(self, view_id: int) -> None:

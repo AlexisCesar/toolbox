@@ -5,7 +5,10 @@ description = "TUI to centralize scripts I run on a daily basis."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "ptyprocess>=0.7.0 ; sys_platform != 'win32'",
     "pyperclip>=1.11.0",
+    "pyte>=0.8.2",
+    "pywinpty>=2.0.15 ; sys_platform == 'win32'",
     "rich>=15.0.0",
     "textual[syntax]>=8.2.7",
     "tomlkit>=0.15.1",
