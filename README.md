@@ -17,6 +17,7 @@ checks we use throughout the workday, so they are easy to find in one place.
 - 🏥 Monitor HTTP endpoints and TCP connections on a configurable interval.
 - ✅ Create and organize TODOs, sub-items, descriptions, and priorities.
 - 🔧 Configure folders, theme, log sources, health checks, and other settings.
+- 🎃🎄 Enjoy seasonal themes!
 
 ## Get started
 
@@ -56,6 +57,10 @@ Scripts can be scanned from the root folder only (`depth = 0`) through five
 subfolder levels (`depth = 5`). Log folders may be local or network locations;
 the viewer opens at the latest part of a log file. HTTP and TCP checks repeat
 every 5, 10, 15, 30, or 60 seconds while the Health Checks tab is open.
+
+Seasonal themes appear in Settings during their calendar periods. To make all
+seasonal themes available year-round for development, set
+`ui.enable_all_seasonal_themes = true` manually in `config.toml`.
 
 TODO items are stored separately from `config.toml` in the current user's
 application data directory: `%APPDATA%\\toolbox` on Windows,

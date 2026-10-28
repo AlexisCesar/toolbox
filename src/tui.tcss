@@ -81,6 +81,10 @@ Footer {
 }
 
 /* Scripts View Styles */
+#ascii-art {
+    height: auto;
+}
+
 #scripts-label {
     padding: 1;
     text-style: bold;
@@ -284,6 +288,38 @@ ConfirmDialog {
 #settings-services-edit {
     background: #2864b4;
     color: white;
+}
+
+.halloween-theme #settings-logs-add,
+.halloween-theme #settings-logs-edit,
+.halloween-theme #settings-services-add,
+.halloween-theme #settings-services-edit {
+    background: #c026d3;
+    color: white;
+}
+
+.halloween-theme #settings-logs-add:hover,
+.halloween-theme #settings-logs-edit:hover,
+.halloween-theme #settings-services-add:hover,
+.halloween-theme #settings-services-edit:hover {
+    background: #e879f9;
+    color: #1a1124;
+}
+
+.christmas-theme #settings-logs-add,
+.christmas-theme #settings-logs-edit,
+.christmas-theme #settings-services-add,
+.christmas-theme #settings-services-edit {
+    background: #16a34a;
+    color: white;
+}
+
+.christmas-theme #settings-logs-add:hover,
+.christmas-theme #settings-logs-edit:hover,
+.christmas-theme #settings-services-add:hover,
+.christmas-theme #settings-services-edit:hover {
+    background: #4ade80;
+    color: #0c1711;
 }
 
 #settings-services-settings {

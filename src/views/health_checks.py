@@ -12,6 +12,7 @@ from textual.widgets import Button, Label, Static
 
 from src.utils.config import config
 from src.utils.logger import Logger
+from src.utils.seasonal_theme import HALLOWEEN_THEME
 
 
 REQUEST_TIMEOUT = 5
@@ -122,12 +123,18 @@ class HealthChecks(Static):
             exclusive=True,
         )
 
+    def _down_status(self) -> str:
+        """Render a failed check with seasonal iconography when enabled."""
+        if getattr(self.app, "theme", None) == HALLOWEEN_THEME:
+            return "[red]🪦 DOWN[/red]"
+        return "[red]✖ DOWN[/red]"
+
     async def perform_check(self, index: int, entry: dict[str, object]) -> None:
         try:
             is_healthy, message, duration = await asyncio.to_thread(check_service, entry)
             if not self._active:
                 return
-            status = "[green]● UP[/green]" if is_healthy else "[red]✖ DOWN[/red]"
+            status = "[green]● UP[/green]" if is_healthy else self._down_status()
             self.query_one(f"#health-status-{index}", Static).update(status)
             checked_at = datetime.now().strftime("%H:%M:%S")
             self.query_one(f"#health-detail-{index}", Static).update(
@@ -143,7 +150,7 @@ class HealthChecks(Static):
         except Exception as error:
             self.logger.error(f"Health check '{entry.get('name', index)}' failed unexpectedly: {error}")
             if self._active:
-                self.query_one(f"#health-status-{index}", Static).update("[red]✖ DOWN[/red]")
+                self.query_one(f"#health-status-{index}", Static).update(self._down_status())
                 self.query_one(f"#health-detail-{index}", Static).update(str(error))
         finally:
             self._pending.discard(index)

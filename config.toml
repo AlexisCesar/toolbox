@@ -6,6 +6,8 @@ projects = "./projects"
 [ui]
 theme = "textual-dark"
 todo_startup_notification = true
+# Set true to make all seasonal themes selectable throughout the year.
+enable_all_seasonal_themes = false
 
 [scripts]
 timeout = 3
