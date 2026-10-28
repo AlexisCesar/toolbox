@@ -30,6 +30,8 @@ First time using the Toolbox? Configure your directories, log folders, health ch
 - Add local or network log folders in [bold #5f5fff]Settings[/bold #5f5fff], then open them from the [bold #5f5fff]Logs[/bold #5f5fff] tab. Log files open at their latest entries.
 
 - Add HTTP endpoint or TCP health checks in [bold #5f5fff]Settings[/bold #5f5fff]. They run while the [bold #5f5fff]Health Checkers[/bold #5f5fff] tab is open.
+
+- Track tasks in the [bold #5f5fff]TODO list[/bold #5f5fff] tab (shortcut [bold]d[/bold]). Create tasks and sub-items, set priorities, pause work, and reorder the list. TODO items are saved between launches; startup notifications can be changed in [bold #5f5fff]Settings[/bold #5f5fff].
 """
 
 class Home(Static):

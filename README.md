@@ -55,3 +55,15 @@ Checks tab opens, then repeat at the selected 5, 10, 15, 30, or 60 second
 interval while that tab remains open. HTTP responses with status codes from 200
 through 399 are considered healthy; TCP checks report whether a connection can
 be established.
+
+The TODO list (sidebar shortcut `d`) lets you create, edit, complete, pause, and
+delete tasks. Tasks can include sub-items, descriptions, and low, medium, or high
+priorities. The list shows creation time, pending and completed totals, and
+completion progress; sort by manual order, creation time, or priority, and use
+Move up/Move down to adjust manual order. Completing a task also completes its
+sub-items. TODO data is stored separately from `config.toml` in the current
+user's application data directory (`%APPDATA%\toolbox` on Windows,
+`~/Library/Application Support/toolbox` on macOS, and `$XDG_DATA_HOME/toolbox`
+or `~/.local/share/toolbox` on Linux). Set `TOOLBOX_DATA_DIR` to use another
+directory. Startup notifications for pending tasks can be switched off in
+Settings.

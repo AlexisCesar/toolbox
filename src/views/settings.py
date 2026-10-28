@@ -3,7 +3,7 @@ import tomlkit
 from tomlkit import comment, document, nl
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
-from textual.widgets import Button, DataTable, Input, Label, Select, Static
+from textual.widgets import Button, Checkbox, DataTable, Input, Label, Rule, Select, Static
 from textual import on
 from pathlib import Path
 
@@ -39,7 +39,7 @@ class Settings(Static):
             with Horizontal(id="settings-columns"):
                 with Vertical(id="settings-left-column"):
                     yield from self.build_path_settings()
-                    yield from self.build_theme_settings()
+                    yield from self.build_other_settings()
                 with Vertical(id="settings-right-column"):
                     yield from self.build_logs_settings()
                     yield from self.build_services_settings()
@@ -48,7 +48,9 @@ class Settings(Static):
         """Build the path settings section of the settings view."""
         with VerticalScroll(id="paths-settings"):
             yield from self.build_scripts_path_settings()
+            yield Rule()
             yield from self.build_notes_path_settings()
+            yield Rule()
             yield from self.build_projects_path_settings()
     
     def build_scripts_path_settings(self) -> ComposeResult:
@@ -57,13 +59,13 @@ class Settings(Static):
         yield Label("Scripts Directory")
         yield Label("Path to the folder containing your scripts.", classes="settings-general-label-italic")
         yield Input(placeholder="/example/scripts", disabled=True, id="settings-directories-scripts-input")
-        yield Label("Scripts Folder Depth")
-        yield Label("Include scripts from subfolders up to this depth (0–5).", classes="settings-general-label-italic")
-        yield Select(((str(depth), depth) for depth in range(config.MAX_SCRIPTS_DEPTH + 1)), id="settings-scripts-depth-select")
         yield Static(SCRIPTS_DESC_INSTRUCTIONS, classes="settings-general-label-italic")
         with Horizontal(classes="settings-directories-buttons"):
             yield Button(label="Change Directory", id="settings-directories-scripts-change-button")
             yield Button(label="Generate Scripts Configuration File", id="settings-directories-generate-scripts-config-file")
+        yield Label("Scripts Folder Depth")
+        yield Label("Include scripts from subfolders up to this depth (0-5).", classes="settings-general-label-italic")
+        yield Select(((str(depth), depth) for depth in range(config.MAX_SCRIPTS_DEPTH + 1)), id="settings-scripts-depth-select")
     
     def build_notes_path_settings(self) -> ComposeResult:
         """Build the notes path settings section of the settings view."""
@@ -81,13 +83,19 @@ class Settings(Static):
         with Horizontal(classes="settings-directories-buttons"):
             yield Button(label="Change Directory", id="settings-directories-projects-change-button")
     
-    def build_theme_settings(self) -> ComposeResult:
-        """Build the theme settings section of the settings view."""
-        with VerticalScroll(id="theme-settings"):
-            yield Label("Application Theme", id="settings-theme-title")
+    def build_other_settings(self) -> ComposeResult:
+        """Build the other settings section of the settings view."""
+        with VerticalScroll(id="other-settings"):
+            yield Label("Other Settings", id="settings-other-title")
             with Horizontal():
                 yield Select(id="settings-theme-select", options=((line, line) for line in THEMES))
                 yield Button(label="Apply", id="settings-theme-apply-button")
+            yield Label("TODO list", classes="settings-general-label-italic")
+            yield Checkbox(
+                "Show a notification when items are pending",
+                value=config.todo_startup_notification,
+                id="settings-todo-notification",
+            )
     
     def build_logs_settings(self) -> ComposeResult:
         """Build the log folders configuration section."""
@@ -95,8 +103,8 @@ class Settings(Static):
             yield Label("Logs", id="settings-logs-title")
             yield DataTable(id="settings-logs-table", zebra_stripes=True, cursor_type="row")
             with Horizontal(id="settings-logs-buttons"):
-                yield Button("Add", id="settings-logs-add")
-                yield Button("Edit", id="settings-logs-edit")
+                yield Button("Add", variant="primary", id="settings-logs-add")
+                yield Button("Edit", variant="primary", id="settings-logs-edit")
                 yield Button("Remove", id="settings-logs-remove", variant="error")
 
     def build_services_settings(self) -> ComposeResult:
@@ -104,8 +112,8 @@ class Settings(Static):
             yield Label("Health Checks", id="settings-services-title")
             yield DataTable(id="settings-services-table", zebra_stripes=True, cursor_type="row")
             with Horizontal(id="settings-services-buttons"):
-                yield Button("Add", id="settings-services-add")
-                yield Button("Edit", id="settings-services-edit")
+                yield Button("Add", variant="primary", id="settings-services-add")
+                yield Button("Edit", variant="primary", id="settings-services-edit")
                 yield Button("Remove", id="settings-services-remove", variant="error")
     
     def on_mount(self) -> None:
@@ -120,6 +128,7 @@ class Settings(Static):
         self.query_one("#settings-directories-projects-input", Input).value = str(config.projects_dir.absolute())
         self.query_one("#settings-theme-select", Select).value = str(config.theme)
         self.query_one("#settings-scripts-depth-select", Select).value = config.scripts_depth
+        self.query_one("#settings-todo-notification", Checkbox).value = config.todo_startup_notification
         self.refresh_logs_table()
         self.refresh_services_table()
 
@@ -154,6 +163,20 @@ class Settings(Static):
         if depth != config.scripts_depth:
             config.update("scripts", "depth", depth)
             self.logger.info(f"Scripts folder depth changed to {depth}.")
+
+    @on(Checkbox.Changed, "#settings-todo-notification")
+    def on_todo_notification_changed(self, event: Checkbox.Changed) -> None:
+        enabled = bool(event.value)
+        if enabled == config.todo_startup_notification:
+            return
+        try:
+            config.update("ui", "todo_startup_notification", enabled)
+        except OSError as error:
+            self.query_one("#settings-todo-notification", Checkbox).value = not enabled
+            self.logger.error(f"Could not save the TODO notification setting: {error}")
+            return
+        state = "enabled" if enabled else "disabled"
+        self.logger.info(f"TODO startup notification {state}.")
         
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "settings-theme-apply-button":

@@ -5,6 +5,7 @@ projects = "./projects"
 
 [ui]
 theme = "textual-dark"
+todo_startup_notification = true
 
 [scripts]
 timeout = 3
