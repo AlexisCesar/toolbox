@@ -2,18 +2,19 @@ from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, Placeholder, RichLog
+from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, RichLog
 from src.views.home import Home
 from src.views.markdown_view import MarkdownPreview
-from src.views.search import Search
 from src.views.scripts import Scripts
 from src.views.notes import Notes
 from src.views.my_projects import MyProjects
 from src.views.logs import Logs
 from src.views.health_checks import HealthChecks
 from src.views.bash import Bash
+from src.views.todos import Todos
 from src.utils.logger import Logger
 from src.utils.config import config
+from src.utils.todo_store import TodoStore
 import platform
 
 from src.views.settings import Settings
@@ -25,21 +26,22 @@ class ToolboxTUI(App):
     CSS_PATH = "tui.tcss"
     BINDINGS = [
         ("h", "select_view(0)", "Home"),
-        ("s", "select_view(1)", "Search"),
-        ("c", "select_view(2)", "Scripts"),
-        ("l", "select_view(3)", "Logs"),
-        ("t", "select_view(4)", "Health Checkers"),
-        ("n", "select_view(5)", "Notes"),
-        ("m", "select_view(6)", "Markdown Viewer"),
-        ("p", "select_view(7)", "My Projects"),
-        ("e", "select_view(8)", "Settings"),
-        ("b", "select_view(9)", "Bash"),
+        ("b", "select_view(1)", "Bash"),
+        ("d", "select_view(2)", "TODO list"),
+        ("c", "select_view(3)", "Scripts"),
+        ("l", "select_view(4)", "Logs"),
+        ("t", "select_view(5)", "Health Checkers"),
+        ("n", "select_view(6)", "Notes"),
+        ("m", "select_view(7)", "Markdown Viewer"),
+        ("p", "select_view(8)", "My Projects"),
+        ("e", "select_view(9)", "Settings"),
         ("q", "quit", "Quit")
     ]
 
     def __init__(self):
         super().__init__()
         self.logger = Logger(self)
+        self.todo_store = TodoStore()
 
     def compose(self) -> ComposeResult:
         """Create the main layout for the TUI."""
@@ -65,7 +67,8 @@ class ToolboxTUI(App):
     def _build_sidebar(self, id) -> ListView:
         list_items = [
             "🏡 Home",
-            "🔍 Search",
+            "🐚 Bash",
+            "✅ TODO list",
             "📜 Scripts",
             "📝 Logs",
             "🏥 Health Checkers",
@@ -73,7 +76,6 @@ class ToolboxTUI(App):
             "📖 Markdown Preview",
             "📂 My Projects",
             "🔧 Settings",
-            "🐚 Bash",
             "🚪 Quit"
         ]
         list_view = ListView(*[ListItem(Label(item), classes="sidebar-item") for item in list_items], id=id)
@@ -87,7 +89,6 @@ class ToolboxTUI(App):
         container = Container(
             ContentSwitcher(
                 Home(id="home-view"),
-                Placeholder(label="In Development",id="search-view"),
                 Scripts(logger=self.logger, id="scripts-view"),
                 Logs(logger=self.logger, id="logs-view"),
                 HealthChecks(logger=self.logger, id="health-checkers-view"),
@@ -96,6 +97,7 @@ class ToolboxTUI(App):
                 MarkdownPreview(logger=self.logger, id="markdow-preview-view"),
                 MyProjects(logger=self.logger, id="my-projects-view"),
                 Bash(logger=self.logger, id="bash-view"),
+                Todos(logger=self.logger, store=self.todo_store, id="todos-view"),
                 initial="home-view",
                 id="main-content-switcher"
             ),
@@ -111,7 +113,7 @@ class ToolboxTUI(App):
 
     def show_markdown_preview(self, path: Path | None = None) -> None:
         """Switch the main content to the markdown viewer and load the selected file."""
-        self.query_one("#sidebar-list", ListView).index = 6
+        self.query_one("#sidebar-list", ListView).index = 7
 
         switcher = self.query_one("#main-content-switcher", ContentSwitcher)
         switcher.current = "markdow-preview-view"
@@ -129,23 +131,23 @@ class ToolboxTUI(App):
             case 0:
                 switcher.current = "home-view"
             case 1:
-                switcher.current = "search-view"
-            case 2:
-                switcher.current = "scripts-view"
-            case 3:
-                switcher.current = "logs-view"
-            case 4:
-                switcher.current = "health-checkers-view"
-            case 5:
-                switcher.current = "notes-view"
-            case 6:
-                switcher.current = "markdow-preview-view"
-            case 7:
-                switcher.current = "my-projects-view"
-            case 8:
-                switcher.current = "settings-view"
-            case 9:
                 switcher.current = "bash-view"
+            case 2:
+                switcher.current = "todos-view"
+            case 3:
+                switcher.current = "scripts-view"
+            case 4:
+                switcher.current = "logs-view"
+            case 5:
+                switcher.current = "health-checkers-view"
+            case 6:
+                switcher.current = "notes-view"
+            case 7:
+                switcher.current = "markdow-preview-view"
+            case 8:
+                switcher.current = "my-projects-view"
+            case 9:
+                switcher.current = "settings-view"
             case 10:
                 App.exit(self)
 

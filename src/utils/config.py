@@ -65,6 +65,11 @@ class Config:
         return self._data["ui"]["theme"]
 
     @property
+    def todo_startup_notification(self) -> bool:
+        """Whether to notify about pending TODO items when the app starts."""
+        return bool(self._data["ui"].get("todo_startup_notification", True))
+
+    @property
     def script_timeout(self) -> float:
         return float(self._data["scripts"]["timeout"])
 
@@ -78,8 +83,6 @@ class Config:
         return max(0, min(depth, self.MAX_SCRIPTS_DEPTH))
     
     def update(self, section: str, key: str, value):
-        self._data[section][key] = value
-
         with open("config.toml", "r", encoding="utf-8") as f:
             doc = tomlkit.parse(f.read())
 
@@ -87,6 +90,7 @@ class Config:
 
         with open("config.toml", "w", encoding="utf-8") as f:
             f.write(tomlkit.dumps(doc))
+        self._data[section][key] = value
 
     def update_logs(self, entries: list[dict[str, str]]) -> None:
         """Replace configured log folders and persist them as TOML array tables."""
