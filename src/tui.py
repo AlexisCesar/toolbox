@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from textual.app import App, ComposeResult
+from textual.css.query import NoMatches
+from textual.theme import Theme
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, RichLog
 from src.views.home import Home
@@ -15,6 +17,13 @@ from src.views.todos import Todos
 from src.utils.logger import Logger
 from src.utils.config import config
 from src.utils.todo_store import TodoStore
+from src.utils.seasonal_theme import (
+    CHRISTMAS_THEME,
+    DEFAULT_THEME,
+    HALLOWEEN_THEME,
+    SEASONAL_THEMES,
+    is_theme_available,
+)
 import platform
 
 from src.views.settings import Settings
@@ -42,6 +51,42 @@ class ToolboxTUI(App):
         super().__init__()
         self.logger = Logger(self)
         self.todo_store = TodoStore()
+        self._seasonal_timer = None
+        self._decoration_row = 0
+        self.register_theme(
+            Theme(
+                name=HALLOWEEN_THEME,
+                primary="#ff7a1a",
+                secondary="#a855f7",
+                accent="#c084fc",
+                foreground="#f7eaff",
+                background="#120d1a",
+                surface="#21152c",
+                panel="#1a1124",
+                boost="#321b3d",
+                warning="#ff9f43",
+                error="#ff5a3d",
+                success="#ff7a1a",
+                dark=True,
+            )
+        )
+        self.register_theme(
+            Theme(
+                name=CHRISTMAS_THEME,
+                primary="#dc2626",
+                secondary="#16a34a",
+                accent="#f8fafc",
+                foreground="#f0fdf4",
+                background="#0c1711",
+                surface="#14251a",
+                panel="#101d16",
+                boost="#244330",
+                warning="#facc15",
+                error="#fb7185",
+                success="#22c55e",
+                dark=True,
+            )
+        )
 
     def compose(self) -> ComposeResult:
         """Create the main layout for the TUI."""
@@ -53,7 +98,7 @@ class ToolboxTUI(App):
 
         with Vertical(id="main-container"):
             with Horizontal(id="title-bar"):
-                yield Label("Toolbox TUI")
+                yield Label("Toolbox TUI", id="app-title")
                 yield Label(" - v0.1.0", id="version")
                 yield Label(" - " + os_icon + platform.system(), id="os-info")
             with Horizontal(id="app-shell"):
@@ -65,8 +110,10 @@ class ToolboxTUI(App):
 
 
     def _build_sidebar(self, id) -> ListView:
+        halloween_active = config.theme == HALLOWEEN_THEME and is_theme_available(config.theme)
+        christmas_active = config.theme == CHRISTMAS_THEME and is_theme_available(config.theme)
         list_items = [
-            "🏡 Home",
+            "👻 Home" if halloween_active else "🎄 Home" if christmas_active else "🏡 Home",
             "🐚 Bash",
             "✅ TODO list",
             "📜 Scripts",
@@ -75,8 +122,8 @@ class ToolboxTUI(App):
             "📓 Notes",
             "📖 Markdown Preview",
             "📂 My Projects",
-            "🔧 Settings",
-            "🚪 Quit"
+            "🕸️ Settings" if halloween_active else "🔧 Settings",
+            "🪦 Quit" if halloween_active else "🦌 Quit" if christmas_active else "🚪 Quit"
         ]
         list_view = ListView(*[ListItem(Label(item), classes="sidebar-item") for item in list_items], id=id)
         list_view.index = 0
@@ -108,8 +155,93 @@ class ToolboxTUI(App):
 
     def on_mount(self) -> None:
         self.query_one("#sidebar-list").focus()
-        self.theme = config.theme
+        theme_name = config.theme
+        if theme_name in SEASONAL_THEMES and not is_theme_available(theme_name):
+            theme_name = DEFAULT_THEME
+        self.apply_theme(theme_name)
         self.logger.info("Toolbox TUI started.")
+
+    def apply_theme(self, theme_name: str) -> None:
+        """Apply a theme and update seasonal navigation decorations."""
+        if theme_name in SEASONAL_THEMES and not is_theme_available(theme_name):
+            theme_name = DEFAULT_THEME
+        halloween_active = theme_name == HALLOWEEN_THEME and is_theme_available(theme_name)
+        christmas_active = theme_name == CHRISTMAS_THEME
+        self.theme = theme_name
+        if not self.is_mounted:
+            return
+
+        if halloween_active or christmas_active:
+            if halloween_active:
+                self.add_class("halloween-theme")
+            else:
+                self.remove_class("halloween-theme")
+            if christmas_active:
+                self.add_class("christmas-theme")
+            else:
+                self.remove_class("christmas-theme")
+            if self._seasonal_timer is None:
+                self._seasonal_timer = self.set_interval(0.55, self._animate_seasonal_decoration)
+        else:
+            self.remove_class("halloween-theme")
+            self.remove_class("christmas-theme")
+            if self._seasonal_timer is not None:
+                self._seasonal_timer.stop()
+                self._seasonal_timer = None
+
+        title = "Toolbox TUI"
+        if halloween_active:
+            title = "🦇 Toolbox TUI 🎃"
+        elif christmas_active:
+            title = "🍪 Toolbox TUI ⛄"
+        self.query_one("#app-title", Label).update(title)
+        self._render_sidebar_labels(theme_name)
+
+    def _render_sidebar_labels(self, theme_name: str) -> None:
+        halloween_active = theme_name == HALLOWEEN_THEME
+        christmas_active = theme_name == CHRISTMAS_THEME
+        sidebar = self.query_one("#sidebar-list", ListView)
+        labels = [child.query_one(Label) for child in sidebar.children]
+        home_icon = "👻" if halloween_active else "🎄" if christmas_active else "🏡"
+        settings_icon = "🕸️" if halloween_active else "🔧"
+        quit_icon = "🪦" if halloween_active else "🦌" if christmas_active else "🚪"
+        decoration = "🕷" if halloween_active else "❄️" if christmas_active else ""
+        captions = [
+            f"{home_icon} Home",
+            "🐚 Bash",
+            "✅ TODO list",
+            "📜 Scripts",
+            "📝 Logs",
+            "🏥 Health Checkers",
+            "📓 Notes",
+            "📖 Markdown Preview",
+            "📂 My Projects",
+            f"{settings_icon} Settings",
+            f"{quit_icon} Quit",
+        ]
+        for index, (label, caption) in enumerate(zip(labels, captions)):
+            marker = f" {decoration}" if decoration and index == self._decoration_row else ""
+            label.update(caption + marker)
+
+    def _animate_seasonal_decoration(self) -> None:
+        """Move the seasonal spider or snowflake down the sidebar menu."""
+        if self.theme not in SEASONAL_THEMES:
+            return
+        if self.screen.id != "_default":
+            return
+        self._decoration_row = (self._decoration_row + 1) % 11
+        try:
+            self._render_sidebar_labels(self.theme)
+        except NoMatches:
+            if self._seasonal_timer is not None:
+                self._seasonal_timer.stop()
+                self._seasonal_timer = None
+
+    def on_unmount(self) -> None:
+        """Stop the seasonal animation when the app is closing."""
+        if self._seasonal_timer is not None:
+            self._seasonal_timer.stop()
+            self._seasonal_timer = None
 
     def show_markdown_preview(self, path: Path | None = None) -> None:
         """Switch the main content to the markdown viewer and load the selected file."""

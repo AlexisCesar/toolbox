@@ -1,5 +1,17 @@
 from datetime import datetime
+import random
+
 from textual.widgets import Log, RichLog
+from src.utils.seasonal_theme import CHRISTMAS_THEME, HALLOWEEN_THEME
+
+
+HALLOWEEN_LOG_EMOJIS = (
+    "🎃", "👻", "🕸️", "🕷️", "🦇", "💀", "☠️", "🐈‍⬛", "🧛", "🧟", "🍬", "🍭", "⚰️", "🪦",
+)
+CHRISTMAS_LOG_EMOJIS = (
+    "🎄", "🎅", "🤶", "🧝", "🦌", "🛷", "🎁", "🎀", "🧦", "🔔", "🕯️", "☃️", "⛄",
+    "❄️", "🍪", "🥛", "🥂", "🌟", "✨", "👼", "⛪", "❤️", "💚",
+)
 
 
 class Logger:
@@ -25,10 +37,15 @@ class Logger:
     def _write(self, level: str, message: str):
         log = self.app.query_one("#log", RichLog)
         time = datetime.now().strftime("%H:%M:%S")
+        emoji = ""
+        if self.app.theme == HALLOWEEN_THEME:
+            emoji = f"{random.choice(HALLOWEEN_LOG_EMOJIS)} "
+        elif self.app.theme == CHRISTMAS_THEME:
+            emoji = f"{random.choice(CHRISTMAS_LOG_EMOJIS)} "
         log_level_style = {
             "INFO": "blue",
             "WARN": "yellow",
             "ERROR": "red",
         }.get(level, "gray")
         
-        log.write(f"[bold {log_level_style}][{level} - {time}] {message}")
+        log.write(f"{emoji}[bold {log_level_style}][{level} - {time}] {message}")

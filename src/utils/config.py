@@ -70,6 +70,11 @@ class Config:
         return bool(self._data["ui"].get("todo_startup_notification", True))
 
     @property
+    def enable_all_seasonal_themes(self) -> bool:
+        """Whether seasonal themes are available outside their calendar periods."""
+        return bool(self._data["ui"].get("enable_all_seasonal_themes", False))
+
+    @property
     def script_timeout(self) -> float:
         return float(self._data["scripts"]["timeout"])
 

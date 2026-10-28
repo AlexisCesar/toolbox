@@ -53,10 +53,21 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
             )
 
             file_list.index = 1
+            open_button = app.screen.query_one("#log-files-open", Button)
+            for _ in range(40):
+                if not open_button.disabled:
+                    break
+                await pilot.pause(0.05)
+            assert not open_button.disabled
             await pilot.click("#log-files-open")
-            await pilot.pause(0.1)
+            for _ in range(40):
+                if isinstance(app.screen, LogFileDialog):
+                    break
+                await pilot.pause(0.05)
 
-            assert isinstance(app.screen, LogFileDialog)
+            assert isinstance(app.screen, LogFileDialog), str(
+                app.screen.query_one("#log-files-status").content
+            )
             assert app.screen.query_one("#log-file-close", Button).variant == "primary"
             viewer = app.screen.query_one("#log-file-content", TextArea)
             assert viewer.text == "older entry\nlatest entry"

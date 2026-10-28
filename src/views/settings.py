@@ -12,6 +12,7 @@ from src.utils.logger import Logger
 from src.utils.confirm_dialog import ConfirmDialog
 from src.utils.log_config_dialog import LogConfigDialog, LogFolder
 from src.utils.health_check_config_dialog import HealthCheckConfig, HealthCheckConfigDialog
+from src.utils.seasonal_theme import DEFAULT_THEME, available_themes
 
 
 THEMES = """nord
@@ -22,6 +23,10 @@ solarized-light
 atom-one-dark
 atom-one-light
 """.splitlines()
+
+
+def theme_options() -> list[str]:
+    return available_themes(THEMES)
 
 SCRIPTS_DESC_INSTRUCTIONS = """To add descriptions for your scripts, generate the descriptions file then edit it (located on your scripts folder)."""
 
@@ -88,7 +93,7 @@ class Settings(Static):
         with VerticalScroll(id="other-settings"):
             yield Label("Other Settings", id="settings-other-title")
             with Horizontal():
-                yield Select(id="settings-theme-select", options=((line, line) for line in THEMES))
+                yield Select(id="settings-theme-select", options=((line, line) for line in theme_options()))
                 yield Button(label="Apply", id="settings-theme-apply-button")
             yield Label("TODO list", classes="settings-general-label-italic")
             yield Checkbox(
@@ -126,7 +131,10 @@ class Settings(Static):
         self.query_one("#settings-directories-scripts-input", Input).value = str(config.scripts_dir.absolute())
         self.query_one("#settings-directories-notes-input", Input).value = str(config.notes_dir.absolute())
         self.query_one("#settings-directories-projects-input", Input).value = str(config.projects_dir.absolute())
-        self.query_one("#settings-theme-select", Select).value = str(config.theme)
+        available = theme_options()
+        select = self.query_one("#settings-theme-select", Select)
+        select.set_options((line, line) for line in available)
+        select.value = config.theme if config.theme in available else DEFAULT_THEME
         self.query_one("#settings-scripts-depth-select", Select).value = config.scripts_depth
         self.query_one("#settings-todo-notification", Checkbox).value = config.todo_startup_notification
         self.refresh_logs_table()
@@ -181,10 +189,14 @@ class Settings(Static):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "settings-theme-apply-button":
             theme_name = self.query_one("#settings-theme-select", Select).value
-            if not theme_name in THEMES:
+            if theme_name not in theme_options():
                 return
-            self.app.theme = theme_name
-            config.update("ui", "theme", theme_name)
+            try:
+                config.update("ui", "theme", theme_name)
+            except OSError as error:
+                self.logger.error(f"Could not save the application theme: {error}")
+                return
+            self.app.apply_theme(theme_name)
             self.logger.info(f"Application theme changed to: \"{theme_name}\".")
         
         if event.button.id == "settings-directories-scripts-change-button":

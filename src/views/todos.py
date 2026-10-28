@@ -15,6 +15,7 @@ from textual.widgets import Button, DataTable, Label, ProgressBar, Select, Stati
 from src.utils.confirm_dialog import ConfirmDialog
 from src.utils.config import config
 from src.utils.logger import Logger
+from src.utils.seasonal_theme import HALLOWEEN_THEME
 from src.utils.todo_dialog import TodoDraft, TodoEditorDialog
 from src.utils.todo_store import (
     TodoItem,
@@ -102,6 +103,10 @@ class Todos(Static):
                 severity="warning",
             )
 
+    def on_show(self) -> None:
+        """Refresh seasonal priority markers when returning to the TODO list."""
+        self.refresh_table()
+
     def load_items(self) -> None:
         """Read persisted tasks once the view is attached to the app."""
         try:
@@ -128,10 +133,14 @@ class Todos(Static):
                 status = "Ⅱ Paused"
             else:
                 status = "○ Pending"
+            priority_emoji = "💀" if (
+                item.priority == "high"
+                and getattr(self.app, "theme", None) == HALLOWEEN_THEME
+            ) else "🔴"
             priority_text = {
                 "low": Text("🟢 Low", style="green"),
                 "medium": Text("🟡 Medium", style="yellow"),
-                "high": Text("🔴 High", style="red"),
+                "high": Text(f"{priority_emoji} High", style="red"),
             }[item.priority]
             try:
                 created = datetime.fromisoformat(item.created_at).astimezone().strftime("%Y-%m-%d %H:%M")
