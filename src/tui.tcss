@@ -214,13 +214,6 @@ ConfirmDialog {
     padding: 0 1;
 }
 
-#settings-secondary-config {
-    height: 1fr;
-    min-height: 12;
-    border: round #374558;
-    margin-top: 1;
-}
-
 #settings-logs-title {
     text-style: bold;
     margin: 0;
@@ -236,6 +229,32 @@ ConfirmDialog {
 }
 
 #settings-logs-buttons Button {
+    margin-right: 1;
+}
+
+#settings-services-settings {
+    height: 1fr;
+    min-height: 12;
+    border: round #374558;
+    padding: 0 1;
+    margin-top: 1;
+}
+
+#settings-services-title {
+    text-style: bold;
+    margin: 0;
+}
+
+#settings-services-table {
+    height: 1fr;
+    min-height: 3;
+}
+
+#settings-services-buttons {
+    height: 3;
+}
+
+#settings-services-buttons Button {
     margin-right: 1;
 }
 
@@ -288,6 +307,58 @@ ConfirmDialog {
 #logs-subtitle {
     margin: 0 1 1 1;
     text-style: italic;
+}
+
+/* Health Checks View */
+#health-checks-title {
+    padding: 1;
+    text-style: bold;
+}
+
+#health-checks-subtitle {
+    margin: 0 1 1 1;
+    text-style: italic;
+}
+
+#health-checks-entries {
+    height: 1fr;
+    padding: 0 1;
+}
+
+.health-check-entry {
+    height: 5;
+    border: round #374558;
+    padding: 0 1;
+    margin-bottom: 1;
+    align: left middle;
+}
+
+.health-status {
+    width: 10;
+    content-align: left middle;
+    text-style: bold;
+}
+
+.health-check-name {
+    width: 20%;
+    content-align: left middle;
+    text-style: bold;
+}
+
+.health-check-target {
+    width: 1fr;
+    content-align: left middle;
+    text-wrap: nowrap;
+}
+
+.health-check-detail {
+    width: 30%;
+    content-align: left middle;
+    text-wrap: wrap;
+}
+
+.health-check-entry Button {
+    width: 15;
 }
 
 #logs-entries {
@@ -393,4 +464,42 @@ LogConfigDialog {
     min-height: 1;
     color: $error;
     margin-top: 1;
+}
+
+HealthCheckConfigDialog {
+    align: center middle;
+}
+
+#health-config-dialog {
+    width: 70%;
+    height: auto;
+    max-height: 90%;
+    padding: 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#health-config-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.health-config-label {
+    margin-top: 1;
+}
+
+#health-config-error {
+    min-height: 1;
+    color: $error;
+    margin-top: 1;
+}
+
+#health-config-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#health-config-buttons Button {
+    margin-left: 1;
 }

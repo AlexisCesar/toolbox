@@ -10,6 +10,7 @@ from src.views.scripts import Scripts
 from src.views.notes import Notes
 from src.views.my_projects import MyProjects
 from src.views.logs import Logs
+from src.views.health_checks import HealthChecks
 from src.utils.logger import Logger
 from src.utils.config import config
 import platform
@@ -86,7 +87,7 @@ class ToolboxTUI(App):
                 Placeholder(label="In Development",id="search-view"),
                 Scripts(logger=self.logger, id="scripts-view"),
                 Logs(logger=self.logger, id="logs-view"),
-                Placeholder(label="In Development", id="health-checkers-view"),
+                HealthChecks(logger=self.logger, id="health-checkers-view"),
                 Settings(logger=self.logger, id="settings-view"),
                 Notes(logger=self.logger, id="notes-view"),
                 MarkdownPreview(logger=self.logger, id="markdow-preview-view"),

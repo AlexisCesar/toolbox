@@ -15,7 +15,7 @@ LOGO_ASCII_ART = """[bold #ff5f00]
 
 INSTRUCTIONS = """[bold]Select an option from the sidebar to get started.[/bold]
 
-First time using the Toolbox? Configure your directories, log folders, theme and more on the [bold #5f5fff]Settings[/bold #5f5fff] tab.
+First time using the Toolbox? Configure your directories, log folders, health checks, theme and more on the [bold #5f5fff]Settings[/bold #5f5fff] tab.
 
 [bold]Tips:[/bold]
 
@@ -26,6 +26,8 @@ First time using the Toolbox? Configure your directories, log folders, theme and
 - You can edit and save text/script files using the [bold #5f5fff]Notes[/bold #5f5fff] tab.
 
 - Add local or network log folders in [bold #5f5fff]Settings[/bold #5f5fff], then open them from the [bold #5f5fff]Logs[/bold #5f5fff] tab. Log files open at their latest entries.
+
+- Add HTTP endpoint or TCP health checks in [bold #5f5fff]Settings[/bold #5f5fff]. They run while the [bold #5f5fff]Health Checkers[/bold #5f5fff] tab is open.
 """
 
 class Home(Static):

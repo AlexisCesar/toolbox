@@ -10,23 +10,6 @@ theme = "textual-dark"
 timeout = 3
 depth = 1
 
-# Health Checker - Services locations
-# In order to add a new service, use the following structure:
-# [[services]]
-# name = "service 1"
-# server = "localhost"
-# environment = "PROD"
-
-[[services]]
-name = "My Test Service 1"
-server = "localhost"
-environment = "dev"
-
-[[services]]
-name = "My Test Service 2"
-server = "localhost"
-environment = "dev"
-
 [[logs]]
 name = "Application_01_logs"
 location = "./logs/application_01_logs"
@@ -34,3 +17,15 @@ location = "./logs/application_01_logs"
 [[logs]]
 name = "Application 02"
 location = "./logs/application_02_logs"
+
+[[services]]
+name = "Healthy Endpoint Example"
+type = "http"
+target = "https://httpbin.org/status/200"
+interval = 5
+
+[[services]]
+name = "Failing Endpoint Example"
+type = "http"
+target = "https://httpbin.org/status/500"
+interval = 5

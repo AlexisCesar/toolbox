@@ -2,7 +2,7 @@ import tomlkit
 
 from tomlkit import comment, document, nl
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical, VerticalScroll
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, DataTable, Input, Label, Select, Static
 from textual import on
 from pathlib import Path
@@ -11,6 +11,7 @@ from src.utils.config import config, iter_script_files, normalize_directory_path
 from src.utils.logger import Logger
 from src.utils.confirm_dialog import ConfirmDialog
 from src.utils.log_config_dialog import LogConfigDialog, LogFolder
+from src.utils.health_check_config_dialog import HealthCheckConfig, HealthCheckConfigDialog
 
 
 THEMES = """nord
@@ -41,7 +42,7 @@ class Settings(Static):
                     yield from self.build_theme_settings()
                 with Vertical(id="settings-right-column"):
                     yield from self.build_logs_settings()
-                    yield Container(id="settings-secondary-config")
+                    yield from self.build_services_settings()
     
     def build_path_settings(self) -> ComposeResult:
         """Build the path settings section of the settings view."""
@@ -97,6 +98,15 @@ class Settings(Static):
                 yield Button("Add", id="settings-logs-add")
                 yield Button("Edit", id="settings-logs-edit")
                 yield Button("Remove", id="settings-logs-remove", variant="error")
+
+    def build_services_settings(self) -> ComposeResult:
+        with Vertical(id="settings-services-settings"):
+            yield Label("Health Checks", id="settings-services-title")
+            yield DataTable(id="settings-services-table", zebra_stripes=True, cursor_type="row")
+            with Horizontal(id="settings-services-buttons"):
+                yield Button("Add", id="settings-services-add")
+                yield Button("Edit", id="settings-services-edit")
+                yield Button("Remove", id="settings-services-remove", variant="error")
     
     def on_mount(self) -> None:
         self.update_fields()
@@ -111,6 +121,7 @@ class Settings(Static):
         self.query_one("#settings-theme-select", Select).value = str(config.theme)
         self.query_one("#settings-scripts-depth-select", Select).value = config.scripts_depth
         self.refresh_logs_table()
+        self.refresh_services_table()
 
     def refresh_logs_table(self) -> None:
         table = self.query_one("#settings-logs-table", DataTable)
@@ -119,6 +130,21 @@ class Settings(Static):
         table.add_column("Folder")
         for index, entry in enumerate(config.logs):
             table.add_row(entry["name"], entry["location"], key=str(index))
+
+    def refresh_services_table(self) -> None:
+        table = self.query_one("#settings-services-table", DataTable)
+        table.clear(columns=True)
+        table.add_columns("Name", "Type", "Target", "Interval")
+        for index, entry in enumerate(config.services):
+            check_type = str(entry.get("type", "invalid config")).upper()
+            interval = f"{entry.get('interval', '?')}s" if "interval" in entry else "?"
+            table.add_row(
+                str(entry.get("name", "(unnamed)")),
+                check_type,
+                str(entry.get("target", entry.get("server", "(missing)"))),
+                interval,
+                key=str(index),
+            )
 
     @on(Select.Changed, "#settings-scripts-depth-select")
     def on_scripts_depth_changed(self, event: Select.Changed) -> None:
@@ -170,6 +196,15 @@ class Settings(Static):
 
         if event.button.id == "settings-logs-remove":
             self.confirm_remove_log(self.selected_log_index())
+
+        if event.button.id == "settings-services-add":
+            self.open_health_check_editor()
+
+        if event.button.id == "settings-services-edit":
+            self.open_health_check_editor(self.selected_service_index())
+
+        if event.button.id == "settings-services-remove":
+            self.confirm_remove_health_check(self.selected_service_index())
 
     def selected_log_index(self) -> int | None:
         entries = config.logs
@@ -246,6 +281,104 @@ class Settings(Static):
             return
         self.logger.info(f"Removed log folder '{removed['name']}'.")
         self.refresh_logs_table()
+
+    def selected_service_index(self) -> int | None:
+        entries = config.services
+        index = self.query_one("#settings-services-table", DataTable).cursor_row
+        if index is None or not 0 <= index < len(entries):
+            self.logger.warn("Select a health check first.")
+            return None
+        return index
+
+    def open_health_check_editor(self, index: int | None = None) -> None:
+        initial = None
+        if index is not None:
+            entry = config.services[index]
+            try:
+                if entry["type"] not in {"http", "tcp"}:
+                    raise ValueError("Unsupported check type")
+                interval = int(entry["interval"])
+                if interval not in {5, 10, 15, 30, 60}:
+                    raise ValueError("Unsupported check interval")
+                initial = HealthCheckConfig(
+                    name=str(entry["name"]),
+                    check_type=str(entry["type"]),
+                    target=str(entry["target"]),
+                    interval=interval,
+                )
+            except (KeyError, TypeError, ValueError):
+                self.logger.warn("This health check uses an older or invalid configuration. Remove it and add it again.")
+                return
+        self.app.push_screen(
+            HealthCheckConfigDialog(logger=self.logger, initial=initial),
+            callback=lambda result: self.save_health_check(result, index),
+        )
+
+    def save_health_check(self, result: HealthCheckConfig | None, index: int | None) -> None:
+        if result is None:
+            return
+        entries = config.services
+        if any(
+            str(entry.get("name", "")).casefold() == result.name.casefold()
+            for existing_index, entry in enumerate(entries)
+            if existing_index != index
+        ):
+            self.logger.warn(f"A health check named '{result.name}' already exists.")
+            return
+
+        entry = {
+            "name": result.name,
+            "type": result.check_type,
+            "target": result.target,
+            "interval": result.interval,
+        }
+        if index is None:
+            entries.append(entry)
+            message = f"Added {result.check_type.upper()} health check '{result.name}'."
+        elif 0 <= index < len(entries):
+            entries[index] = entry
+            message = f"Updated health check '{result.name}'."
+        else:
+            self.logger.warn("The selected health check is no longer configured.")
+            return
+
+        try:
+            config.update_services(entries)
+        except OSError as error:
+            self.logger.error(f"Could not save health check configuration: {error}")
+            return
+        self.logger.info(message)
+        self.refresh_services_table()
+
+    def confirm_remove_health_check(self, index: int | None) -> None:
+        if index is None:
+            return
+        entry = config.services[index]
+        name = str(entry.get("name", "(unnamed)"))
+        self.app.push_screen(
+            ConfirmDialog(
+                f"Remove the health check '{name}'?",
+                confirmButtonText="Remove",
+                cancelButtonText="Cancel",
+            ),
+            callback=lambda result: self.remove_health_check(result.confirmed, index),
+        )
+
+    def remove_health_check(self, confirmed: bool, index: int) -> None:
+        if not confirmed:
+            return
+        entries = config.services
+        if not 0 <= index < len(entries):
+            self.logger.warn("The selected health check is no longer configured.")
+            return
+        removed = entries.pop(index)
+        try:
+            config.update_services(entries)
+        except OSError as error:
+            self.logger.error(f"Could not save health check configuration: {error}")
+            return
+        self.logger.info(f"Removed health check '{removed.get('name', '(unnamed)')}'.")
+        self.refresh_services_table()
     
     def change_scripts_dir(self, confirmationResult: bool):
         if confirmationResult.confirmed:
