@@ -1,69 +1,88 @@
-Running the toolbox:
+# Toolbox TUI 🧰
 
-With UV installed, run:
-```uv sync```
+![Toolbox TUI screenshot](https://github.com/user-attachments/assets/cb793e85-24b2-4d93-83d3-0b86fc051b0e)
 
-Then:
-```uv run python main.py```
+**Toolbox TUI** is a terminal user interface for everyday software engineering
+tasks. It brings together the scripts, logs, project folders, notes, and health
+checks we use throughout the workday, so they are easy to find in one place.
 
-Run the test suite with:
-```uv run pytest```
+## What you can do
 
-The Bash tab (sidebar shortcut `b`) opens a persistent interactive Bash session
-inside Toolbox, starting in the directory where Toolbox was launched. Commands,
-`cd`, variables, aliases, history, Tab completion, and interactive input use the
-same shell until it exits or you select **Stop session**. Switching tabs keeps
-the session running; closing Toolbox stops it. Select **New session** after a
-session ends to start again.
+- 🐚 Run commands in an interactive, persistent Bash session.
+- 📜 Browse and run scripts from a configurable folder, with descriptions and
+  saved parameters.
+- 📝 Browse, edit, and save text files and preview Markdown notes.
+- 📂 Find project folders and open Visual Studio solutions or folders in VS Code.
+- 📋 Browse local or network log folders and inspect recent log output.
+- 🏥 Monitor HTTP endpoints and TCP connections on a configurable interval.
+- ✅ Create and organize TODOs, sub-items, descriptions, and priorities.
+- 🔧 Configure folders, theme, log sources, health checks, and other settings.
 
-Use `Ctrl+C` to interrupt a command, `Ctrl+D` or `exit` to end Bash, and `Ctrl+G`
-to return keyboard focus to the sidebar. While the terminal has focus, letters
-and Tab go to Bash instead of Toolbox navigation. Scroll with the mouse wheel
-or `Shift+PageUp` / `Shift+PageDown` (up to 2,000 lines of output history).
+## Get started
 
-Bash must be installed: on Linux/macOS it is found on `PATH`; on Windows,
-install Git for Windows (its usual installation paths are detected). For a
-custom installation, set `TOOLBOX_BASH` to the full executable path before
-launching Toolbox. Windows uses ConPTY via pywinpty; Linux/macOS use a native
-PTY. Dependencies are installed by `uv sync`. Terminal emulation supports common
-ANSI output and keyboard interaction; advanced terminal protocols and mouse
-interaction inside terminal programs are not supported.
+### Prerequisites
 
-The Scripts view scans the configured scripts directory. Set `scripts.depth` in
-`config.toml` to include subfolders (from `0` for the root directory only to
-`5`); this value can also be changed in the Settings tab.
+- [Python 3.12 or newer](https://www.python.org/downloads/)
+- [Git](https://git-scm.com/downloads)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) for installing
+  project dependencies and running the app
+- Bash, if you want to use the embedded Bash view. Linux and macOS use Bash on
+  `PATH`; on Windows, install [Git for Windows](https://gitforwindows.org/).
 
-Configure log folders in Settings. Each entry uses a name and a folder path,
-which may be a local directory or a network share accessible to this computer:
+### Clone and run
 
-```toml
-[[logs]]
-name = "Application X v2"
-location = 'C:\dev\my_projects\application_x_v2\logs\'
+```bash
+git clone https://github.com/AlexisCesar/toolbox.git
+cd toolbox
+uv sync
+uv run python main.py
 ```
 
-The Logs tab lists the configured folders and shows their entries in descending
-name order. It accepts logs with any filename, including rotated or extensionless
-logs, and checks a small content sample when you open an entry to reject common
-binary formats such as images and videos. Folder scans and file reads run in the
-background, and the viewer starts with up to the last 256 KiB of the file so
-large remote logs do not need to be read in full.
+The first command installs the dependencies declared by the project. To start
+the app again later, run `uv run python main.py` from the repository directory.
+You can also install the dependencies into the active environment with `uv sync`
+and run `python main.py` directly.
 
-Configure HTTP endpoint and TCP connection health checks in Settings. HTTP checks
-use a URL; TCP checks use `host:port`. Checks run immediately when the Health
-Checks tab opens, then repeat at the selected 5, 10, 15, 30, or 60 second
-interval while that tab remains open. HTTP responses with status codes from 200
-through 399 are considered healthy; TCP checks report whether a connection can
-be established.
+## Configure your Toolbox
 
-The TODO list (sidebar shortcut `d`) lets you create, edit, complete, pause, and
-delete tasks. Tasks can include sub-items, descriptions, and low, medium, or high
-priorities. The list shows creation time, pending and completed totals, and
-completion progress; sort by manual order, creation time, or priority, and use
-Move up/Move down to adjust manual order. Completing a task also completes its
-sub-items. TODO data is stored separately from `config.toml` in the current
-user's application data directory (`%APPDATA%\toolbox` on Windows,
-`~/Library/Application Support/toolbox` on macOS, and `$XDG_DATA_HOME/toolbox`
-or `~/.local/share/toolbox` on Linux). Set `TOOLBOX_DATA_DIR` to use another
-directory. Startup notifications for pending tasks can be switched off in
-Settings.
+The included `config.toml` contains example settings and paths for scripts,
+notes, projects, logs, and health checks. Open **Settings** in the app to change
+the configured directories, theme, log folders, and HTTP or TCP checks. The
+Scripts settings also let you set how many subfolder levels are scanned and
+generate a `scripts_configuration.toml` file for script descriptions and saved
+parameters.
+
+Scripts can be scanned from the root folder only (`depth = 0`) through five
+subfolder levels (`depth = 5`). Log folders may be local or network locations;
+the viewer opens at the latest part of a log file. HTTP and TCP checks repeat
+every 5, 10, 15, 30, or 60 seconds while the Health Checks tab is open.
+
+TODO items are stored separately from `config.toml` in the current user's
+application data directory: `%APPDATA%\\toolbox` on Windows,
+`~/Library/Application Support/toolbox` on macOS, and
+`$XDG_DATA_HOME/toolbox` or `~/.local/share/toolbox` on Linux. Set
+`TOOLBOX_DATA_DIR` to use a different location. Startup notifications for
+pending TODOs can be changed in Settings.
+
+## Bash view
+
+The Bash tab (`b`) starts a persistent interactive session in the directory
+where Toolbox was launched. Commands, variables, aliases, history, and tab
+completion stay in the same session while you move between tabs. Use `Ctrl+C`
+to interrupt a command, `Ctrl+D` or `exit` to end the session, and `Ctrl+G` to
+return focus to the sidebar. Scroll through output with the mouse wheel or
+`Shift+PageUp` / `Shift+PageDown`.
+
+On Windows, Toolbox detects common Git for Windows Bash locations. For a custom
+installation, set `TOOLBOX_BASH` to the full path of the Bash executable before
+launching. Terminal emulation supports common ANSI output and keyboard input;
+advanced terminal protocols and mouse interaction inside terminal programs are
+not supported.
+
+## Development
+
+Run the test suite with:
+
+```bash
+uv run pytest
+```
