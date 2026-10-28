@@ -48,6 +48,11 @@ class Config:
         ]
 
     @property
+    def services(self) -> list[dict[str, object]]:
+        """Return configured health checks, preserving entries with older schemas."""
+        return [dict(entry) for entry in self._data.get("services", []) if isinstance(entry, dict)]
+
+    @property
     def notes_dir(self) -> Path:
         return Path(self._data["paths"]["notes"])
 
@@ -103,6 +108,24 @@ class Config:
         with open("config.toml", "w", encoding="utf-8") as f:
             f.write(tomlkit.dumps(doc))
         self._data["logs"] = normalized_entries
+
+    def update_services(self, entries: list[dict[str, object]]) -> None:
+        """Replace configured health checks and persist them as TOML array tables."""
+        normalized_entries = [dict(entry) for entry in entries]
+        with open("config.toml", "r", encoding="utf-8") as f:
+            doc = tomlkit.parse(f.read())
+
+        service_tables = tomlkit.aot()
+        for entry in normalized_entries:
+            service_table = tomlkit.table()
+            for key, value in entry.items():
+                service_table[key] = value
+            service_tables.append(service_table)
+        doc["services"] = service_tables
+
+        with open("config.toml", "w", encoding="utf-8") as f:
+            f.write(tomlkit.dumps(doc))
+        self._data["services"] = normalized_entries
 
 
 config = Config()

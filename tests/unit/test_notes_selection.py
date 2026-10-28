@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 from src.utils.confirm_dialog import ConfirmResult
 from src.views.notes import Notes
 from textual.app import App
+from textual._context import active_app
 
 
 def make_notes(viewer: MagicMock, tree: MagicMock | None = None) -> Notes:
@@ -38,7 +39,11 @@ def test_selecting_another_file_prompts_when_current_file_is_dirty(
     notes.saved_content = "original"
     event = SimpleNamespace(path=next_path)
 
-    notes.on_directory_tree_file_selected(event)
+    app_token = active_app.set(notes._parent)
+    try:
+        notes.on_directory_tree_file_selected(event)
+    finally:
+        active_app.reset(app_token)
 
     notes.app.push_screen.assert_called_once()
     dialog = notes.app.push_screen.call_args.args[0]

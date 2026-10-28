@@ -25,3 +25,10 @@ location = 'C:\dev\my_projects\application_x_v2\logs\'
 The Logs tab lists the configured folders, filters to supported text log types
 (`.log`, `.txt`, `.out`, `.err`, `.trace`, `.jsonl`, and `.ndjson`), and opens a
 selected file at its latest entries.
+
+Configure HTTP endpoint and TCP connection health checks in Settings. HTTP checks
+use a URL; TCP checks use `host:port`. Checks run immediately when the Health
+Checks tab opens, then repeat at the selected 5, 10, 15, 30, or 60 second
+interval while that tab remains open. HTTP responses with status codes from 200
+through 399 are considered healthy; TCP checks report whether a connection can
+be established.
