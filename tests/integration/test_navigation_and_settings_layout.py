@@ -11,7 +11,7 @@ def test_sidebar_order_and_settings_layout() -> None:
     async def check_layout() -> None:
         async with app.run_test(size=(160, 45)) as pilot:
             sidebar = app.query_one("#sidebar-list", ListView)
-            assert len(sidebar.children) == 11
+            assert len(sidebar.children) == 12
             app.action_select_view(1)
             await pilot.pause()
             assert app.query_one("#main-content-switcher").current == "bash-view"
@@ -19,7 +19,7 @@ def test_sidebar_order_and_settings_layout() -> None:
             await pilot.pause()
             assert app.query_one("#main-content-switcher").current == "todos-view"
 
-            app.action_select_view(9)
+            app.action_select_view(10)
             await pilot.pause()
             left = app.query_one("#settings-left-column").region
             right = app.query_one("#settings-right-column").region

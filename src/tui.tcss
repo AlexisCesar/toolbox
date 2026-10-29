@@ -90,6 +90,130 @@ Footer {
     text-style: bold;
 }
 
+/* Offline Utilities View */
+#utilities-view {
+    height: 1fr;
+    padding: 1;
+}
+
+#utilities-container {
+    height: 1fr;
+}
+
+#utilities-title {
+    height: 1;
+    text-style: bold;
+}
+
+#utilities-subtitle {
+    height: auto;
+    max-height: 2;
+    margin-bottom: 1;
+}
+
+#utility-search {
+    height: 3;
+    margin-bottom: 1;
+}
+
+#utilities-browser {
+    height: 1fr;
+    min-height: 10;
+}
+
+#utility-list {
+    width: 58%;
+    min-width: 32;
+    border: round #374558;
+}
+
+#utility-list > .option-list--separator {
+    color: $accent;
+    text-style: bold;
+}
+
+#utilities-browser OptionList:focus {
+    border: round $accent;
+}
+
+#utility-details {
+    width: 42%;
+    padding: 1 2;
+}
+
+#utility-details-title {
+    height: auto;
+    text-style: bold;
+}
+
+#utility-details-description {
+    height: auto;
+    margin-top: 1;
+}
+
+#utility-open {
+    margin-top: 1;
+}
+
+UtilityDialog {
+    align: center middle;
+}
+
+#utility-dialog {
+    width: 92%;
+    height: 90%;
+    padding: 1 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#utility-dialog-title {
+    height: 1;
+    text-style: bold;
+}
+
+#utility-dialog-description {
+    height: auto;
+    max-height: 3;
+    margin-bottom: 1;
+}
+
+.utility-field-label {
+    height: 1;
+    margin-top: 1;
+    text-style: bold;
+}
+
+#utility-input,
+#utility-second-input,
+#utility-output {
+    height: 1fr;
+    min-height: 3;
+    border: round #374558;
+}
+
+#utility-inputs-row {
+    height: 1fr;
+    min-height: 6;
+}
+
+.utility-input-column {
+    width: 50%;
+    height: 1fr;
+    padding-right: 1;
+}
+
+#utility-dialog-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#utility-dialog-buttons Button {
+    min-width: 14;
+    margin-left: 1;
+}
+
 /* Script Editor Dialog Styles */
 ScriptEditorDialog {
     align: center middle;
