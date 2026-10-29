@@ -21,7 +21,7 @@ def test_christmas_theme_works_with_manual_seasonal_override(monkeypatch) -> Non
             sidebar = app.query_one("#sidebar-list", ListView)
             labels = [str(item.query_one(Label).content) for item in sidebar.children]
             assert labels[0].startswith("\U0001F384 Home")
-            assert labels[10].startswith("\U0001F98C Quit")
+            assert labels[11].startswith("\U0001F98C Quit")
 
             art = str(app.query_one("#ascii-art", Static).content)
             assert "\U0001F381 Wishing you a Merry Christmas!" in art

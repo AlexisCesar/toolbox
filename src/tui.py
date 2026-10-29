@@ -14,6 +14,7 @@ from src.views.logs import Logs
 from src.views.health_checks import HealthChecks
 from src.views.bash import Bash
 from src.views.todos import Todos
+from src.views.utilities import Utilities
 from src.utils.logger import Logger
 from src.utils.config import config
 from src.utils.todo_store import TodoStore
@@ -43,7 +44,8 @@ class ToolboxTUI(App):
         ("n", "select_view(6)", "Notes"),
         ("m", "select_view(7)", "Markdown Viewer"),
         ("p", "select_view(8)", "My Projects"),
-        ("e", "select_view(9)", "Settings"),
+        ("u", "select_view(9)", "Utilities"),
+        ("e", "select_view(10)", "Settings"),
         ("q", "quit", "Quit")
     ]
 
@@ -137,6 +139,7 @@ class ToolboxTUI(App):
             "\U0001F4D3 Notes",
             "\U0001F4D6 Markdown Preview",
             "\U0001F4C2 My Projects",
+            f"\U0001F9F0 Utilities",
             f"{settings_icon} Settings",
             f"{quit_icon} Quit",
         ]
@@ -160,6 +163,7 @@ class ToolboxTUI(App):
                 MyProjects(logger=self.logger, id="my-projects-view"),
                 Bash(logger=self.logger, id="bash-view"),
                 Todos(logger=self.logger, store=self.todo_store, id="todos-view"),
+                Utilities(logger=self.logger, id="utilities-view"),
                 initial="home-view",
                 id="main-content-switcher"
             ),
@@ -250,6 +254,7 @@ class ToolboxTUI(App):
             "\U0001F4D3 Notes",
             "\U0001F4D6 Markdown Preview",
             "\U0001F4C2 My Projects",
+            f"\U0001F9F0 Utilities",
             f"{settings_icon} Settings",
             f"{quit_icon} Quit",
         ]
@@ -263,7 +268,7 @@ class ToolboxTUI(App):
             return
         if self.screen.id != "_default":
             return
-        self._decoration_row = (self._decoration_row + 1) % 11
+        self._decoration_row = (self._decoration_row + 1) % 12
         try:
             self._render_sidebar_labels(self.theme)
         except NoMatches:
@@ -313,8 +318,10 @@ class ToolboxTUI(App):
             case 8:
                 switcher.current = "my-projects-view"
             case 9:
-                switcher.current = "settings-view"
+                switcher.current = "utilities-view"
             case 10:
+                switcher.current = "settings-view"
+            case 11:
                 App.exit(self)
 
     def action_select_view(self, view_id: int) -> None:

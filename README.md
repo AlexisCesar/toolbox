@@ -17,6 +17,8 @@ checks we use throughout the workday, so they are easy to find in one place.
 - 📋 Browse local or network log folders and inspect recent log output.
 - 🏥 Monitor HTTP endpoints and TCP connections on a configurable interval.
 - ✅ Create and organize TODOs, sub-items, descriptions, and priorities.
+- 🧰 Search offline utilities for formatting, validation, text comparison, encoding,
+  conversion, and sample data generation.
 - 🔧 Configure folders, theme, log sources, health checks, and other settings.
 - 🎃🎄 Enjoy seasonal themes!
 
