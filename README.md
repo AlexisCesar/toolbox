@@ -39,6 +39,10 @@ cd toolbox
 uv run python main.py
 ```
 
+On first launch, Toolbox creates `config.override.toml` in the project folder
+from the checked-in `config.toml` defaults. The override is ignored by Git and
+stores your local settings, so pulling project changes does not overwrite them.
+
 
 ## 🔧 Configure your Toolbox
 

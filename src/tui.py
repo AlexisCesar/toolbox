@@ -174,6 +174,7 @@ class ToolboxTUI(App):
         if theme_name in SEASONAL_THEMES and not is_theme_available(theme_name):
             theme_name = DEFAULT_THEME
         self.apply_theme(theme_name)
+        self.logger.info(f"User configuration loaded from {config.config_path}.")
         self.logger.info("Toolbox TUI started.")
 
     def apply_theme(self, theme_name: str) -> None:

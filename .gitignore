@@ -15,6 +15,7 @@ wheels/
 .coverage.*
 htmlcov/
 .uv-cache/
+config.override.toml
 
 # Local environment files
 .env

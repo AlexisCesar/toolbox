@@ -55,9 +55,9 @@ def test_manual_override_defaults_to_disabled_when_missing_from_config(
         '[ui]\ntheme = "textual-dark"\n',
         encoding="utf-8",
     )
-    monkeypatch.chdir(tmp_path)
-
-    assert Config().enable_all_seasonal_themes is False
+    assert Config(
+        tmp_path / "config.toml", tmp_path / "config.override.toml"
+    ).enable_all_seasonal_themes is False
 
 
 def test_enabled_config_override_makes_both_themes_available(monkeypatch) -> None:
@@ -82,6 +82,6 @@ def test_manual_override_reads_boolean_from_config(
         '[ui]\ntheme = "textual-dark"\nenable_all_seasonal_themes = true\n',
         encoding="utf-8",
     )
-    monkeypatch.chdir(tmp_path)
-
-    assert Config().enable_all_seasonal_themes is True
+    assert Config(
+        tmp_path / "config.toml", tmp_path / "config.override.toml"
+    ).enable_all_seasonal_themes is True

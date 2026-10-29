@@ -31,9 +31,38 @@ class Config:
 
     MAX_SCRIPTS_DEPTH = 5
 
-    def __init__(self):
-        with open("config.toml", "rb") as f:
-            self._data = tomllib.load(f)
+    def __init__(
+        self,
+        default_path: Path | None = None,
+        override_path: Path | None = None,
+    ) -> None:
+        project_root = Path(__file__).resolve().parents[2]
+        self.default_path = default_path or project_root / "config.toml"
+        self.config_path = override_path or project_root / "config.override.toml"
+        self._create_override_if_missing()
+        with self.config_path.open("rb") as config_file:
+            self._data = tomllib.load(config_file)
+
+    def _create_override_if_missing(self) -> None:
+        """Copy the checked-in defaults once, without replacing user settings."""
+        if self.config_path.exists():
+            return
+        try:
+            defaults = self.default_path.read_bytes()
+            with self.config_path.open("xb") as override_file:
+                try:
+                    override_file.write(defaults)
+                except OSError:
+                    self.config_path.unlink(missing_ok=True)
+                    raise
+        except FileExistsError:
+            return
+        except OSError as error:
+            raise ConfigInitializationError(
+                f"Could not create the Toolbox configuration file at "
+                f"'{self.config_path}': {error}. Check that the project folder "
+                "is writable, then try again."
+            ) from error
 
     @property
     def scripts_dir(self) -> Path:
@@ -88,12 +117,12 @@ class Config:
         return max(0, min(depth, self.MAX_SCRIPTS_DEPTH))
     
     def update(self, section: str, key: str, value):
-        with open("config.toml", "r", encoding="utf-8") as f:
+        with self.config_path.open("r", encoding="utf-8") as f:
             doc = tomlkit.parse(f.read())
 
         doc[section][key] = value
 
-        with open("config.toml", "w", encoding="utf-8") as f:
+        with self.config_path.open("w", encoding="utf-8") as f:
             f.write(tomlkit.dumps(doc))
         self._data[section][key] = value
 
@@ -103,7 +132,7 @@ class Config:
             {"name": str(entry["name"]), "location": str(entry["location"])}
             for entry in entries
         ]
-        with open("config.toml", "r", encoding="utf-8") as f:
+        with self.config_path.open("r", encoding="utf-8") as f:
             doc = tomlkit.parse(f.read())
 
         log_tables = tomlkit.aot()
@@ -114,14 +143,14 @@ class Config:
             log_tables.append(log_table)
         doc["logs"] = log_tables
 
-        with open("config.toml", "w", encoding="utf-8") as f:
+        with self.config_path.open("w", encoding="utf-8") as f:
             f.write(tomlkit.dumps(doc))
         self._data["logs"] = normalized_entries
 
     def update_services(self, entries: list[dict[str, object]]) -> None:
         """Replace configured health checks and persist them as TOML array tables."""
         normalized_entries = [dict(entry) for entry in entries]
-        with open("config.toml", "r", encoding="utf-8") as f:
+        with self.config_path.open("r", encoding="utf-8") as f:
             doc = tomlkit.parse(f.read())
 
         service_tables = tomlkit.aot()
@@ -132,9 +161,13 @@ class Config:
             service_tables.append(service_table)
         doc["services"] = service_tables
 
-        with open("config.toml", "w", encoding="utf-8") as f:
+        with self.config_path.open("w", encoding="utf-8") as f:
             f.write(tomlkit.dumps(doc))
         self._data["services"] = normalized_entries
+
+
+class ConfigInitializationError(OSError):
+    """Raised when the user-specific configuration cannot be initialized."""
 
 
 config = Config()
