@@ -91,10 +91,10 @@ class ToolboxTUI(App):
     def compose(self) -> ComposeResult:
         """Create the main layout for the TUI."""
         os_icon = {
-            "Linux": "🐧 ",
-            "Darwin": "🍎 ",
-            "Windows": "🪟 "
-        }.get(platform.system(), " ❓ ")
+            "Linux": "\U0001F427 ",
+            "Darwin": "\U0001F34E ",
+            "Windows": "\U0001FA9F ",
+        }.get(platform.system(), " \u2753 ")
 
         with Vertical(id="main-container"):
             with Horizontal(id="title-bar"):
@@ -112,18 +112,33 @@ class ToolboxTUI(App):
     def _build_sidebar(self, id) -> ListView:
         halloween_active = config.theme == HALLOWEEN_THEME and is_theme_available(config.theme)
         christmas_active = config.theme == CHRISTMAS_THEME and is_theme_available(config.theme)
+        home_icon = (
+            "\U0001F47B"
+            if halloween_active
+            else "\U0001F384"
+            if christmas_active
+            else "\U0001F3E1"
+        )
+        settings_icon = "\U0001F578\uFE0F" if halloween_active else "\U0001F527"
+        quit_icon = (
+            "\U0001FAA6"
+            if halloween_active
+            else "\U0001F98C"
+            if christmas_active
+            else "\U0001F6AA"
+        )
         list_items = [
-            "👻 Home" if halloween_active else "🎄 Home" if christmas_active else "🏡 Home",
-            "🐚 Bash",
-            "✅ TODO list",
-            "📜 Scripts",
-            "📝 Logs",
-            "🏥 Health Checkers",
-            "📓 Notes",
-            "📖 Markdown Preview",
-            "📂 My Projects",
-            "🕸️ Settings" if halloween_active else "🔧 Settings",
-            "🪦 Quit" if halloween_active else "🦌 Quit" if christmas_active else "🚪 Quit"
+            f"{home_icon} Home",
+            "\U0001F41A Bash",
+            "\u2705 TODO list",
+            "\U0001F4DC Scripts",
+            "\U0001F4DD Logs",
+            "\U0001F3E5 Health Checkers",
+            "\U0001F4D3 Notes",
+            "\U0001F4D6 Markdown Preview",
+            "\U0001F4C2 My Projects",
+            f"{settings_icon} Settings",
+            f"{quit_icon} Quit",
         ]
         list_view = ListView(*[ListItem(Label(item), classes="sidebar-item") for item in list_items], id=id)
         list_view.index = 0
@@ -191,9 +206,9 @@ class ToolboxTUI(App):
 
         title = "Toolbox TUI"
         if halloween_active:
-            title = "🦇 Toolbox TUI 🎃"
+            title = "\U0001F987 Toolbox TUI \U0001F383"
         elif christmas_active:
-            title = "🍪 Toolbox TUI ⛄"
+            title = "\U0001F36A Toolbox TUI \U00002603 "
         self.query_one("#app-title", Label).update(title)
         self._render_sidebar_labels(theme_name)
 
@@ -202,20 +217,38 @@ class ToolboxTUI(App):
         christmas_active = theme_name == CHRISTMAS_THEME
         sidebar = self.query_one("#sidebar-list", ListView)
         labels = [child.query_one(Label) for child in sidebar.children]
-        home_icon = "👻" if halloween_active else "🎄" if christmas_active else "🏡"
-        settings_icon = "🕸️" if halloween_active else "🔧"
-        quit_icon = "🪦" if halloween_active else "🦌" if christmas_active else "🚪"
-        decoration = "🕷" if halloween_active else "❄️" if christmas_active else ""
+        home_icon = (
+            "\U0001F47B"
+            if halloween_active
+            else "\U0001F384"
+            if christmas_active
+            else "\U0001F3E1"
+        )
+        settings_icon = "\U0001F578 " if halloween_active else "\U0001F527"
+        quit_icon = (
+            "\U0001FAA6"
+            if halloween_active
+            else "\U0001F98C"
+            if christmas_active
+            else "\U0001F6AA"
+        )
+        decoration = (
+            "\U0001F577"
+            if halloween_active
+            else "\U00002744"
+            if christmas_active
+            else ""
+        )
         captions = [
             f"{home_icon} Home",
-            "🐚 Bash",
-            "✅ TODO list",
-            "📜 Scripts",
-            "📝 Logs",
-            "🏥 Health Checkers",
-            "📓 Notes",
-            "📖 Markdown Preview",
-            "📂 My Projects",
+            "\U0001F41A Bash",
+            "\u2705 TODO list",
+            "\U0001F4DC Scripts",
+            "\U0001F4DD Logs",
+            "\U0001F3E5 Health Checkers",
+            "\U0001F4D3 Notes",
+            "\U0001F4D6 Markdown Preview",
+            "\U0001F4C2 My Projects",
             f"{settings_icon} Settings",
             f"{quit_icon} Quit",
         ]

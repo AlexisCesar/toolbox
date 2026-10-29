@@ -12,7 +12,8 @@ checks we use throughout the workday, so they are easy to find in one place.
 - 📜 Browse and run scripts from a configurable folder, with descriptions and
   saved parameters.
 - 📝 Browse, edit, and save text files and preview Markdown notes.
-- 📂 Find project folders and open Visual Studio solutions or folders in VS Code.
+- 📂 Find project folders and open solutions in Visual Studio or VS Code. Open
+  folders without a solution in VS Code when it is installed.
 - 📋 Browse local or network log folders and inspect recent log output.
 - 🏥 Monitor HTTP endpoints and TCP connections on a configurable interval.
 - ✅ Create and organize TODOs, sub-items, descriptions, and priorities.

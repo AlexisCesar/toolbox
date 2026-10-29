@@ -46,7 +46,7 @@ class TodoEditorDialog(ModalScreen[TodoDraft | None]):
             )
             yield Static("Priority", classes="todo-editor-label")
             yield Select(
-                (("🟢 Low", "low"), ("🟡 Medium", "medium"), ("🔴 High", "high")),
+                (("\U0001F7E2 Low", "low"), ("\U0001F7E1 Medium", "medium"), ("\U0001F534 High", "high")),
                 value=self.initial.priority if self.initial else "medium",
                 allow_blank=False,
                 id="todo-editor-priority",

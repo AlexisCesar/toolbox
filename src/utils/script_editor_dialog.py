@@ -39,7 +39,7 @@ class ScriptEditorDialog(ModalScreen[bool]):
             ),
             Static("", id="script-editor-status"),
             Horizontal(
-                Button("💾 Save", variant="success", id="script-editor-save"),
+                Button("\U0001F4BE Save", variant="success", id="script-editor-save"),
                 Button("Cancel", variant="error", id="script-editor-cancel"),
                 id="script-editor-buttons",
             ),

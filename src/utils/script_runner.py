@@ -20,7 +20,7 @@ class ScriptRunner:
             self.logger.error(f"Script {script_path} does not exist.")
             return
         if script_path.suffix.lower() == ".py":
-            self.logger.system(f"Executing Python 🐍 script: {script_path.name}")
+            self.logger.system(f"Executing Python \U0001F40D script: {script_path.name}")
             if external_terminal:
                 self.run_in_external_terminal(
                     ["python", str(script_path)], script_extension=script_path.suffix
@@ -28,13 +28,13 @@ class ScriptRunner:
             else:
                 self.run_subprocess(["python", str(script_path), *shlex.split(parameters)])
         elif script_path.suffix.lower() == ".ps1":
-            self.logger.system(f"Executing Powershell 📜 script: {script_path.name}")
+            self.logger.system(f"Executing Powershell \U0001F4DC script: {script_path.name}")
             if external_terminal:
                 self.run_in_external_terminal([str(script_path)], script_extension=".ps1")
             else:
                 self.run_subprocess(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(script_path), *shlex.split(parameters)])
         elif script_path.suffix.lower() == ".sh":
-            self.logger.system(f"Executing Shell 🐚 script: {script_path.name}")
+            self.logger.system(f"Executing Shell \U0001F41A script: {script_path.name}")
             if external_terminal:
                 self.run_in_external_terminal(
                     ["bash", str(script_path)], script_extension=script_path.suffix

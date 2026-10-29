@@ -112,7 +112,7 @@ class HealthChecks(Static):
         if not self._active or index in self._pending:
             return
         self._pending.add(index)
-        self.query_one(f"#health-status-{index}", Static).update("[yellow]⏳ CHECKING[/yellow]")
+        self.query_one(f"#health-status-{index}", Static).update("[yellow]\u23F3 CHECKING[/yellow]")
         self.query_one(f"#health-detail-{index}", Static).update("Checking…")
         button = self.query_one(f"#health-check-now-{index}", Button)
         button.disabled = True
@@ -126,15 +126,15 @@ class HealthChecks(Static):
     def _down_status(self) -> str:
         """Render a failed check with seasonal iconography when enabled."""
         if getattr(self.app, "theme", None) == HALLOWEEN_THEME:
-            return "[red]🪦 DOWN[/red]"
-        return "[red]✖ DOWN[/red]"
+            return "[red]\U0001FAA6 DOWN[/red]"
+        return "[red]\u2716 DOWN[/red]"
 
     async def perform_check(self, index: int, entry: dict[str, object]) -> None:
         try:
             is_healthy, message, duration = await asyncio.to_thread(check_service, entry)
             if not self._active:
                 return
-            status = "[green]● UP[/green]" if is_healthy else self._down_status()
+            status = "[green]\u25CF UP[/green]" if is_healthy else self._down_status()
             self.query_one(f"#health-status-{index}", Static).update(status)
             checked_at = datetime.now().strftime("%H:%M:%S")
             self.query_one(f"#health-detail-{index}", Static).update(

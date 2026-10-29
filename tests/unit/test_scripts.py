@@ -33,7 +33,7 @@ def test_scripts_depth_defaults_and_clamps_to_supported_range() -> None:
 
 
 def test_scripts_directory_label_mentions_depth_only_when_enabled(tmp_path) -> None:
-    assert format_scripts_directory_label(tmp_path, 0) == f"Reading scripts from: 📂 {tmp_path.absolute()}"
+    assert format_scripts_directory_label(tmp_path, 0) == f"Reading scripts from: \U0001F4C2 {tmp_path.absolute()}"
     assert format_scripts_directory_label(tmp_path, 3).endswith("(with a depth of 3 subfolders)")
 
 
@@ -42,4 +42,4 @@ def test_script_display_name_shows_subfolder_depth(tmp_path) -> None:
     nested_script = tmp_path / "one" / "two" / "hello.py"
 
     assert format_script_display_name(root_script, tmp_path) == "hello.py"
-    assert format_script_display_name(nested_script, tmp_path) == "📁 (2) hello.py"
+    assert format_script_display_name(nested_script, tmp_path) == "\U0001F4C1 (2) hello.py"

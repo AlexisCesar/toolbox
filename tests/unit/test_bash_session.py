@@ -73,7 +73,13 @@ def test_session_streams_output_sends_input_and_cleans_up(monkeypatch, tmp_path)
     monkeypatch.setattr(bash_session, "find_bash", lambda: Path("bash"))
     spawn = MagicMock(return_value=process)
     monkeypatch.setattr(bash_session, "spawn_bash", spawn)
-    monkeypatch.setattr(bash_session.select, "select", lambda *args: ([1], [], []))
+    waits = []
+
+    def select_readers(readers, _writers, _errors, timeout):
+        waits.append((readers, timeout))
+        return [readers[0]], [], []
+
+    monkeypatch.setattr(bash_session.select, "select", select_readers)
     close = MagicMock()
     monkeypatch.setattr(BashSession, "_close_process", close)
     session = BashSession(tmp_path, 20, 80)
@@ -88,6 +94,9 @@ def test_session_streams_output_sends_input_and_cleans_up(monkeypatch, tmp_path)
     spawn.assert_called_once_with(Path("bash"), tmp_path, 20, 80)
     process.write.assert_called_once_with("pwd\r")
     process.setwinsize.assert_called_once_with(1, 1)
+    assert len(waits) == 2
+    assert all(len(readers) == 2 for readers, _ in waits)
+    assert all(timeout == bash_session.SELECT_TIMEOUT_SECONDS for _, timeout in waits)
     close.assert_called_once_with(process)
     assert session.finished.is_set()
 

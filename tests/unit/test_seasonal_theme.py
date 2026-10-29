@@ -8,6 +8,7 @@ from src.utils.seasonal_theme import (
     available_themes,
     is_theme_available,
 )
+from src.views import home as home_module
 
 
 def test_halloween_theme_is_available_from_october_first_through_november_tenth() -> None:
@@ -22,6 +23,16 @@ def test_christmas_theme_is_available_throughout_december() -> None:
     assert is_theme_available(CHRISTMAS_THEME, date(2026, 12, 31), force_all=False)
     assert not is_theme_available(CHRISTMAS_THEME, date(2026, 11, 30), force_all=False)
     assert not is_theme_available(CHRISTMAS_THEME, date(2027, 1, 1), force_all=False)
+
+
+def test_home_includes_christmas_theme_tip_during_december(monkeypatch) -> None:
+    monkeypatch.setattr(home_module, "is_halloween_season", lambda: False)
+    monkeypatch.setattr(home_module, "is_christmas_season", lambda: True)
+
+    instructions = home_module.Home().instructions()
+
+    assert "The Christmas theme is available in Settings throughout December." in instructions
+    assert "The Halloween theme is available" not in instructions
 
 
 def test_manual_override_makes_all_seasonal_themes_available_year_round() -> None:
