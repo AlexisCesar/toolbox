@@ -32,15 +32,9 @@ First time using the Toolbox? Configure your directories, log folders, health ch
 
 - Generating a [u]scripts configuration file[/u] through the [bold #5f5fff]Settings[/bold #5f5fff] tab enable script parameter history. Trust me, it's very helpful!
 
-- You can edit and save text/script files using the [bold #5f5fff]Notes[/bold #5f5fff] tab.
+- Completing an [bold #5f5fff]item[/bold #5f5fff] in the [bold #5f5fff]Tasks[/bold #5f5fff] tab will also complete its subtasks.
 
-- Open [bold #5f5fff]Bash[/bold #5f5fff] (shortcut [bold]b[/bold]) for an interactive shell inside Toolbox. On Windows, install Git for Windows first. Use Ctrl+G to return to the sidebar; Ctrl+C interrupts the running command.
-
-- Add local or network log folders in [bold #5f5fff]Settings[/bold #5f5fff], then open them from the [bold #5f5fff]Logs[/bold #5f5fff] tab. Log files open at their latest entries.
-
-- Add HTTP endpoint or TCP health checks in [bold #5f5fff]Settings[/bold #5f5fff]. They run while the [bold #5f5fff]Health Checkers[/bold #5f5fff] tab is open.
-
-- Track tasks in the [bold #5f5fff]TODO list[/bold #5f5fff] tab (shortcut [bold]d[/bold]). Create tasks and sub-items, set priorities, pause work, and reorder the list. TODO items are saved between launches; startup notifications can be changed in [bold #5f5fff]Settings[/bold #5f5fff].
+- \U0001F41E Found an issue or have a feature request? Please submit it on our [link="https://github.com/AlexisCesar/toolbox/issues"]GitHub repository[/link].
 """
 
 class Home(Static):
