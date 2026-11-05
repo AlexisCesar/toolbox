@@ -70,6 +70,10 @@ application data directory: `%APPDATA%\\toolbox` on Windows,
 `TOOLBOX_DATA_DIR` to use a different location. Startup notifications for
 pending TODOs can be changed in Settings.
 
+Completed TODO rows appear dimmed. Use the ordering selector to sort by manual
+order, creation time, priority, or status (pending, paused, then done). Sub-items
+stay under their parent and use the selected order within that group.
+
 
 ## 💻 Bash view
 

@@ -73,6 +73,35 @@ def test_flatten_sorts_by_priority_and_keeps_sub_items_under_parent() -> None:
     ]
 
 
+def test_status_sort_groups_siblings_and_preserves_manual_order_for_ties() -> None:
+    pending = TodoItem("Pending", order=2)
+    first_pending = TodoItem("First pending", order=1)
+    paused = TodoItem("Paused", paused=True, order=0)
+    done = TodoItem("Done", completed=True, order=0)
+    done_child = TodoItem("Done child", parent_id=pending.id, completed=True, order=0)
+    paused_child = TodoItem("Paused child", parent_id=pending.id, paused=True, order=1)
+    pending_child = TodoItem("Pending child", parent_id=pending.id, order=2)
+    items = [done, paused, pending, done_child, paused_child, pending_child, first_pending]
+
+    assert flatten_todos(items, "status") == [
+        first_pending, pending, pending_child, paused_child, done_child, paused, done,
+    ]
+    assert pending.order == 2
+    assert items[0] is done
+
+
+@pytest.mark.parametrize("items", [[], [TodoItem("Only task", completed=True, paused=True)]])
+def test_status_sort_handles_empty_and_single_item_lists(items: list[TodoItem]) -> None:
+    assert flatten_todos(items, "status") == items
+
+
+def test_status_sort_treats_completed_paused_items_as_done() -> None:
+    done = TodoItem("Done", completed=True, paused=True, order=0)
+    paused = TodoItem("Paused", paused=True, order=1)
+
+    assert flatten_todos([done, paused], "status") == [paused, done]
+
+
 def test_completing_parent_completes_sub_items_but_reopening_keeps_them_done() -> None:
     parent = TodoItem("Prepare release")
     child = TodoItem("Write release notes", parent_id=parent.id)

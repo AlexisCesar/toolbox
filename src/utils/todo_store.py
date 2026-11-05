@@ -14,7 +14,7 @@ from uuid import uuid4
 
 
 Priority = Literal["low", "medium", "high"]
-SortMode = Literal["manual", "created", "priority"]
+SortMode = Literal["manual", "created", "priority", "status"]
 PRIORITY_ORDER: dict[str, int] = {"low": 0, "medium": 1, "high": 2}
 
 
@@ -182,6 +182,9 @@ def flatten_todos(items: list[TodoItem], sort_mode: SortMode = "manual") -> list
             return (item.created_at, item.order, item.title.casefold())
         if sort_mode == "priority":
             return (-PRIORITY_ORDER[item.priority], item.order, item.created_at)
+        if sort_mode == "status":
+            status_order = 2 if item.completed else 1 if item.paused else 0
+            return (status_order, item.order, item.created_at)
         return (item.order, item.created_at)
 
     flattened: list[TodoItem] = []
