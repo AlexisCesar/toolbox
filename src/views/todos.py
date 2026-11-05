@@ -84,7 +84,12 @@ class Todos(Static):
                     classes="icon-button",
                 )
                 yield Select(
-                    (("Manual order", "manual"), ("Created time", "created"), ("Priority", "priority")),
+                    (
+                        ("Manual order", "manual"),
+                        ("Created time", "created"),
+                        ("Priority", "priority"),
+                        ("Status", "status"),
+                    ),
                     value="manual",
                     allow_blank=False,
                     id="todos-sort",
@@ -146,11 +151,12 @@ class Todos(Static):
                 created = datetime.fromisoformat(item.created_at).astimezone().strftime("%Y-%m-%d %H:%M")
             except ValueError:
                 created = item.created_at
+            cells = [Text(task_label), Text(status), priority_text, Text(created)]
+            if item.completed:
+                for cell in cells:
+                    cell.stylize("dim")
             table.add_row(
-                task_label,
-                status,
-                priority_text,
-                created,
+                *cells,
                 height=2 if item.description else 1,
                 key=item.id,
             )
@@ -182,7 +188,7 @@ class Todos(Static):
 
     @on(Select.Changed, "#todos-sort")
     def on_sort_changed(self, event: Select.Changed) -> None:
-        if event.value in {"manual", "created", "priority"}:
+        if event.value in {"manual", "created", "priority", "status"}:
             self.sort_mode = event.value
             self.refresh_table()
 
