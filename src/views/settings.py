@@ -13,16 +13,19 @@ from src.utils.confirm_dialog import ConfirmDialog
 from src.utils.log_config_dialog import LogConfigDialog, LogFolder
 from src.utils.health_check_config_dialog import HealthCheckConfig, HealthCheckConfigDialog
 from src.utils.seasonal_theme import DEFAULT_THEME, available_themes
+from src.utils.themes import NETRUNNER_THEME
 
 
-THEMES = """nord
-gruvbox
-tokyo-night
-textual-dark
-solarized-light
-atom-one-dark
-atom-one-light
-""".splitlines()
+THEMES = [
+    "nord",
+    "gruvbox",
+    "tokyo-night",
+    "textual-dark",
+    "solarized-light",
+    "atom-one-dark",
+    "atom-one-light",
+    NETRUNNER_THEME,
+]
 
 
 def theme_options() -> list[str]:

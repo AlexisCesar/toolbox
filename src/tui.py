@@ -25,6 +25,7 @@ from src.utils.seasonal_theme import (
     SEASONAL_THEMES,
     is_theme_available,
 )
+from src.utils.themes import NETRUNNER_THEME
 import platform
 
 from src.views.settings import Settings
@@ -86,6 +87,23 @@ class ToolboxTUI(App):
                 warning="#facc15",
                 error="#fb7185",
                 success="#22c55e",
+                dark=True,
+            )
+        )
+        self.register_theme(
+            Theme(
+                name=NETRUNNER_THEME,
+                primary="#ff1744",
+                secondary="#b00020",
+                accent="#ff3b5c",
+                foreground="#ffe8ec",
+                background="#080608",
+                surface="#160b0e",
+                panel="#10080a",
+                boost="#2b0d14",
+                warning="#ff6b35",
+                error="#ff1744",
+                success="#ff4d6d",
                 dark=True,
             )
         )
@@ -187,6 +205,7 @@ class ToolboxTUI(App):
             theme_name = DEFAULT_THEME
         halloween_active = theme_name == HALLOWEEN_THEME and is_theme_available(theme_name)
         christmas_active = theme_name == CHRISTMAS_THEME
+        netrunner_active = theme_name == NETRUNNER_THEME
         self.theme = theme_name
         if not self.is_mounted:
             return
@@ -208,6 +227,11 @@ class ToolboxTUI(App):
             if self._seasonal_timer is not None:
                 self._seasonal_timer.stop()
                 self._seasonal_timer = None
+
+        if netrunner_active:
+            self.add_class("netrunner-theme")
+        else:
+            self.remove_class("netrunner-theme")
 
         title = "Toolbox TUI"
         if halloween_active:

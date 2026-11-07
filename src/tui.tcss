@@ -446,6 +446,68 @@ ConfirmDialog {
     color: #0c1711;
 }
 
+.netrunner-theme #main-content-switcher,
+.netrunner-theme #log,
+.netrunner-theme #bash-terminal,
+.netrunner-theme #utility-list,
+.netrunner-theme #utility-input,
+.netrunner-theme #utility-second-input,
+.netrunner-theme #utility-output,
+.netrunner-theme #script-editor-content,
+.netrunner-theme #script-inspection-content,
+.netrunner-theme #log-files-list,
+.netrunner-theme #log-file-content {
+    border: round #5c1727;
+}
+
+.netrunner-theme #utility-dialog,
+.netrunner-theme #script-editor-dialog,
+.netrunner-theme #script-inspection-dialog,
+.netrunner-theme #log-files-dialog,
+.netrunner-theme #log-file-dialog,
+.netrunner-theme #log-config-dialog,
+.netrunner-theme #health-config-dialog {
+    border: thick #5c1727;
+}
+
+.netrunner-theme #paths-settings,
+.netrunner-theme #other-settings,
+.netrunner-theme #settings-logs-settings,
+.netrunner-theme #settings-services-settings {
+    border: round #5c1727;
+}
+
+.netrunner-theme #logs-entries .logs-entry,
+.netrunner-theme #health-checks-entries .health-check-entry {
+    border: round #5c1727;
+}
+
+.netrunner-theme #todo-editor-dialog,
+.netrunner-theme #dialog {
+    border: thick #5c1727;
+}
+
+.netrunner-theme .settings-general-label-italic,
+.netrunner-theme #log-files-location {
+    color: #e89aa8;
+}
+
+.netrunner-theme #settings-logs-add,
+.netrunner-theme #settings-logs-edit,
+.netrunner-theme #settings-services-add,
+.netrunner-theme #settings-services-edit {
+    background: #b00020;
+    color: #fff0f2;
+}
+
+.netrunner-theme #settings-logs-add:hover,
+.netrunner-theme #settings-logs-edit:hover,
+.netrunner-theme #settings-services-add:hover,
+.netrunner-theme #settings-services-edit:hover {
+    background: #ff1744;
+    color: #080608;
+}
+
 #settings-services-settings {
     height: 1fr;
     min-height: 12;
