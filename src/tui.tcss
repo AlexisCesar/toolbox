@@ -4,6 +4,24 @@
     align: center middle;
 }
 
+#title-spacer,
+#runtime-status {
+    width: 1fr;
+    height: 100%;
+}
+
+#title-content {
+    width: auto;
+    height: 100%;
+    align: center middle;
+}
+
+#runtime-status {
+    content-align: right middle;
+    padding-right: 1;
+    color: $text-muted;
+}
+
 #sidebar {
     width: 20%;
     padding: 0 1;

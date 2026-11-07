@@ -1,5 +1,7 @@
 from pathlib import Path
+from datetime import datetime
 
+import psutil
 from textual.app import App, ComposeResult
 from textual.css.query import NoMatches
 from textual.theme import Theme
@@ -55,6 +57,10 @@ class ToolboxTUI(App):
         self.logger = Logger(self)
         self.todo_store = TodoStore()
         self._seasonal_timer = None
+        self._runtime_timer = None
+        self._runtime_status_label: Label | None = None
+        self._process = psutil.Process()
+        self._runtime_metrics_warning_logged = False
         self._decoration_row = 0
         self.register_theme(
             Theme(
@@ -118,9 +124,16 @@ class ToolboxTUI(App):
 
         with Vertical(id="main-container"):
             with Horizontal(id="title-bar"):
-                yield Label("Toolbox TUI", id="app-title")
-                yield Label(" - v0.1.0", id="version")
-                yield Label(" - " + os_icon + platform.system(), id="os-info")
+                yield Label("", id="title-spacer")
+                with Horizontal(id="title-content"):
+                    yield Label("Toolbox TUI", id="app-title")
+                    yield Label(" - v0.1.0", id="version")
+                    yield Label(" - " + os_icon + platform.system(), id="os-info")
+                self._runtime_status_label = Label(
+                    f"{datetime.now():%H:%M:%S}  CPU --  RAM --",
+                    id="runtime-status",
+                )
+                yield self._runtime_status_label
             with Horizontal(id="app-shell"):
                 with Vertical(id="sidebar"):
                     yield self._build_sidebar(id="sidebar-list")
@@ -196,8 +209,29 @@ class ToolboxTUI(App):
         if theme_name in SEASONAL_THEMES and not is_theme_available(theme_name):
             theme_name = DEFAULT_THEME
         self.apply_theme(theme_name)
+        self._process.cpu_percent()
+        self._runtime_timer = self.set_interval(1.0, self._update_runtime_status)
         self.logger.info(f"User configuration loaded from {config.config_path}.")
         self.logger.info("Toolbox TUI started.")
+
+    def _update_runtime_status(self) -> None:
+        """Refresh the local clock and this process's CPU and memory usage."""
+        status_label = self._runtime_status_label
+        if status_label is None:
+            return
+
+        clock = datetime.now().strftime("%H:%M:%S")
+        try:
+            cpu_percent = self._process.cpu_percent()
+            memory_mb = self._process.memory_info().rss / (1024 * 1024)
+        except (psutil.Error, OSError) as error:
+            if not self._runtime_metrics_warning_logged:
+                self.logger.warn(f"Could not read TUI resource usage: {error}")
+                self._runtime_metrics_warning_logged = True
+            status_label.update(f"{clock}  CPU --  RAM --")
+            return
+
+        status_label.update(f"{clock}  CPU {cpu_percent:.1f}%  RAM {memory_mb:.1f} MB")
 
     def apply_theme(self, theme_name: str) -> None:
         """Apply a theme and update seasonal navigation decorations."""
@@ -305,6 +339,9 @@ class ToolboxTUI(App):
         if self._seasonal_timer is not None:
             self._seasonal_timer.stop()
             self._seasonal_timer = None
+        if self._runtime_timer is not None:
+            self._runtime_timer.stop()
+            self._runtime_timer = None
 
     def show_markdown_preview(self, path: Path | None = None) -> None:
         """Switch the main content to the markdown viewer and load the selected file."""
