@@ -8,6 +8,7 @@ from textual.containers import Horizontal, HorizontalScroll
 from textual.widgets import Button, Static, DirectoryTree, TextArea
 from src.utils.config import config
 from src.utils.confirm_dialog import ConfirmDialog
+from src.utils.new_note_dialog import NewNoteDialog, NewNoteDraft
 
 MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
 
@@ -104,6 +105,7 @@ class Notes(Static):
     """A simple notes view for the Toolbox TUI."""
 
     BUTTON_ACTIONS = {
+        "new-note-button": "new_note",
         "refresh-folder-button": "refresh_folder",
         "open-file-button": "open_file",
         "refresh-file-button": "refresh_file",
@@ -136,7 +138,12 @@ class Notes(Static):
                 )
             
         with Horizontal():
-            
+            yield Button(
+                "\U0001F4C4 New Note",
+                id="new-note-button",
+                flat=True,
+                classes="icon-button",
+            )
             yield Button("\U0001F503 Refresh Folder", id="refresh-folder-button", flat=True, classes="icon-button")
             yield Button("\U0001F50E Open File", id="open-file-button", flat=True, classes="icon-button")
             yield Button("\U0001F504\uFE0F Refresh File", id="refresh-file-button", flat=True, classes="icon-button")
@@ -159,6 +166,94 @@ class Notes(Static):
         directory_tree = self.query_one(NotesDirectoryTree)
         directory_tree.path = config.notes_dir
         directory_tree.reload()
+
+    def action_new_note(self) -> None:
+        """Ask for a file name, then create a note in the selected folder."""
+        directory_tree = self.query_one(NotesDirectoryTree)
+        selected_node = directory_tree.cursor_node
+        if selected_node is None or selected_node.data is None:
+            self.logger.warn("Select a folder to create a note.")
+            return
+
+        selected_directory = selected_node.data.path
+        if not selected_directory.is_dir():
+            self.logger.warn("Select a folder to create a note.")
+            return
+
+        self.app.push_screen(
+            NewNoteDialog(
+                logger=self.logger,
+                supported_extensions=TEXT_EXTENSIONS,
+            ),
+            callback=lambda draft: self.create_note(selected_directory, draft),
+        )
+
+    def create_note(
+        self,
+        directory: Path,
+        draft: NewNoteDraft | None,
+    ) -> None:
+        """Create a new empty note without replacing an existing file."""
+        if draft is None:
+            return
+        if not directory.is_dir():
+            self.logger.warn(
+                f"The selected notes folder is unavailable: {directory}"
+            )
+            self.app.notify(
+                "The selected folder is no longer available.",
+                title="New Note",
+                severity="warning",
+            )
+            return
+
+        file_path = directory / f"{draft.name}.{draft.extension}"
+        try:
+            with file_path.open("x", encoding="utf-8"):
+                pass
+        except FileExistsError:
+            self.logger.warn(f"A notes file already exists at {file_path}.")
+            self.app.notify(
+                f"A file named '{file_path.name}' already exists.",
+                title="New Note",
+                severity="warning",
+            )
+            return
+        except OSError as error:
+            self.logger.error(f"Could not create notes file {file_path}: {error}")
+            self.app.notify(
+                "Could not create the note file.",
+                title="New Note",
+                severity="error",
+            )
+            return
+
+        self.logger.info(f"Created notes file: {file_path}")
+        self.action_refresh_folder(silent=True)
+        self.open_created_note(file_path)
+
+    def open_created_note(self, file_path: Path) -> None:
+        """Open a new note while preserving any unsaved editor content."""
+        viewer = self.query_one("#viewer", TextArea)
+        if (
+            self.current_file_path is not None
+            and self.saved_content is not None
+            and viewer.text != self.saved_content
+        ):
+            self.logger.warn(f"Unsaved changes detected in {self.current_file_path}.")
+            self.app.push_screen(
+                ConfirmDialog(
+                    f"Discard unsaved changes to {self.current_file_path.name}?",
+                    confirmButtonText="Discard",
+                    cancelButtonText="Keep Editing",
+                ),
+                callback=lambda result: self.confirm_file_selection(
+                    result, file_path
+                ),
+            )
+            return
+
+        self.display_file(file_path)
 
     def action_open_file(self) -> None:
         """Opens the selected file using the default Windows application."""

@@ -483,6 +483,7 @@ ConfirmDialog {
 }
 
 .netrunner-theme #todo-editor-dialog,
+.netrunner-theme #new-note-dialog,
 .netrunner-theme #dialog {
     border: thick #5c1727;
 }
@@ -655,6 +656,44 @@ TodoEditorDialog {
 }
 
 #todo-editor-buttons Button {
+    margin-left: 1;
+}
+
+NewNoteDialog {
+    align: center middle;
+}
+
+#new-note-dialog {
+    width: 60%;
+    height: auto;
+    max-height: 90%;
+    padding: 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#new-note-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.new-note-label {
+    margin-top: 1;
+}
+
+#new-note-error {
+    min-height: 1;
+    color: $error;
+    margin-top: 1;
+}
+
+#new-note-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#new-note-buttons Button {
     margin-left: 1;
 }
 
