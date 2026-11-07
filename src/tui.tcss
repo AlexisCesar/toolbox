@@ -103,9 +103,121 @@ Footer {
     height: auto;
 }
 
-#scripts-label {
+#scripts-view {
+    height: 1fr;
     padding: 1;
+}
+
+#scripts-container {
+    height: 1fr;
+}
+
+#scripts-title {
+    height: 1;
     text-style: bold;
+}
+
+#scripts-label {
+    height: auto;
+    max-height: 2;
+    margin-bottom: 1;
+}
+
+#script-search {
+    height: 3;
+    margin-bottom: 1;
+}
+
+#scripts-browser {
+    height: 1fr;
+    min-height: 10;
+}
+
+#script-list {
+    width: 58%;
+    min-width: 32;
+    border: round #374558;
+}
+
+#script-list > .option-list--separator {
+    color: $accent;
+    text-style: bold;
+}
+
+#scripts-browser OptionList:focus {
+    border: round $accent;
+}
+
+#script-details-scroll {
+    width: 42%;
+    height: 1fr;
+}
+
+#script-details {
+    width: 1fr;
+    height: auto;
+    padding: 1 2;
+}
+
+#script-details-title {
+    height: auto;
+    text-style: bold;
+}
+
+#script-details-description {
+    height: auto;
+    margin-top: 1;
+}
+
+#script-actions {
+    height: auto;
+    margin-top: 1;
+}
+
+#script-actions Button {
+    width: 1fr;
+    min-width: 16;
+    margin-bottom: 1;
+}
+
+ScriptDescriptionDialog {
+    align: center middle;
+}
+
+#script-description-dialog {
+    width: 70%;
+    height: 60%;
+    min-height: 14;
+    padding: 1 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#script-description-title {
+    height: 1;
+    text-style: bold;
+}
+
+#script-description-script-name {
+    height: auto;
+    margin-bottom: 1;
+}
+
+#script-description-input {
+    height: 1fr;
+    min-height: 5;
+    border: round #374558;
+}
+
+#script-description-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#script-description-buttons Button {
+    min-width: 14;
+    margin-left: 1;
 }
 
 /* Offline Utilities View */
@@ -266,34 +378,6 @@ ScriptEditorDialog {
 
 #script-editor-save {
     margin-right: 1;
-}
-
-/* Script Inspection Dialog Styles */
-ScriptInspectionDialog {
-    align: center middle;
-}
-
-#script-inspection-dialog {
-    width: 85%;
-    height: 85%;
-    padding: 1 2;
-    border: thick #374558;
-    background: $surface;
-}
-
-#script-inspection-title {
-    text-style: bold;
-    margin-bottom: 1;
-}
-
-#script-inspection-content {
-    height: 1fr;
-}
-
-#script-inspection-buttons {
-    height: 3;
-    align: right middle;
-    margin-top: 1;
 }
 
 /* Confirm Dialog Styles */
@@ -468,11 +552,12 @@ ConfirmDialog {
 .netrunner-theme #log,
 .netrunner-theme #bash-terminal,
 .netrunner-theme #utility-list,
+.netrunner-theme #script-list,
 .netrunner-theme #utility-input,
 .netrunner-theme #utility-second-input,
 .netrunner-theme #utility-output,
 .netrunner-theme #script-editor-content,
-.netrunner-theme #script-inspection-content,
+.netrunner-theme #script-description-input,
 .netrunner-theme #log-files-list,
 .netrunner-theme #log-file-content {
     border: round #5c1727;
@@ -480,7 +565,7 @@ ConfirmDialog {
 
 .netrunner-theme #utility-dialog,
 .netrunner-theme #script-editor-dialog,
-.netrunner-theme #script-inspection-dialog,
+.netrunner-theme #script-description-dialog,
 .netrunner-theme #log-files-dialog,
 .netrunner-theme #log-file-dialog,
 .netrunner-theme #log-config-dialog,

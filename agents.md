@@ -21,6 +21,8 @@
 - Add unit tests for every new feature, covering its expected behavior and relevant edge cases.
 - Run the test suite after adding or changing functionality to confirm the new behavior works and existing features continue to pass.
 - When a test cannot be run, document the reason and the remaining verification needed.
+- On Windows in the restricted Codex environment, pass `--basetemp` with a fresh directory under `.pytest_tmp`; the default `%TEMP%` may not be writable. Confirm the chosen directory does not already exist because pytest clears its `--basetemp` directory before use.
+- Bash session tests use `socket.socketpair()`. Python's Windows fallback opens a loopback connection, which the restricted environment may block and leave tests hanging. When this happens, rerun pytest in an environment that permits localhost loopback; do not change application code to work around the sandbox restriction. If that run is unavailable, report the limitation and the verification still needed.
 - Organize tests under `tests/unit` and `tests/integration`.
 - Keep `.gitkeep` files only in otherwise empty folders, and remove them as soon as a folder contains another file.
 

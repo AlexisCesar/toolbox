@@ -31,7 +31,7 @@ THEMES = [
 def theme_options() -> list[str]:
     return available_themes(THEMES)
 
-SCRIPTS_DESC_INSTRUCTIONS = """To add descriptions for your scripts, generate the descriptions file then edit it (located on your scripts folder)."""
+SCRIPTS_DESC_INSTRUCTIONS = """Generate this file once to enable description editing from the Scripts tab. It is saved in your scripts folder."""
 
 class Settings(Static):
     """Settings view for the Toolbox TUI allowing customization and folder configurations."""

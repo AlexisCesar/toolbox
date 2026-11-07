@@ -37,6 +37,19 @@ class ToolboxTUI(App):
 
     ENABLE_COMMAND_PALETTE = False
     CSS_PATH = "tui.tcss"
+    VIEW_IDS = {
+        0: "home-view",
+        1: "bash-view",
+        2: "todos-view",
+        3: "scripts-view",
+        4: "logs-view",
+        5: "health-checkers-view",
+        6: "notes-view",
+        7: "markdow-preview-view",
+        8: "my-projects-view",
+        9: "utilities-view",
+        10: "settings-view",
+    }
     BINDINGS = [
         ("h", "select_view(0)", "Home"),
         ("b", "select_view(1)", "Bash"),
@@ -356,42 +369,19 @@ class ToolboxTUI(App):
         """Handle selection changes in the sidebar list view."""
         if event.list_view.id != "sidebar-list":
             return
-
-        switcher = self.query_one("#main-content-switcher", ContentSwitcher)
-
-        match event.list_view.index:
-            case 0:
-                switcher.current = "home-view"
-            case 1:
-                switcher.current = "bash-view"
-            case 2:
-                switcher.current = "todos-view"
-            case 3:
-                switcher.current = "scripts-view"
-            case 4:
-                switcher.current = "logs-view"
-            case 5:
-                switcher.current = "health-checkers-view"
-            case 6:
-                switcher.current = "notes-view"
-            case 7:
-                switcher.current = "markdow-preview-view"
-            case 8:
-                switcher.current = "my-projects-view"
-            case 9:
-                switcher.current = "utilities-view"
-            case 10:
-                switcher.current = "settings-view"
-            case 11:
-                App.exit(self)
+        self._show_view(event.list_view.index)
 
     def action_select_view(self, view_id: int) -> None:
+        """Select a sidebar item and synchronously show its view."""
         list_view = self.query_one("#sidebar-list")
         list_view.index = view_id
         list_view.focus()
+        self._show_view(view_id)
 
-        selected_item = list_view.highlighted_child
-        if selected_item is not None:
-            list_view.post_message(
-                ListView.Selected(list_view, item=selected_item, index=view_id)
-            )
+    def _show_view(self, view_id: int) -> None:
+        if view_id == 11:
+            self.exit()
+            return
+        view_name = self.VIEW_IDS.get(view_id)
+        if view_name is not None:
+            self.query_one("#main-content-switcher", ContentSwitcher).current = view_name
