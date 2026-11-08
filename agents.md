@@ -35,6 +35,7 @@
 
 - Keep `README.md` current whenever a change adds or alters relevant project information, such as setup, execution, configuration, features, or usage.
 - Prefer concise, actionable documentation that matches the behavior of the application.
+- Update the application version label that is displayed to the user according to the change. Keep the "v0.0.0" structure following the MAJOR(breaking)/MINOR/PATCH pattern.
 
 ## Toolbox TUI home screen
 
