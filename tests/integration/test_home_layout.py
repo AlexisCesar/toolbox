@@ -18,7 +18,8 @@ def test_home_splits_guidance_and_update_log_and_shows_current_version(
             guidance = app.query_one("#home-guidance")
             update_log = app.query_one("#home-update-log")
 
-            assert abs(guidance.region.width - update_log.region.width) <= 1
+            assert abs(guidance.region.width - 3 * update_log.region.width) <= 2
+            assert guidance.region.width > update_log.region.width
             assert guidance.region.x < update_log.region.x
             app.query_one("#home-changelog", Static)
             assert f"v{APP_VERSION}" in str(app.query_one("#version", Label).content)
