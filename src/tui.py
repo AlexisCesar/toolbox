@@ -43,6 +43,7 @@ from src.utils.themes import NETRUNNER_THEME
 import platform
 
 from src.views.settings import Settings
+from src.version import APP_VERSION
 
 class ToolboxTUI(App):
     """A Textual-based TUI for the Toolbox application."""
@@ -161,7 +162,7 @@ class ToolboxTUI(App):
                     yield self._profile_status_button
                 with Horizontal(id="title-content"):
                     yield Label("Toolbox TUI", id="app-title")
-                    yield Label(" - v0.2.0", id="version")
+                    yield Label(f" - v{APP_VERSION}", id="version")
                     yield Label(" - " + os_icon + platform.system(), id="os-info")
                 self._runtime_status_label = Label(
                     f"{datetime.now():%H:%M:%S}  CPU --  RAM --",

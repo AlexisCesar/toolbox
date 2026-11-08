@@ -35,7 +35,9 @@
 
 - Keep `README.md` current whenever a change adds or alters relevant project information, such as setup, execution, configuration, features, or usage.
 - Prefer concise, actionable documentation that matches the behavior of the application.
-- Update the application version label that is displayed to the user according to the change. Keep the "v0.0.0" structure following the MAJOR(breaking)/MINOR/PATCH pattern.
+- Keep `src/version.py` as the application source for `APP_VERSION` and the release `CHANGELOG`; keep the package version in `pyproject.toml` and `uv.lock` synchronized with `APP_VERSION`.
+- For every change prepared for merge, increment `APP_VERSION` and add a dated changelog entry under the same version. Use MAJOR for breaking changes, MINOR for backward-compatible features, and PATCH for fixes or other backward-compatible changes. Include only non-empty `added`, `changed`, and `fixed` sections in the Home screen output.
+- Keep the version label in the UI derived from `APP_VERSION`; do not add a separate hard-coded version.
 
 ## Toolbox TUI home screen
 

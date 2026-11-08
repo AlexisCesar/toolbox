@@ -123,6 +123,31 @@ Footer {
     height: auto;
 }
 
+#home-view,
+#home-columns {
+    height: 1fr;
+}
+
+#home-guidance {
+    width: 3fr;
+    height: 1fr;
+    padding: 1 2;
+}
+
+#home-update-log {
+    width: 1fr;
+    height: 1fr;
+    padding: 1 2;
+}
+
+#home-guidance {
+    border-right: dashed #374558;
+}
+
+#home-changelog {
+    height: auto;
+}
+
 #scripts-view {
     height: 1fr;
     padding: 1;

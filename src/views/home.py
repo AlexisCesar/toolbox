@@ -1,3 +1,8 @@
+from rich.markup import escape
+from textual.app import ComposeResult
+from textual.containers import Horizontal, VerticalScroll
+from textual.widgets import Rule, Static
+
 from src.utils.seasonal_theme import (
     CHRISTMAS_THEME,
     HALLOWEEN_THEME,
@@ -7,10 +12,7 @@ from src.utils.seasonal_theme import (
 )
 from src.utils.themes import NETRUNNER_THEME
 from src.utils.config import config
-
-from textual.app import ComposeResult
-from textual.containers import VerticalScroll
-from textual.widgets import Rule, Static
+from src.version import APP_VERSION, CHANGELOG, VersionChanges
 
 
 LOGO_ASCII_ART = """[bold #ff5f00]
@@ -41,6 +43,31 @@ First time using the Toolbox? Configure your directories, log folders, health ch
 
 - \U0001F41E Found an issue or have a feature request? Please submit it on our [link="https://github.com/AlexisCesar/toolbox/issues"]GitHub repository[/link].
 """
+
+CHANGELOG_SECTIONS = (
+    ("added", "Added"),
+    ("changed", "Changed"),
+    ("fixed", "Fixed"),
+)
+
+
+def format_changelog(
+    version: str = APP_VERSION,
+    changelog: dict[str, VersionChanges] = CHANGELOG,
+) -> str:
+    """Format the selected release notes for Rich markup on the Home screen."""
+    changes = changelog.get(version, {})
+    sections: list[str] = []
+    for key, title in CHANGELOG_SECTIONS:
+        entries = changes.get(key, [])
+        if entries:
+            bullets = "\n".join(f"- {escape(entry)}" for entry in entries)
+            sections.append(f"[bold]{title}:[/bold]\n{bullets}")
+
+    return f"[bold]Version {escape(version)} Update Log:[/bold]" + (
+        "\n\n" + "\n\n".join(sections) if sections else ""
+    )
+
 
 class Home(Static):
     """A simple home view for the Toolbox TUI."""
@@ -89,11 +116,14 @@ class Home(Static):
 
     def compose(self) -> ComposeResult:
         """Create the layout for the home view."""
-        with VerticalScroll():
-            theme_name = config.theme if is_theme_available(config.theme) else None
-            yield Static(self.logo_art(theme_name), id="ascii-art")
-            yield Rule(line_style="dashed")
-            yield Static(self.instructions(theme_name), id="home-instructions")
+        theme_name = config.theme if is_theme_available(config.theme) else None
+        with Horizontal(id="home-columns"):
+            with VerticalScroll(id="home-guidance"):
+                yield Static(self.logo_art(theme_name), id="ascii-art")
+                yield Rule(line_style="dashed")
+                yield Static(self.instructions(theme_name), id="home-instructions")
+            with VerticalScroll(id="home-update-log"):
+                yield Static(format_changelog(), id="home-changelog")
 
     def on_show(self) -> None:
         """Refresh seasonal guidance when returning to the home screen."""
