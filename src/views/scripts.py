@@ -17,6 +17,7 @@ from textual.widgets.option_list import Option
 
 from src.utils.config import config, iter_script_files
 from src.utils.confirm_dialog import ConfirmDialog, ConfirmResult
+from src.utils.gamification import SCRIPT_RUN_EXP
 from src.utils.logger import Logger
 from src.utils.script_description_dialog import ScriptDescriptionDialog
 from src.utils.script_editor_dialog import ScriptEditorDialog
@@ -392,11 +393,13 @@ class Scripts(Static):
     def execute_script_callback(self, result: ConfirmResult, script_path: Path) -> None:
         if result.confirmed:
             self.script_runner.run(script_path)
+            self.app.award_experience(SCRIPT_RUN_EXP)
 
     def run_external_terminal_callback(self, result: ConfirmResult, script_path: Path) -> None:
         if result.confirmed:
             self.logger.info(f"Running {script_path.name} in external terminal.")
             self.script_runner.run(script_path, external_terminal=True)
+            self.app.award_experience(SCRIPT_RUN_EXP)
 
     def run_with_parameters_callback(self, result: ConfirmResult, script_path: Path) -> None:
         if result.confirmed:
@@ -410,6 +413,7 @@ class Scripts(Static):
                     script_path.relative_to(config.scripts_dir).as_posix(), result.parameters
                 )
             self.script_runner.run(script_path, parameters=result.parameters)
+            self.app.award_experience(SCRIPT_RUN_EXP)
 
     def save_script_parameters(self, script_name: str, parameters: str) -> None:
         try:

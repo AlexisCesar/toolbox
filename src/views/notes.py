@@ -8,6 +8,7 @@ from textual.containers import Horizontal, HorizontalScroll
 from textual.widgets import Button, Static, DirectoryTree, TextArea
 from src.utils.config import config
 from src.utils.confirm_dialog import ConfirmDialog
+from src.utils.gamification import NOTE_OPEN_EXP
 from src.utils.new_note_dialog import NewNoteDialog, NewNoteDraft
 
 MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
@@ -359,6 +360,7 @@ class Notes(Static):
 
     def display_file(self, path: Path) -> None:
         """Reads and displays the content of a text file in the editor."""
+        is_new_open = path != self.current_file_path
         viewer = self.query_one("#viewer", TextArea)
 
         try:
@@ -377,6 +379,10 @@ class Notes(Static):
         # Return the viewer to the beginning of the file.
         viewer.cursor_location = (0, 0)
         viewer.scroll_cursor_visible(animate=False)
+        if is_new_open:
+            award_experience = getattr(self.app, "award_experience", None)
+            if callable(award_experience):
+                award_experience(NOTE_OPEN_EXP)
     
     def update_highlight_based_on_file_type(
         self,

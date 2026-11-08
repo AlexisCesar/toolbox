@@ -194,12 +194,15 @@ class Settings(Static):
             theme_name = self.query_one("#settings-theme-select", Select).value
             if theme_name not in theme_options():
                 return
+            previous_theme = config.theme
             try:
                 config.update("ui", "theme", theme_name)
             except OSError as error:
                 self.logger.error(f"Could not save the application theme: {error}")
                 return
             self.app.apply_theme(theme_name)
+            if theme_name != previous_theme:
+                self.app.award_first_theme_change()
             self.logger.info(f"Application theme changed to: \"{theme_name}\".")
         
         if event.button.id == "settings-directories-scripts-change-button":

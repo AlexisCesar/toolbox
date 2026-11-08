@@ -4,10 +4,30 @@
     align: center middle;
 }
 
-#title-spacer,
+#profile-slot,
 #runtime-status {
     width: 1fr;
     height: 100%;
+}
+
+#profile-slot {
+    align: left middle;
+}
+
+#profile-status {
+    width: auto;
+    min-width: 1;
+    margin-left: 3;
+    padding: 0;
+    content-align: left middle;
+    text-align: left;
+    border: none;
+    background: transparent;
+}
+
+#profile-status:hover,
+#profile-status:focus {
+    background: $surface;
 }
 
 #title-content {
@@ -1003,5 +1023,42 @@ HealthCheckConfigDialog {
 }
 
 #health-config-buttons Button {
+    margin-left: 1;
+}
+
+TitleSelectionDialog {
+    align: center middle;
+}
+
+#title-selection-dialog {
+    width: 60%;
+    height: auto;
+    max-height: 80%;
+    padding: 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#title-selection-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.title-selection-label {
+    margin-bottom: 1;
+}
+
+#title-selection-choice {
+    width: 1fr;
+    height: 3;
+}
+
+#title-selection-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#title-selection-buttons Button {
     margin-left: 1;
 }

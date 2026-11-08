@@ -1,12 +1,13 @@
+from datetime import date, datetime
 from pathlib import Path
-from datetime import datetime
 
 import psutil
+from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.css.query import NoMatches
 from textual.theme import Theme
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import ContentSwitcher, Footer, Label, ListItem, ListView, RichLog
+from textual.widgets import Button, ContentSwitcher, Footer, Label, ListItem, ListView, RichLog
 from src.views.home import Home
 from src.views.markdown_view import MarkdownPreview
 from src.views.scripts import Scripts
@@ -19,6 +20,17 @@ from src.views.todos import Todos
 from src.views.utilities import Utilities
 from src.utils.logger import Logger
 from src.utils.config import config
+from src.utils.gamification import (
+    DAILY_LOGIN_BASE_EXP,
+    FIRST_THEME_CHANGE_EXP,
+    TITLES,
+    available_titles,
+    calculate_streak,
+    level_for_experience,
+    render_title_label,
+    title_for_code,
+)
+from src.utils.title_selection_dialog import TitleSelectionDialog
 from src.utils.todo_store import TodoStore
 from src.utils.seasonal_theme import (
     CHRISTMAS_THEME,
@@ -72,6 +84,7 @@ class ToolboxTUI(App):
         self._seasonal_timer = None
         self._runtime_timer = None
         self._runtime_status_label: Label | None = None
+        self._profile_status_button: Button | None = None
         self._process = psutil.Process()
         self._runtime_metrics_warning_logged = False
         self._decoration_row = 0
@@ -137,7 +150,15 @@ class ToolboxTUI(App):
 
         with Vertical(id="main-container"):
             with Horizontal(id="title-bar"):
-                yield Label("", id="title-spacer")
+                with Horizontal(id="profile-slot"):
+                    self._profile_status_button = Button(
+                        self._profile_status_text(),
+                        id="profile-status",
+                        flat=True,
+                        tooltip=self._profile_tooltip(),
+                    )
+                    self._profile_status_button.styles.line_pad = 0
+                    yield self._profile_status_button
                 with Horizontal(id="title-content"):
                     yield Label("Toolbox TUI", id="app-title")
                     yield Label(" - v0.1.0", id="version")
@@ -225,7 +246,100 @@ class ToolboxTUI(App):
         self._process.cpu_percent()
         self._runtime_timer = self.set_interval(1.0, self._update_runtime_status)
         self.logger.info(f"User configuration loaded from {config.config_path}.")
+        if config.gamification_defaults_added:
+            self.logger.info("Added missing gamification defaults to the user configuration.")
+        if config.gamification_migration_error:
+            self.logger.warn(
+                "Could not save gamification defaults to the user configuration: "
+                f"{config.gamification_migration_error}"
+            )
+        if not config.experience_is_valid:
+            self.logger.warn("Configured gamification experience is invalid; using 0 XP.")
+        if not config.selected_title_is_valid:
+            self.logger.warn("Configured title is invalid or locked; using Newbie.")
+        self._update_profile_status()
+        daily_experience, streak_days = self.claim_daily_login()
+        if daily_experience:
+            self.notify(
+                f"Daily login: +{daily_experience} EXP. Streak: {streak_days} day(s).",
+                title="Daily login",
+            )
         self.logger.info("Toolbox TUI started.")
+
+    def _profile_status_text(self) -> Text:
+        """Build the level and selected title, coloring only the title."""
+        level = config.level
+        title = title_for_code(config.selected_title_code, level)
+        if title is None:
+            title = available_titles(0)[0]
+        return render_title_label(f"Level {level} - ", title)
+
+    def _profile_tooltip(self) -> str:
+        """Show XP before the title selection hint on hover."""
+        return f"Current EXP: {config.experience}\nClick to select an unlocked title"
+
+    def award_experience(self, amount: int, **gamification_updates: object) -> bool:
+        """Persist XP and select a title when the award crosses its unlock level."""
+        if not isinstance(amount, int) or isinstance(amount, bool) or amount <= 0:
+            return False
+
+        previous_level = config.level
+        new_experience = config.experience + amount
+        new_level = level_for_experience(new_experience)
+
+        changes: dict[str, object] = {"experience": new_experience}
+        newly_unlocked = [
+            title for title in TITLES if previous_level < title.level <= new_level
+        ]
+        if newly_unlocked:
+            changes["selected_title"] = max(newly_unlocked, key=lambda title: title.level).code
+        changes.update(gamification_updates)
+
+        try:
+            config.update_gamification(**changes)
+        except (OSError, ValueError) as error:
+            self.logger.error(f"Could not save gamification progress: {error}")
+            return False
+
+        self._update_profile_status()
+        return True
+
+    def claim_daily_login(self, today: date | None = None) -> tuple[int, int]:
+        """Award the daily login XP once and persist the current streak."""
+        current_date = today or date.today()
+        date_value = current_date.isoformat()
+        if config.last_started_date == date_value and config.daily_exp_received:
+            return 0, config.streak_days
+
+        streak_days = calculate_streak(
+            config.last_started_date,
+            config.streak_days,
+            current_date,
+        )
+        experience = DAILY_LOGIN_BASE_EXP * streak_days
+        awarded = self.award_experience(
+            experience,
+            last_started_date=date_value,
+            daily_exp_received=True,
+            streak_days=streak_days,
+        )
+        return (experience if awarded else 0), streak_days
+
+    def award_first_theme_change(self) -> bool:
+        """Award the one-time bonus for changing the application theme."""
+        if config.first_theme_change_rewarded:
+            return False
+        return self.award_experience(
+            FIRST_THEME_CHANGE_EXP,
+            first_theme_change_rewarded=True,
+        )
+
+    def _update_profile_status(self) -> None:
+        """Refresh the clickable profile summary in the top-left header area."""
+        if self._profile_status_button is not None:
+            self._profile_status_button.label = self._profile_status_text()
+            self._profile_status_button.tooltip = self._profile_tooltip()
+            self._profile_status_button.refresh(layout=True)
 
     def _update_runtime_status(self) -> None:
         """Refresh the local clock and this process's CPU and memory usage."""
@@ -370,6 +484,36 @@ class ToolboxTUI(App):
         if event.list_view.id != "sidebar-list":
             return
         self._show_view(event.list_view.index)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Open and save the title selector from the profile header button."""
+        if event.button.id != "profile-status":
+            return
+        event.stop()
+        self.push_screen(
+            TitleSelectionDialog(
+                logger=self.logger,
+                level=config.level,
+                selected_code=config.selected_title_code,
+            ),
+            self._save_selected_title,
+        )
+
+    def _save_selected_title(self, selected_code: str | None) -> None:
+        """Persist a title selected from the currently unlocked choices."""
+        if selected_code is None:
+            return
+        unlocked_codes = {title.code for title in available_titles(config.level)}
+        if selected_code not in unlocked_codes:
+            self.logger.warn("Ignored a profile title that is not unlocked.")
+            return
+        try:
+            config.update("gamification", "selected_title", selected_code)
+        except OSError as error:
+            self.logger.error(f"Could not save the selected profile title: {error}")
+            return
+        self.logger.info(f"Profile title changed to {config.selected_title_name}.")
+        self._update_profile_status()
 
     def action_select_view(self, view_id: int) -> None:
         """Select a sidebar item and synchronously show its view."""

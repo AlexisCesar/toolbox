@@ -4,6 +4,7 @@ import tomllib
 import pytest
 
 from src.utils.config import Config
+from src.utils.gamification import DEFAULT_GAMIFICATION_SETTINGS
 
 
 def test_update_logs_persists_toml_array_tables(tmp_path: Path) -> None:
@@ -47,7 +48,7 @@ def test_update_logs_can_clear_all_entries(tmp_path: Path) -> None:
     assert test_config.logs == []
 
 
-def test_existing_override_is_preserved_and_not_reinitialized(tmp_path: Path) -> None:
+def test_existing_override_is_preserved_and_migrated(tmp_path: Path) -> None:
     default_file = tmp_path / "config.toml"
     default_file.write_text('[ui]\ntheme = "default"\n', encoding="utf-8")
     override_file = tmp_path / "config.override.toml"
@@ -56,7 +57,10 @@ def test_existing_override_is_preserved_and_not_reinitialized(tmp_path: Path) ->
     test_config = Config(default_file, override_file)
 
     assert test_config.theme == "user-choice"
-    assert override_file.read_text(encoding="utf-8") == '[ui]\ntheme = "user-choice"\n'
+    assert test_config.gamification_defaults_added
+    parsed = tomllib.loads(override_file.read_text(encoding="utf-8"))
+    assert parsed["ui"]["theme"] == "user-choice"
+    assert parsed["gamification"] == DEFAULT_GAMIFICATION_SETTINGS
     assert default_file.read_text(encoding="utf-8") == '[ui]\ntheme = "default"\n'
 
 
@@ -68,7 +72,11 @@ def test_missing_override_is_copied_from_defaults(tmp_path: Path) -> None:
     test_config = Config(default_file, override_file)
 
     assert test_config.theme == "starter"
-    assert override_file.read_text(encoding="utf-8") == default_file.read_text(encoding="utf-8")
+    assert test_config.gamification_defaults_added
+    assert default_file.read_text(encoding="utf-8") == '[ui]\ntheme = "starter"\n'
+    parsed = tomllib.loads(override_file.read_text(encoding="utf-8"))
+    assert parsed["ui"]["theme"] == "starter"
+    assert parsed["gamification"] == DEFAULT_GAMIFICATION_SETTINGS
 
 
 def test_override_creation_failure_has_actionable_error(tmp_path: Path) -> None:
