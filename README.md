@@ -11,7 +11,7 @@ checks we use throughout the workday, so they are easy to find in one place.
 - 🐚 Run commands in an interactive, persistent Bash session.
 - 📜 Browse and run scripts from a configurable folder, with descriptions and
   saved parameters.
-- 📝 Browse, edit, and save text files and preview Markdown notes.
+- 📝 Create, browse, edit, and save text files and preview Markdown notes.
 - 📂 Find project folders and open solutions in Visual Studio or VS Code. Open
   folders without a solution in VS Code when it is installed.
 - 📋 Browse local or network log folders and inspect recent log output.

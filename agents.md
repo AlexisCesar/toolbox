@@ -21,6 +21,8 @@
 - Add unit tests for every new feature, covering its expected behavior and relevant edge cases.
 - Run the test suite after adding or changing functionality to confirm the new behavior works and existing features continue to pass.
 - When a test cannot be run, document the reason and the remaining verification needed.
+- On Windows in the restricted Codex environment, pass `--basetemp` with a fresh directory under `.pytest_tmp`; the default `%TEMP%` may not be writable. Confirm the chosen directory does not already exist because pytest clears its `--basetemp` directory before use.
+- Bash session tests use `socket.socketpair()`. Python's Windows fallback opens a loopback connection, which the restricted environment may block and leave tests hanging. When this happens, rerun pytest in an environment that permits localhost loopback; do not change application code to work around the sandbox restriction. If that run is unavailable, report the limitation and the verification still needed.
 - Organize tests under `tests/unit` and `tests/integration`.
 - Keep `.gitkeep` files only in otherwise empty folders, and remove them as soon as a folder contains another file.
 
@@ -33,6 +35,9 @@
 
 - Keep `README.md` current whenever a change adds or alters relevant project information, such as setup, execution, configuration, features, or usage.
 - Prefer concise, actionable documentation that matches the behavior of the application.
+- Keep `src/version.py` as the application source for `APP_VERSION` and the release `CHANGELOG`; keep the package version in `pyproject.toml` and `uv.lock` synchronized with `APP_VERSION`.
+- For every change prepared for merge, increment `APP_VERSION` and add a dated changelog entry under the same version. Use MAJOR for breaking changes, MINOR for backward-compatible features, and PATCH for fixes or other backward-compatible changes. Include only non-empty `added`, `changed`, and `fixed` sections in the Home screen output.
+- Keep the version label in the UI derived from `APP_VERSION`; do not add a separate hard-coded version.
 
 ## Toolbox TUI home screen
 

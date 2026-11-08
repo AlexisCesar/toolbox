@@ -1,238 +1,429 @@
+"""Searchable, folder-grouped catalog of local scripts."""
+
+from __future__ import annotations
+
 import tomllib
-from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 
 import pyperclip
+import tomlkit
+from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import VerticalScroll
-import tomlkit
+from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.widgets import Button, Input, Label, OptionList, Static
+from textual.widgets.option_list import Option
 
 from src.utils.config import config, iter_script_files
+from src.utils.confirm_dialog import ConfirmDialog, ConfirmResult
+from src.utils.gamification import SCRIPT_RUN_EXP
 from src.utils.logger import Logger
-from src.utils.script_inspection_dialog import ScriptInspectionDialog
+from src.utils.script_description_dialog import ScriptDescriptionDialog
 from src.utils.script_editor_dialog import ScriptEditorDialog
 from src.utils.script_runner import ScriptRunner
-from src.utils.confirm_dialog import ConfirmDialog
 
-from textual.widgets import DataTable, Static
+
+SCRIPT_TYPES = {
+    ".py": "🐍 Python Script",
+    ".sh": "🐚 Shell Script",
+    ".sql": "📜 SQL",
+    ".ps1": "PowerShell Script",
+    ".bat": "Windows Batch Script",
+    ".cmd": "Windows Command Script",
+}
+
+
+@dataclass(frozen=True)
+class ScriptEntry:
+    """A script and the metadata shown in the browser."""
+
+    path: Path
+    relative_path: str
+    name: str
+    script_type: str
+    description: str
+
+    @property
+    def is_sql(self) -> bool:
+        return self.path.suffix.lower() == ".sql"
 
 
 def format_scripts_directory_label(scripts_dir: Path, depth: int) -> str:
-    label = f"Reading scripts from: \U0001F4C2 {Path(scripts_dir).absolute()}"
+    label = f"Reading scripts from: 📂 {Path(scripts_dir).absolute()}"
     if depth > 0:
         label += f" (with a depth of {depth} subfolders)"
     return label
 
 
 def format_script_display_name(script_path: Path, scripts_dir: Path) -> str:
+    """Format a script name with its nesting depth for legacy callers."""
     relative_path = Path(script_path).relative_to(scripts_dir)
     depth = len(relative_path.parts) - 1
     if depth == 0:
         return relative_path.name
-    return f"\U0001F4C1 ({depth}) {relative_path.name}"
+    return f"📁 ({depth}) {relative_path.name}"
 
 
 class Scripts(Static):
-    """Scripts view for the Toolbox TUI."""
-    def __init__(self, logger: Logger, **kwargs):
+    """Browse scripts by folder, then run or inspect the selected script."""
+
+    def __init__(self, logger: Logger, **kwargs) -> None:
         super().__init__(**kwargs)
         self.logger = logger
         self.script_runner = ScriptRunner(logger=self.logger)
-        self.rows = []
-        self.script_paths: dict[str, str] = {}
+        self.scripts: dict[str, ScriptEntry] = {}
+        self.selected_script: ScriptEntry | None = None
 
     def compose(self) -> ComposeResult:
-        """Create the layout for the scripts view."""
-        yield Static("-", id="scripts-label")
-        with VerticalScroll():
-            yield DataTable(id="scripts-datatable", zebra_stripes=True)
-    
+        with Vertical(id="scripts-container"):
+            yield Label("Scripts", id="scripts-title")
+            yield Static("", id="scripts-label")
+            yield Input(
+                placeholder="Search by name, folder, or description…", id="script-search"
+            )
+            with Horizontal(id="scripts-browser"):
+                yield OptionList(id="script-list")
+                with VerticalScroll(id="script-details-scroll"):
+                    with Vertical(id="script-details"):
+                        yield Label("Select a script", id="script-details-title")
+                        yield Static(
+                            "Choose a script to see its folder and available actions.",
+                            id="script-details-description",
+                        )
+                        with Vertical(id="script-actions"):
+                            yield Button("Run", variant="primary", id="script-run", disabled=True)
+                            yield Button("Run External", id="script-run-external", disabled=True)
+                            yield Button(
+                                "Run With Parameters", id="script-run-parameters", disabled=True
+                            )
+                            yield Button("Copy SQL", id="script-copy", disabled=True)
+                            yield Button("Open / Edit", id="script-open-edit", disabled=True)
+                            yield Button(
+                                "Update Description",
+                                id="script-update-description",
+                                disabled=True,
+                            )
+
     def on_mount(self) -> None:
         self.logger.info("Initializing scripts.")
         self.update_script_dir_label()
         self.update_scripts_list()
-        if not self.rows:
+        if not self.scripts:
             self.logger.warn("No scripts found in the directory.")
         else:
-            self.logger.info(f"Scripts initialized with {len(self.rows)} scripts.")
-        
+            self.logger.info(f"Scripts initialized with {len(self.scripts)} scripts.")
+
     def on_show(self) -> None:
-        self.update_scripts_list(silent=True)
+        search = self.query_one("#script-search", Input).value
         self.update_script_dir_label()
-        self.build_scripts_datatable()
-    
+        self.update_scripts_list(silent=True, query=search)
+
     def update_script_dir_label(self) -> None:
-        self.query_one("#scripts-label", Static).content = format_scripts_directory_label(
-            config.scripts_dir, config.scripts_depth
+        self.query_one("#scripts-label", Static).update(
+            format_scripts_directory_label(config.scripts_dir, config.scripts_depth)
         )
-    
-    def update_scripts_list(self, silent: bool = False) -> None:
-        scripts_configs: dict[str, dict] = None
-        try:
-            with open(config.scripts_dir / "scripts_configuration.toml", "rb") as file:
-                scripts_configs = tomllib.load(file)
-        except Exception:
-            if not silent:
-                self.logger.warn("Scripts configurations file not found. Generate it in the Settings tab.")
-            
-        self.rows = []
-        self.script_paths = {}
-        script_files = sorted(iter_script_files(config.scripts_dir, config.scripts_depth))
-        display_names = [format_script_display_name(path, config.scripts_dir) for path in script_files]
-        display_name_counts = Counter(display_names)
 
-        for file_path, display_name in zip(script_files, display_names):
-            script_name = file_path.relative_to(config.scripts_dir).as_posix()
-            if file_path.is_file():
-                if display_name_counts[display_name] > 1:
-                    parent_path = file_path.parent.relative_to(config.scripts_dir).as_posix()
-                    display_name = f"{display_name} — {parent_path}"
-                self.script_paths[display_name] = script_name
-                script_type = {
-                    ".py": "\U0001F40D Python Script",
-                    ".sh": "\U0001F41A Shell Script",
-                    ".sql": "\U0001F4DC SQL",
-                    ".ps1": "</> Powershell Script",
-                    ".bat": "\u25A3 Windows Batch Script",
-                    ".cmd": "\u25A3 Windows Command Script",
-                }.get(file_path.suffix.lower(), "Unknown Type")
-                
-                action_1 = "\u25B6 Run"
-                action_2 = "\U0001F4DF Run External"
-                action_3 = "\U0001F522 Run With Parameters"
-                
-                if file_path.suffix.lower() == ".sql":
-                    action_1 = "\U0001F4CB Copy"
-                    action_2 = ""
-                    action_3 = ""
-                
-                script_description = ""
-                if scripts_configs:
-                    script_config = scripts_configs.get(script_name, scripts_configs.get(file_path.name, {}))
-                    script_description = script_config.get("description", "")
-                    
-                self.rows.append((display_name, script_description, script_type, action_1, action_2, action_3, "\U0001F50D Open", "\u270F\uFE0F Edit"))
+    def update_scripts_list(self, silent: bool = False, query: str = "") -> None:
+        scripts_configs = self._load_script_configs(silent)
+        scripts_dir = config.scripts_dir
+        script_files = sorted(
+            (
+                path
+                for path in iter_script_files(scripts_dir, config.scripts_depth)
+                if path.is_file()
+            ),
+            key=lambda path: path.relative_to(scripts_dir).as_posix().casefold(),
+        )
 
-    def build_scripts_datatable(self):
-        table = self.query_one("#scripts-datatable", DataTable)
-        table.clear(columns=True)
-
-        table.add_column("Script Name")
-        table.add_column("Description", width=25)
-        type_key = table.add_column("Type")
-        table.add_column("Action")
-        table.add_column("Action")
-        table.add_column("Action")
-        table.add_column("Inspect")
-        table.add_column("Edit")
-
-        for row in self.rows:
-            cells = list(row)
-            
-            cells = [f"\n{cell}\n" for cell in cells]
-            height = 3
-
-            desc_length = len(str(cells[1]))
-            if desc_length > 25:
-                height = 4
-                if desc_length > 40:
-                    cells[1] = cells[1][:40] + "..."
-
-            table.add_row(*cells, key=row[0], height=height)
-
-        table.sort(type_key)
-    
-    
-    @on(DataTable.CellSelected)
-    def handle_cell_click(self, event: DataTable.CellSelected) -> None:
-        cell_value = str(event.value).strip()
-        if cell_value == "\u25B6 Run":
-            script_name = self.get_script_name_from_row(event.coordinate.row)
-            script_path = self.get_script_path(script_name)
-            self.app.push_screen(ConfirmDialog(f"Run {script_name}?"), callback=lambda result: self.execute_script_callback(result, script_path))
-        elif cell_value == "\U0001F4DF Run External":
-            script_name = self.get_script_name_from_row(event.coordinate.row)
-            script_path = self.get_script_path(script_name)
-            self.app.push_screen(ConfirmDialog(f"Run {script_name} in external terminal?"), callback=lambda result: self.run_external_terminal_callback(result, script_path))
-        elif cell_value == "\U0001F522 Run With Parameters":
-            script_name = self.get_script_name_from_row(event.coordinate.row)
-            script_path = self.get_script_path(script_name)
-            try:
-                with open(config.scripts_dir / "scripts_configuration.toml", "rb") as file:
-                    scripts_configs = tomllib.load(file)
-                    script_key = self.get_script_path(script_name).relative_to(config.scripts_dir).as_posix()
-                    script_config = scripts_configs.get(script_key, scripts_configs.get(Path(script_key).name, {}))
-                    latest_parameters = script_config.get("latest_parameters", "")
-            except Exception:
-                latest_parameters = ""
-            self.app.push_screen(ConfirmDialog(f"Run {script_name} with parameters?", askParameters=True, initialValue=latest_parameters), callback=lambda result: self.run_with_parameters_callback(result, script_path))
-        elif cell_value == "\U0001F50D Open":
-            script_name = self.get_script_name_from_row(event.coordinate.row)
-            file_content = (self.get_script_path(script_name)).read_text()
-            self.app.push_screen(ScriptInspectionDialog(file_content, script_name))
-        elif cell_value == "\u270F\uFE0F Edit":
-            script_name = self.get_script_name_from_row(event.coordinate.row)
-            script_path = self.get_script_path(script_name)
-            try:
-                file_content = script_path.read_text()
-            except OSError as error:
-                self.logger.error(f"Could not open {script_name} for editing: {error}")
-                return
-            self.app.push_screen(
-                ScriptEditorDialog(script_path, file_content),
-                callback=lambda saved: self.on_script_edit_closed(saved, script_name),
+        self.scripts = {}
+        for script_path in script_files:
+            relative_path = script_path.relative_to(scripts_dir).as_posix()
+            script_config = scripts_configs.get(
+                relative_path, scripts_configs.get(script_path.name, {})
             )
-        elif cell_value == "\U0001F4CB Copy":
-            try:
-                script_name = self.get_script_name_from_row(event.coordinate.row)
-                file_content = (self.get_script_path(script_name)).read_text()
-                pyperclip.copy(file_content)
-                self.logger.info(f"Content of {script_name} copied to clipboard.")
-            except pyperclip.PyperclipException:
-                self.logger.error("Unable to access the clipboard. If you are using linux, you may need to install xclip or xsel (clipboard backend).")
-    
-    def get_script_name_from_row(self, row_index: int) -> str:
-        """Get the script name from the datatable row index."""
-        table = self.query_one(DataTable)
-        row_data = table.get_row_at(row_index)
-        return str(row_data[0]).strip()
-    
-    def get_script_path(self, script_name: str):
-        """Get the full path of the script."""
-        relative_path = self.script_paths.get(script_name, script_name)
-        return config.scripts_dir / relative_path
+            description = (
+                str(script_config.get("description", ""))
+                if isinstance(script_config, dict)
+                else ""
+            )
+            script_id = relative_path
+            self.scripts[script_id] = ScriptEntry(
+                path=script_path,
+                relative_path=relative_path,
+                name=script_path.name,
+                script_type=SCRIPT_TYPES.get(script_path.suffix.lower(), "Unknown Type"),
+                description=description,
+            )
 
-    def on_script_edit_closed(self, saved: bool, script_name: str) -> None:
+        self._populate_list(query)
+
+    def _load_script_configs(self, silent: bool) -> dict[str, object]:
+        config_path = config.scripts_dir / "scripts_configuration.toml"
+        try:
+            with config_path.open("rb") as config_file:
+                loaded = tomllib.load(config_file)
+        except FileNotFoundError:
+            if not silent:
+                self.logger.warn(
+                    "Scripts configurations file not found. Generate it in the Settings tab."
+                )
+            return {}
+        except (OSError, tomllib.TOMLDecodeError) as error:
+            self.logger.error(f"Could not read scripts configuration: {error}")
+            return {}
+        return loaded if isinstance(loaded, dict) else {}
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "script-search":
+            self._populate_list(event.value)
+
+    def _populate_list(self, query: str) -> None:
+        script_list = self.query_one("#script-list", OptionList)
+        script_list.clear_options()
+        self.selected_script = None
+        self._update_details()
+
+        normalized_query = query.casefold().strip()
+        visible = [
+            (script_id, script)
+            for script_id, script in self.scripts.items()
+            if normalized_query
+            in f"{script.name} {script.relative_path} {script.description} {script.script_type}".casefold()
+        ]
+
+        folders: dict[str, list[tuple[str, ScriptEntry]]] = {}
+        for script_id, script in visible:
+            folder = Path(script.relative_path).parent.as_posix()
+            folders.setdefault(folder, []).append((script_id, script))
+
+        root_name = self._scripts_root_name()
+        for folder, entries in folders.items():
+            folder_path = f"/{root_name}"
+            if folder != ".":
+                folder_path = f"{folder_path}/{folder}"
+            script_list.add_option(
+                Option(Text(folder_path, style="bold"), id=f"folder:{folder}", disabled=True)
+            )
+            script_list.add_options(
+                Option(f"  {script.name}", id=script_id) for script_id, script in entries
+            )
+
+        if not visible:
+            message = "No scripts match this search." if normalized_query else "No scripts found."
+            script_list.add_option(Option(message, id="no-results", disabled=True))
+
+    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        self._select_script(event.option.id)
+
+    def _select_script(self, script_id: str) -> None:
+        self.selected_script = self.scripts.get(script_id)
+        if self.selected_script is not None:
+            self._update_details()
+
+    def _update_details(self) -> None:
+        self.query_one("#script-details-scroll", VerticalScroll).scroll_home(animate=False)
+        title = self.query_one("#script-details-title", Label)
+        description = self.query_one("#script-details-description", Static)
+        actions = {
+            "script-run": self.query_one("#script-run", Button),
+            "script-run-external": self.query_one("#script-run-external", Button),
+            "script-run-parameters": self.query_one("#script-run-parameters", Button),
+            "script-copy": self.query_one("#script-copy", Button),
+            "script-open-edit": self.query_one("#script-open-edit", Button),
+            "script-update-description": self.query_one(
+                "#script-update-description", Button
+            ),
+        }
+
+        script = self.selected_script
+        if script is None:
+            title.update("Select a script")
+            description.update("Choose a script to see its folder and available actions.")
+            for button in actions.values():
+                button.disabled = True
+                button.styles.display = "block"
+            actions["script-copy"].styles.display = "none"
+            return
+
+        title.update(script.name)
+        details = f"/{self._scripts_root_name()}/{script.relative_path}\n{script.script_type}"
+        if script.description:
+            details += f"\n\n{script.description}"
+        else:
+            details += "\n\nNo description available."
+        description.update(details)
+
+        for button in actions.values():
+            button.disabled = False
+            button.styles.display = "block"
+        if script.is_sql:
+            for action_id in ("script-run", "script-run-external", "script-run-parameters"):
+                actions[action_id].styles.display = "none"
+            actions["script-copy"].disabled = False
+        else:
+            actions["script-copy"].styles.display = "none"
+        actions["script-update-description"].disabled = not self._scripts_config_path().is_file()
+
+    @staticmethod
+    def _scripts_root_name() -> str:
+        scripts_dir = config.scripts_dir
+        return scripts_dir.name or scripts_dir.anchor.rstrip("\\/") or scripts_dir.as_posix()
+
+    @on(Button.Pressed)
+    def handle_action(self, event: Button.Pressed) -> None:
+        script = self.selected_script
+        if script is None:
+            return
+
+        if event.button.id == "script-run":
+            self.app.push_screen(
+                ConfirmDialog(f"Run {script.relative_path}?"),
+                callback=lambda result: self.execute_script_callback(result, script.path),
+            )
+        elif event.button.id == "script-run-external":
+            self.app.push_screen(
+                ConfirmDialog(f"Run {script.relative_path} in external terminal?"),
+                callback=lambda result: self.run_external_terminal_callback(result, script.path),
+            )
+        elif event.button.id == "script-run-parameters":
+            latest_parameters = self._latest_parameters(script)
+            self.app.push_screen(
+                ConfirmDialog(
+                    f"Run {script.relative_path} with parameters?",
+                    askParameters=True,
+                    initialValue=latest_parameters,
+                ),
+                callback=lambda result: self.run_with_parameters_callback(result, script.path),
+            )
+        elif event.button.id == "script-copy":
+            self._copy_script(script)
+        elif event.button.id == "script-open-edit":
+            self._edit_script(script)
+        elif event.button.id == "script-update-description":
+            self._open_description_dialog(script)
+
+    def _scripts_config_path(self) -> Path:
+        return config.scripts_dir / "scripts_configuration.toml"
+
+    def _latest_parameters(self, script: ScriptEntry) -> str:
+        try:
+            config_path = config.scripts_dir / "scripts_configuration.toml"
+            with config_path.open("rb") as config_file:
+                scripts_configs = tomllib.load(config_file)
+        except (OSError, tomllib.TOMLDecodeError) as error:
+            self.logger.warn(
+                f"Could not load saved parameters for {script.relative_path}: {error}"
+            )
+            return ""
+        script_config = scripts_configs.get(
+            script.relative_path, scripts_configs.get(script.name, {})
+        )
+        if isinstance(script_config, dict):
+            return str(script_config.get("latest_parameters", ""))
+        return ""
+
+    def _copy_script(self, script: ScriptEntry) -> None:
+        try:
+            pyperclip.copy(script.path.read_text())
+        except (OSError, pyperclip.PyperclipException) as error:
+            self.logger.error(f"Could not copy {script.relative_path}: {error}")
+            return
+        self.logger.info(f"Content of {script.relative_path} copied to clipboard.")
+
+    def _edit_script(self, script: ScriptEntry) -> None:
+        try:
+            file_content = script.path.read_text()
+        except OSError as error:
+            self.logger.error(f"Could not open {script.relative_path} for editing: {error}")
+            return
+        self.app.push_screen(
+            ScriptEditorDialog(script.path, file_content),
+            callback=lambda saved: self.on_script_edit_closed(saved, script),
+        )
+
+    def on_script_edit_closed(self, saved: bool, script: ScriptEntry) -> None:
         if saved:
-            self.logger.info(f"Saved script: {script_name}")
+            self.logger.info(f"Saved script: {script.relative_path}")
+            self._refresh_script_list(script.relative_path)
 
-    def execute_script_callback(self, result: bool, script_path) -> None:
+    def _open_description_dialog(self, script: ScriptEntry) -> None:
+        if not self._scripts_config_path().is_file():
+            self.logger.warn("Cannot update script descriptions without scripts_configuration.toml.")
+            return
+        self.app.push_screen(
+            ScriptDescriptionDialog(script.name, script.description),
+            callback=lambda description: self._save_script_description(description, script),
+        )
+
+    def _save_script_description(self, description: str | None, script: ScriptEntry) -> None:
+        if description is None:
+            return
+
+        config_path = self._scripts_config_path()
+        try:
+            with config_path.open("r", encoding="utf-8") as config_file:
+                doc = tomlkit.parse(config_file.read())
+            config_key = script.relative_path
+            if config_key not in doc and script.name in doc:
+                config_key = script.name
+            if config_key not in doc:
+                doc[config_key] = tomlkit.table()
+            doc[config_key]["description"] = description
+            with config_path.open("w", encoding="utf-8") as config_file:
+                config_file.write(tomlkit.dumps(doc))
+        except (OSError, tomlkit.exceptions.TOMLKitError, TypeError, AttributeError) as error:
+            self.logger.error(
+                f"Failed to update the description for {script.relative_path}: {error}"
+            )
+            return
+
+        self.logger.info(f"Updated description for {script.relative_path}.")
+        self._refresh_script_list(script.relative_path)
+
+    def _refresh_script_list(self, selected_script_id: str) -> None:
+        search = self.query_one("#script-search", Input).value
+        self.update_scripts_list(silent=True, query=search)
+        option_list = self.query_one("#script-list", OptionList)
+        option_index = option_list.get_option_index(selected_script_id)
+        if option_index is not None:
+            option_list.highlighted = option_index
+            self._select_script(selected_script_id)
+
+    def execute_script_callback(self, result: ConfirmResult, script_path: Path) -> None:
         if result.confirmed:
             self.script_runner.run(script_path)
-            
-    def run_external_terminal_callback(self, result: bool, script_path) -> None:
+            self.app.award_experience(SCRIPT_RUN_EXP)
+
+    def run_external_terminal_callback(self, result: ConfirmResult, script_path: Path) -> None:
         if result.confirmed:
             self.logger.info(f"Running {script_path.name} in external terminal.")
             self.script_runner.run(script_path, external_terminal=True)
-    
-    def run_with_parameters_callback(self, result: bool, script_path) -> None:
+            self.app.award_experience(SCRIPT_RUN_EXP)
+
+    def run_with_parameters_callback(self, result: ConfirmResult, script_path: Path) -> None:
         if result.confirmed:
             if not result.parameters:
-                self.logger.warn(f"No parameters provided. Running {script_path.name} without parameters.")
+                self.logger.warn(
+                    f"No parameters provided. Running {script_path.name} without parameters."
+                )
             else:
                 self.logger.info(f"Running {script_path.name} with parameters: {result.parameters}")
-                self.save_script_parameters(script_path.relative_to(config.scripts_dir).as_posix(), result.parameters)
+                self.save_script_parameters(
+                    script_path.relative_to(config.scripts_dir).as_posix(), result.parameters
+                )
             self.script_runner.run(script_path, parameters=result.parameters)
-    
+            self.app.award_experience(SCRIPT_RUN_EXP)
+
     def save_script_parameters(self, script_name: str, parameters: str) -> None:
         try:
-            with open(config.scripts_dir / "scripts_configuration.toml", "r") as f:
-                doc = tomlkit.parse(f.read())
-                if script_name not in doc:
-                    doc[script_name] = {}
-                doc[script_name]["latest_parameters"] = parameters
-                with open(config.scripts_dir / "scripts_configuration.toml", "w", encoding="utf-8") as f:
-                    f.write(tomlkit.dumps(doc))
-        except Exception as e:
-            self.logger.error(f"Failed to save parameters for {script_name}: {e}")
+            config_path = config.scripts_dir / "scripts_configuration.toml"
+            with config_path.open("r", encoding="utf-8") as file:
+                doc = tomlkit.parse(file.read())
+            if script_name not in doc:
+                doc[script_name] = {}
+            doc[script_name]["latest_parameters"] = parameters
+            with config_path.open("w", encoding="utf-8") as file:
+                file.write(tomlkit.dumps(doc))
+        except (OSError, tomlkit.exceptions.TOMLKitError, TypeError) as error:
+            self.logger.error(f"Failed to save parameters for {script_name}: {error}")

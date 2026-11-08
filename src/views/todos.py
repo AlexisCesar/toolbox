@@ -14,6 +14,10 @@ from textual.widgets import Button, DataTable, Label, ProgressBar, Select, Stati
 
 from src.utils.confirm_dialog import ConfirmDialog
 from src.utils.config import config
+from src.utils.gamification import (
+    TODO_COMPLETION_BASE_EXP,
+    TODO_PRIORITY_MULTIPLIER,
+)
 from src.utils.logger import Logger
 from src.utils.seasonal_theme import HALLOWEEN_THEME
 from src.utils.todo_dialog import TodoDraft, TodoEditorDialog
@@ -268,7 +272,13 @@ class Todos(Static):
 
         detail = " (including its sub-items)" if item.parent_id is None else ""
         state = "completed" if completed else "reopened"
-        self.commit_change(f"TODO item '{item.title}' {state}{detail}.", toggle)
+        changed = self.commit_change(f"TODO item '{item.title}' {state}{detail}.", toggle)
+        if changed and completed:
+            award_experience = getattr(self.app, "award_experience", None)
+            if callable(award_experience):
+                award_experience(
+                    TODO_COMPLETION_BASE_EXP * TODO_PRIORITY_MULTIPLIER[item.priority]
+                )
 
     def action_toggle_paused(self) -> None:
         item = self.selected_item()

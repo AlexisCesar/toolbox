@@ -12,6 +12,7 @@ from src.utils.log_files import (
     iter_log_entries,
     read_log_tail,
 )
+from src.utils.gamification import LOG_OPEN_EXP
 from src.utils.logger import Logger
 
 
@@ -144,6 +145,9 @@ class LogFileDialog(ModalScreen[None]):
         self.logger.info(
             f"Opened log file: {self.path} (read up to {DEFAULT_TAIL_BYTES:,} trailing bytes)"
         )
+        award_experience = getattr(self.app, "award_experience", None)
+        if callable(award_experience):
+            award_experience(LOG_OPEN_EXP)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "log-file-close":

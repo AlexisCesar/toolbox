@@ -13,22 +13,25 @@ from src.utils.confirm_dialog import ConfirmDialog
 from src.utils.log_config_dialog import LogConfigDialog, LogFolder
 from src.utils.health_check_config_dialog import HealthCheckConfig, HealthCheckConfigDialog
 from src.utils.seasonal_theme import DEFAULT_THEME, available_themes
+from src.utils.themes import NETRUNNER_THEME
 
 
-THEMES = """nord
-gruvbox
-tokyo-night
-textual-dark
-solarized-light
-atom-one-dark
-atom-one-light
-""".splitlines()
+THEMES = [
+    "nord",
+    "gruvbox",
+    "tokyo-night",
+    "textual-dark",
+    "solarized-light",
+    "atom-one-dark",
+    "atom-one-light",
+    NETRUNNER_THEME,
+]
 
 
 def theme_options() -> list[str]:
     return available_themes(THEMES)
 
-SCRIPTS_DESC_INSTRUCTIONS = """To add descriptions for your scripts, generate the descriptions file then edit it (located on your scripts folder)."""
+SCRIPTS_DESC_INSTRUCTIONS = """Generate this file once to enable description editing from the Scripts tab. It is saved in your scripts folder."""
 
 class Settings(Static):
     """Settings view for the Toolbox TUI allowing customization and folder configurations."""
@@ -191,12 +194,15 @@ class Settings(Static):
             theme_name = self.query_one("#settings-theme-select", Select).value
             if theme_name not in theme_options():
                 return
+            previous_theme = config.theme
             try:
                 config.update("ui", "theme", theme_name)
             except OSError as error:
                 self.logger.error(f"Could not save the application theme: {error}")
                 return
             self.app.apply_theme(theme_name)
+            if theme_name != previous_theme:
+                self.app.award_first_theme_change()
             self.logger.info(f"Application theme changed to: \"{theme_name}\".")
         
         if event.button.id == "settings-directories-scripts-change-button":

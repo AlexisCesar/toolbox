@@ -9,6 +9,14 @@ todo_startup_notification = true
 # Set true to make all seasonal themes selectable throughout the year.
 enable_all_seasonal_themes = false
 
+[gamification]
+experience = 0
+selected_title = "8f72c4a1-6b39-4d05-ae17-92c0f53b684e"
+last_started_date = ""
+daily_exp_received = false
+streak_days = 0
+first_theme_change_rewarded = false
+
 [scripts]
 timeout = 3
 depth = 1

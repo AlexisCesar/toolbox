@@ -35,6 +35,44 @@ def test_home_includes_christmas_theme_tip_during_december(monkeypatch) -> None:
     assert "The Halloween theme is available" not in instructions
 
 
+def test_home_changelog_omits_empty_sections_and_escapes_markup() -> None:
+    rendered = home_module.format_changelog(
+        "1.2.3",
+        {
+            "1.2.3": {
+                "date": "2026-11-07",
+                "added": ["Added a [quick] action."],
+                "changed": [],
+                "fixed": ["Fixed a display issue."],
+            }
+        },
+    )
+
+    assert "Version 1.2.3 Update Log:" in rendered
+    assert "Added:" in rendered
+    assert "Added a \\[quick] action." in rendered
+    assert "Changed:" not in rendered
+    assert "Fixed:" in rendered
+
+
+def test_release_version_matches_project_metadata() -> None:
+    import tomllib
+
+    from src.version import APP_VERSION, CHANGELOG
+
+    project_file = Path(__file__).parents[2] / "pyproject.toml"
+    project = tomllib.loads(project_file.read_text(encoding="utf-8"))
+    lock_file = Path(__file__).parents[2] / "uv.lock"
+    lock = tomllib.loads(lock_file.read_text(encoding="utf-8"))
+    locked_project = next(
+        package for package in lock["package"] if package["name"] == "toolbox"
+    )
+
+    assert project["project"]["version"] == APP_VERSION
+    assert locked_project["version"] == APP_VERSION
+    assert APP_VERSION in CHANGELOG
+
+
 def test_manual_override_makes_all_seasonal_themes_available_year_round() -> None:
     today = date(2026, 6, 15)
 

@@ -4,6 +4,44 @@
     align: center middle;
 }
 
+#profile-slot,
+#runtime-status {
+    width: 1fr;
+    height: 100%;
+}
+
+#profile-slot {
+    align: left middle;
+}
+
+#profile-status {
+    width: auto;
+    min-width: 1;
+    margin-left: 3;
+    padding: 0;
+    content-align: left middle;
+    text-align: left;
+    border: none;
+    background: transparent;
+}
+
+#profile-status:hover,
+#profile-status:focus {
+    background: $surface;
+}
+
+#title-content {
+    width: auto;
+    height: 100%;
+    align: center middle;
+}
+
+#runtime-status {
+    content-align: right middle;
+    padding-right: 1;
+    color: $text-muted;
+}
+
 #sidebar {
     width: 20%;
     padding: 0 1;
@@ -85,9 +123,146 @@ Footer {
     height: auto;
 }
 
-#scripts-label {
+#home-view,
+#home-columns {
+    height: 1fr;
+}
+
+#home-guidance {
+    width: 3fr;
+    height: 1fr;
+    padding: 1 2;
+}
+
+#home-update-log {
+    width: 1fr;
+    height: 1fr;
+    padding: 1 2;
+}
+
+#home-guidance {
+    border-right: dashed #374558;
+}
+
+#home-changelog {
+    height: auto;
+}
+
+#scripts-view {
+    height: 1fr;
     padding: 1;
+}
+
+#scripts-container {
+    height: 1fr;
+}
+
+#scripts-title {
+    height: 1;
     text-style: bold;
+}
+
+#scripts-label {
+    height: auto;
+    max-height: 2;
+    margin-bottom: 1;
+}
+
+#script-search {
+    height: 3;
+    margin-bottom: 1;
+}
+
+#scripts-browser {
+    height: 1fr;
+    min-height: 10;
+}
+
+#script-list {
+    width: 58%;
+    min-width: 32;
+    border: round #374558;
+}
+
+#script-list > .option-list--separator {
+    color: $accent;
+    text-style: bold;
+}
+
+#scripts-browser OptionList:focus {
+    border: round $accent;
+}
+
+#script-details-scroll {
+    width: 42%;
+    height: 1fr;
+}
+
+#script-details {
+    width: 1fr;
+    height: auto;
+    padding: 1 2;
+}
+
+#script-details-title {
+    height: auto;
+    text-style: bold;
+}
+
+#script-details-description {
+    height: auto;
+    margin-top: 1;
+}
+
+#script-actions {
+    height: auto;
+    margin-top: 1;
+}
+
+#script-actions Button {
+    width: 1fr;
+    min-width: 16;
+    margin-bottom: 1;
+}
+
+ScriptDescriptionDialog {
+    align: center middle;
+}
+
+#script-description-dialog {
+    width: 70%;
+    height: 60%;
+    min-height: 14;
+    padding: 1 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#script-description-title {
+    height: 1;
+    text-style: bold;
+}
+
+#script-description-script-name {
+    height: auto;
+    margin-bottom: 1;
+}
+
+#script-description-input {
+    height: 1fr;
+    min-height: 5;
+    border: round #374558;
+}
+
+#script-description-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#script-description-buttons Button {
+    min-width: 14;
+    margin-left: 1;
 }
 
 /* Offline Utilities View */
@@ -248,34 +423,6 @@ ScriptEditorDialog {
 
 #script-editor-save {
     margin-right: 1;
-}
-
-/* Script Inspection Dialog Styles */
-ScriptInspectionDialog {
-    align: center middle;
-}
-
-#script-inspection-dialog {
-    width: 85%;
-    height: 85%;
-    padding: 1 2;
-    border: thick #374558;
-    background: $surface;
-}
-
-#script-inspection-title {
-    text-style: bold;
-    margin-bottom: 1;
-}
-
-#script-inspection-content {
-    height: 1fr;
-}
-
-#script-inspection-buttons {
-    height: 3;
-    align: right middle;
-    margin-top: 1;
 }
 
 /* Confirm Dialog Styles */
@@ -446,6 +593,70 @@ ConfirmDialog {
     color: #0c1711;
 }
 
+.netrunner-theme #main-content-switcher,
+.netrunner-theme #log,
+.netrunner-theme #bash-terminal,
+.netrunner-theme #utility-list,
+.netrunner-theme #script-list,
+.netrunner-theme #utility-input,
+.netrunner-theme #utility-second-input,
+.netrunner-theme #utility-output,
+.netrunner-theme #script-editor-content,
+.netrunner-theme #script-description-input,
+.netrunner-theme #log-files-list,
+.netrunner-theme #log-file-content {
+    border: round #5c1727;
+}
+
+.netrunner-theme #utility-dialog,
+.netrunner-theme #script-editor-dialog,
+.netrunner-theme #script-description-dialog,
+.netrunner-theme #log-files-dialog,
+.netrunner-theme #log-file-dialog,
+.netrunner-theme #log-config-dialog,
+.netrunner-theme #health-config-dialog {
+    border: thick #5c1727;
+}
+
+.netrunner-theme #paths-settings,
+.netrunner-theme #other-settings,
+.netrunner-theme #settings-logs-settings,
+.netrunner-theme #settings-services-settings {
+    border: round #5c1727;
+}
+
+.netrunner-theme #logs-entries .logs-entry,
+.netrunner-theme #health-checks-entries .health-check-entry {
+    border: round #5c1727;
+}
+
+.netrunner-theme #todo-editor-dialog,
+.netrunner-theme #new-note-dialog,
+.netrunner-theme #dialog {
+    border: thick #5c1727;
+}
+
+.netrunner-theme .settings-general-label-italic,
+.netrunner-theme #log-files-location {
+    color: #e89aa8;
+}
+
+.netrunner-theme #settings-logs-add,
+.netrunner-theme #settings-logs-edit,
+.netrunner-theme #settings-services-add,
+.netrunner-theme #settings-services-edit {
+    background: #b00020;
+    color: #fff0f2;
+}
+
+.netrunner-theme #settings-logs-add:hover,
+.netrunner-theme #settings-logs-edit:hover,
+.netrunner-theme #settings-services-add:hover,
+.netrunner-theme #settings-services-edit:hover {
+    background: #ff1744;
+    color: #080608;
+}
+
 #settings-services-settings {
     height: 1fr;
     min-height: 12;
@@ -593,6 +804,44 @@ TodoEditorDialog {
 }
 
 #todo-editor-buttons Button {
+    margin-left: 1;
+}
+
+NewNoteDialog {
+    align: center middle;
+}
+
+#new-note-dialog {
+    width: 60%;
+    height: auto;
+    max-height: 90%;
+    padding: 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#new-note-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.new-note-label {
+    margin-top: 1;
+}
+
+#new-note-error {
+    min-height: 1;
+    color: $error;
+    margin-top: 1;
+}
+
+#new-note-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#new-note-buttons Button {
     margin-left: 1;
 }
 
@@ -799,5 +1048,42 @@ HealthCheckConfigDialog {
 }
 
 #health-config-buttons Button {
+    margin-left: 1;
+}
+
+TitleSelectionDialog {
+    align: center middle;
+}
+
+#title-selection-dialog {
+    width: 60%;
+    height: auto;
+    max-height: 80%;
+    padding: 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#title-selection-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.title-selection-label {
+    margin-bottom: 1;
+}
+
+#title-selection-choice {
+    width: 1fr;
+    height: 3;
+}
+
+#title-selection-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#title-selection-buttons Button {
     margin-left: 1;
 }

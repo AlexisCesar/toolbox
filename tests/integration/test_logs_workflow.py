@@ -52,7 +52,10 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
                 app.screen.query_one("#log-files-status").content
             )
 
-            file_list.index = 1
+            file_list.focus()
+            await pilot.press("down")
+            await pilot.pause()
+            assert file_list.index == 1
             open_button = app.screen.query_one("#log-files-open", Button)
             for _ in range(40):
                 if not open_button.disabled:
