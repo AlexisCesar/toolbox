@@ -11,13 +11,18 @@ def test_sidebar_order_and_settings_layout() -> None:
     async def check_layout() -> None:
         async with app.run_test(size=(160, 45)) as pilot:
             sidebar = app.query_one("#sidebar-list", ListView)
-            assert len(sidebar.children) == 12
+            assert len(sidebar.children) == 13
             app.action_select_view(1)
             await pilot.pause()
             assert app.query_one("#main-content-switcher").current == "bash-view"
             app.action_select_view(2)
             await pilot.pause()
             assert app.query_one("#main-content-switcher").current == "todos-view"
+
+            app.action_select_view(11)
+            await pilot.pause()
+            assert app.query_one("#main-content-switcher").current == "calendar-view"
+            app.query_one("#calendar-url")
 
             app.action_select_view(10)
             await pilot.pause()

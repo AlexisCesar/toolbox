@@ -8,6 +8,7 @@ from textual.css.query import NoMatches
 from textual.theme import Theme
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import Button, ContentSwitcher, Footer, Label, ListItem, ListView, RichLog
+from src.views.calendar import CalendarView
 from src.views.home import Home
 from src.views.markdown_view import MarkdownPreview
 from src.views.scripts import Scripts
@@ -62,6 +63,7 @@ class ToolboxTUI(App):
         8: "my-projects-view",
         9: "utilities-view",
         10: "settings-view",
+        11: "calendar-view",
     }
     BINDINGS = [
         ("h", "select_view(0)", "Home"),
@@ -75,6 +77,7 @@ class ToolboxTUI(App):
         ("p", "select_view(8)", "My Projects"),
         ("u", "select_view(9)", "Utilities"),
         ("e", "select_view(10)", "Settings"),
+        ("a", "select_view(11)", "Calendar"),
         ("q", "quit", "Quit")
     ]
 
@@ -207,6 +210,7 @@ class ToolboxTUI(App):
             "\U0001F4C2 My Projects",
             f"\U0001F9F0 Utilities",
             f"{settings_icon} Settings",
+            "\U0001F4C5 Calendar",
             f"{quit_icon} Quit",
         ]
         list_view = ListView(*[ListItem(Label(item), classes="sidebar-item") for item in list_items], id=id)
@@ -230,6 +234,7 @@ class ToolboxTUI(App):
                 Bash(logger=self.logger, id="bash-view"),
                 Todos(logger=self.logger, store=self.todo_store, id="todos-view"),
                 Utilities(logger=self.logger, id="utilities-view"),
+                CalendarView(logger=self.logger, id="calendar-view"),
                 initial="home-view",
                 id="main-content-switcher"
             ),
@@ -442,6 +447,7 @@ class ToolboxTUI(App):
             "\U0001F4C2 My Projects",
             f"\U0001F9F0 Utilities",
             f"{settings_icon} Settings",
+            "\U0001F4C5 Calendar",
             f"{quit_icon} Quit",
         ]
         for index, (label, caption) in enumerate(zip(labels, captions)):
@@ -454,7 +460,7 @@ class ToolboxTUI(App):
             return
         if self.screen.id != "_default":
             return
-        self._decoration_row = (self._decoration_row + 1) % 12
+        self._decoration_row = (self._decoration_row + 1) % 13
         try:
             self._render_sidebar_labels(self.theme)
         except NoMatches:
@@ -524,7 +530,7 @@ class ToolboxTUI(App):
         self._show_view(view_id)
 
     def _show_view(self, view_id: int) -> None:
-        if view_id == 11:
+        if view_id == 12:
             self.exit()
             return
         view_name = self.VIEW_IDS.get(view_id)

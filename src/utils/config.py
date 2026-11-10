@@ -108,6 +108,13 @@ class Config:
             ) from error
 
     @property
+    def calendar_url(self) -> str:
+        """Return the private subscription URL without logging it."""
+        settings = self._data.get("calendar", {})
+        value = settings.get("url", "") if isinstance(settings, dict) else ""
+        return value if isinstance(value, str) else ""
+
+    @property
     def scripts_dir(self) -> Path:
         return Path(self._data["paths"]["scripts"])
 

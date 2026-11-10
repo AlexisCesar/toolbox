@@ -37,6 +37,8 @@ First time using the Toolbox? Configure your directories, log folders, health ch
 
 - Completing an [bold #5f5fff]item[/bold #5f5fff] in the [bold #5f5fff]Tasks[/bold #5f5fff] tab will also complete its subtasks.
 
+- Open [bold #5f5fff]Calendar[/bold #5f5fff] (A) and paste your private iCal link to see today's appointments.
+
 - Click your level and title in the top-left corner to choose a title you have unlocked.
 
 - Daily logins build an experience streak. Running scripts, opening notes or logs, completing TODOs, and changing the theme also grant XP.

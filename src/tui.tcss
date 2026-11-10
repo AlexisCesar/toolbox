@@ -1087,3 +1087,14 @@ TitleSelectionDialog {
 #title-selection-buttons Button {
     margin-left: 1;
 }
+
+/* Calendar View */
+#calendar-view { height: 1fr; padding: 1; }
+#calendar-container { height: 1fr; }
+#calendar-title { height: auto; text-style: bold; margin-bottom: 1; }
+#calendar-help { height: auto; margin-bottom: 1; }
+#calendar-actions { height: auto; margin: 1 0; }
+#calendar-actions Button { margin-right: 1; min-width: 12; }
+#calendar-status { height: auto; margin-bottom: 1; }
+#calendar-table { height: 1fr; min-height: 6; }
+#calendar-details { height: auto; min-height: 3; margin-top: 1; }

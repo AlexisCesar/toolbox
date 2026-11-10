@@ -1,4 +1,4 @@
-# Toolbox TUI 🧰
+# Toolbox TUI ??
 
 ![Toolbox TUI screenshot](https://github.com/user-attachments/assets/cb793e85-24b2-4d93-83d3-0b86fc051b0e)
 
@@ -6,23 +6,23 @@
 tasks. It brings together the scripts, logs, project folders, notes, and health
 checks we use throughout the workday, so they are easy to find in one place.
 
-## ❓ What you can do
+## ? What you can do
 
-- 🐚 Run commands in an interactive, persistent Bash session.
-- 📜 Browse and run scripts from a configurable folder, with descriptions and
+- ?? Run commands in an interactive, persistent Bash session.
+- ?? Browse and run scripts from a configurable folder, with descriptions and
   saved parameters.
-- 📝 Create, browse, edit, and save text files and preview Markdown notes.
-- 📂 Find project folders and open solutions in Visual Studio or VS Code. Open
+- ?? Create, browse, edit, and save text files and preview Markdown notes.
+- ?? Find project folders and open solutions in Visual Studio or VS Code. Open
   folders without a solution in VS Code when it is installed.
-- 📋 Browse local or network log folders and inspect recent log output.
-- 🏥 Monitor HTTP endpoints and TCP connections on a configurable interval.
-- ✅ Create and organize TODOs, sub-items, descriptions, and priorities.
-- 🧰 Search offline utilities for formatting, validation, text comparison, encoding,
+- ?? Browse local or network log folders and inspect recent log output.
+- ?? Monitor HTTP endpoints and TCP connections on a configurable interval.
+- ? Create and organize TODOs, sub-items, descriptions, and priorities.
+- ?? Search offline utilities for formatting, validation, text comparison, encoding,
   conversion, and sample data generation.
-- 🔧 Configure folders, theme, log sources, health checks, and other settings.
-- 🎃🎄 Enjoy seasonal themes!
+- ?? Configure folders, theme, log sources, health checks, and other settings.
+- ???? Enjoy seasonal themes!
 
-## 🧰 Get started
+## ?? Get started
 
 ### Prerequisites
 
@@ -46,7 +46,7 @@ from the checked-in `config.toml` defaults. The override is ignored by Git and
 stores your local settings, so pulling project changes does not overwrite them.
 
 
-## 🔧 Configure your Toolbox
+## ?? Configure your Toolbox
 
 The included `config.toml` contains example settings and paths for scripts,
 notes, projects, logs, and health checks. Open **Settings** in the app to change
@@ -75,7 +75,7 @@ order, creation time, priority, or status (pending, paused, then done). Sub-item
 stay under their parent and use the selected order within that group.
 
 
-## 💻 Bash view
+## ?? Bash view
 
 The Bash tab starts a persistent interactive session in the directory
 where Toolbox was launched. Commands, variables, aliases, history, and tab
@@ -90,10 +90,29 @@ launching. Terminal emulation supports common ANSI output and keyboard input;
 advanced terminal protocols and mouse interaction inside terminal programs are
 not supported.
 
-## 🧪 Development
+## ?? Development
 
 Run the test suite with:
 
 ```bash
 uv run pytest
 ```
+
+## Calendar
+
+Open **Calendar** in the sidebar (shortcut **A**) to view today's appointments.
+In Google Calendar on the web, open **Settings > Settings for my calendars >
+your calendar > Integrate calendar**, then copy the **Secret address in iCal
+format**. Paste it into Toolbox and select **Subscribe**. Some managed Google
+accounts may not expose this address; ask your administrator if it is missing.
+
+The agenda is read-only and uses your computer's timezone. It includes recurring,
+all-day and overnight events; select a row to see the location and meeting URL.
+It reloads when opened, on **Refresh**, and when the local date changes while
+visible. Updates depend on the provider's iCal feed; they may not be immediate.
+**Unsubscribe** removes the stored link and clears the agenda.
+
+The subscription URL grants access to your private calendar. It is masked on
+screen and saved in plain text in the Git-ignored `config.override.toml`
+under `[calendar]` as `url`. Keep that file private. Toolbox does not log the
+link or save event data to disk. No Google login or OAuth setup is required.
