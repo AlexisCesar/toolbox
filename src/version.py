@@ -12,9 +12,13 @@ class VersionChanges(TypedDict, total=False):
     fixed: list[str]
 
 
-APP_VERSION = "0.3.0"
+APP_VERSION = "0.4.0"
 
 CHANGELOG: dict[str, VersionChanges] = {
+    "0.4.0": {
+        "date": "2026-11-10",
+        "added": ["Calendar view with a private iCal subscription and today's events, including recurring and all-day events."],
+    },
     "0.3.0": {
         "date": "2026-11-07",
         "added": [
