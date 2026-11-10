@@ -52,7 +52,9 @@ class Todos(Static):
         with Vertical(id="todos-content"):
             yield Label("TODO list", id="todos-title")
             yield Static("", id="todos-summary")
-            yield ProgressBar(total=1, show_eta=False, id="todos-progress")
+            with Horizontal(id="todos-progress-row"):
+                yield Label("Progress", id="todos-progress-label")
+                yield ProgressBar(total=1, show_eta=False, id="todos-progress")
             yield DataTable(id="todos-table", zebra_stripes=True, cursor_type="row")
             with Horizontal(id="todos-controls"):
                 yield Button("\u2795 New task", id="todos-add", flat=True, classes="icon-button")
@@ -135,7 +137,13 @@ class Todos(Static):
         for item in self.visible_items:
             is_sub_item = item.parent_id is not None
             title = f"  \u21B3 {item.title}" if is_sub_item else item.title
-            task_label = f"{title}\n{item.description}" if item.description else title
+            description_indent = "    " if is_sub_item else ""
+            description = item.description.replace("\n", f"\n{description_indent}")
+            task_label = (
+                f"{title}\n{description_indent}{description}"
+                if item.description
+                else title
+            )
             if item.completed:
                 status = "\u2713 Done"
             elif item.paused:
@@ -161,7 +169,7 @@ class Todos(Static):
                     cell.stylize("dim")
             table.add_row(
                 *cells,
-                height=2 if item.description else 1,
+                height=None,
                 key=item.id,
             )
 

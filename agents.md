@@ -36,8 +36,9 @@
 - Keep `README.md` current whenever a change adds or alters relevant project information, such as setup, execution, configuration, features, or usage.
 - Prefer concise, actionable documentation that matches the behavior of the application.
 - Keep `src/version.py` as the application source for `APP_VERSION` and the release `CHANGELOG`; keep the package version in `pyproject.toml` and `uv.lock` synchronized with `APP_VERSION`.
-- For every change prepared for merge, increment `APP_VERSION` and add a dated changelog entry under the same version. Use MAJOR for breaking changes, MINOR for backward-compatible features, and PATCH for fixes or other backward-compatible changes. Include only non-empty `added`, `changed`, and `fixed` sections in the Home screen output.
-- Keep the version label in the UI derived from `APP_VERSION`; do not add a separate hard-coded version.
+- During regular development, keep `APP_VERSION` at the latest official release and accumulate unreleased notes in one pending next-version entry in `CHANGELOG`. Do not bump the version or add a release date for each incremental change.
+- When preparing a pull request, consolidate all pending notes into one release entry, choose the next version from the total changes since the last official release, set its date, and update `APP_VERSION`, `pyproject.toml`, and `uv.lock` together. Use MAJOR for breaking changes, MINOR for backward-compatible features, and PATCH for fixes or other backward-compatible changes.
+- Keep the UI version label derived from `APP_VERSION`; the Home selector may show the pending entry, but the header and its default selection remain at the latest official version until pull request preparation. Omit empty `added`, `changed`, and `fixed` sections from the Home output.
 
 ## Toolbox TUI home screen
 

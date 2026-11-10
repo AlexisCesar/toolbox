@@ -12,7 +12,7 @@ def test_utilities_search_open_and_run() -> None:
 
     async def check_workflow() -> None:
         async with app.run_test(size=(140, 45)) as pilot:
-            app.action_select_view(9)
+            app.action_select_view(10)
             await pilot.pause()
             search = app.query_one("#utility-search", Input)
             search.value = "regular expression"

@@ -19,6 +19,7 @@ first_theme_change_rewarded = false
 
 [scripts]
 timeout = 3
+sql_timeout = 60
 depth = 1
 
 [[logs]]

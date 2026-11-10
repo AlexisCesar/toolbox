@@ -31,3 +31,31 @@ def test_completed_row_is_dimmed_and_reopening_restores_text(monkeypatch, paused
             assert isinstance(cell, Text)
             for offset in range(len(cell.plain)):
                 assert bool(cell.get_style_at_offset(console, offset).dim) is completed
+
+
+def test_sub_item_description_aligns_under_its_title(monkeypatch) -> None:
+    parent = TodoItem("Parent", id="parent")
+    sub_item = TodoItem(
+        "Sub-task",
+        description="First detail\nSecond detail",
+        parent_id=parent.id,
+        id="child",
+    )
+    view = Todos(Mock(), store=Mock(spec=TodoStore))
+    view.items = [parent, sub_item]
+    table = Mock()
+    widgets = {
+        "#todos-table": table,
+        "#todos-summary": Mock(),
+        "#todos-progress": Mock(),
+    }
+    monkeypatch.setattr(view, "query_one", lambda selector, widget_type: widgets[selector])
+
+    view.refresh_table()
+
+    sub_item_task_cell = table.add_row.call_args_list[1].args[0]
+    assert sub_item_task_cell.plain == (
+        "  \u21B3 Sub-task\n"
+        "    First detail\n"
+        "    Second detail"
+    )

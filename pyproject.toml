@@ -8,6 +8,7 @@ dependencies = [
     "ptyprocess>=0.7.0 ; sys_platform != 'win32'",
     "pyperclip>=1.11.0",
     "psutil>=5.9.0",
+    "pyodbc>=5.2.0",
     "pyte>=0.8.2",
     "pywinpty>=2.0.15 ; sys_platform == 'win32'",
     "rich>=15.0.0",

@@ -1,7 +1,8 @@
 from rich.markup import escape
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, VerticalScroll
-from textual.widgets import Rule, Static
+from textual.widgets import Rule, Select, Static
 
 from src.utils.seasonal_theme import (
     CHRISTMAS_THEME,
@@ -29,6 +30,8 @@ INSTRUCTIONS = """[bold]Select an option from the sidebar to get started.[/bold]
 
 First time using the Toolbox? Configure your directories, log folders, health checks, theme and more on the [bold #5f5fff]Settings[/bold #5f5fff] tab.
 
+Use Settings → Configuration to export or import settings. The private subscription URL is included only when you select the Calendar group.
+
 [bold]Tips:[/bold]
 
 - Need to copy something from the screen such as logs? Hold down the [bold #5f5fff]SHIFT[/bold #5f5fff] key to select text from anywhere on the screen.
@@ -36,8 +39,6 @@ First time using the Toolbox? Configure your directories, log folders, health ch
 - Generating a [u]scripts configuration file[/u] through the [bold #5f5fff]Settings[/bold #5f5fff] tab enable script parameter history. Trust me, it's very helpful!
 
 - Completing an [bold #5f5fff]item[/bold #5f5fff] in the [bold #5f5fff]Tasks[/bold #5f5fff] tab will also complete its subtasks.
-
-- Open [bold #5f5fff]Calendar[/bold #5f5fff] (A) and paste your private iCal link to see today's appointments.
 
 - Click your level and title in the top-left corner to choose a title you have unlocked.
 
@@ -53,6 +54,17 @@ CHANGELOG_SECTIONS = (
 )
 
 
+def changelog_versions(
+    changelog: dict[str, VersionChanges] = CHANGELOG,
+) -> list[str]:
+    """Return changelog versions from newest to oldest."""
+    return sorted(
+        changelog,
+        key=lambda version: tuple(int(part) for part in version.split(".")),
+        reverse=True,
+    )
+
+
 def format_changelog(
     version: str = APP_VERSION,
     changelog: dict[str, VersionChanges] = CHANGELOG,
@@ -66,7 +78,7 @@ def format_changelog(
             bullets = "\n".join(f"- {escape(entry)}" for entry in entries)
             sections.append(f"[bold]{title}:[/bold]\n{bullets}")
 
-    return f"[bold]Version {escape(version)} Update Log:[/bold]" + (
+    return f"[bold]Version {escape(version)} Log:[/bold]" + (
         "\n\n" + "\n\n".join(sections) if sections else ""
     )
 
@@ -125,7 +137,34 @@ class Home(Static):
                 yield Rule(line_style="dashed")
                 yield Static(self.instructions(theme_name), id="home-instructions")
             with VerticalScroll(id="home-update-log"):
+                yield Static("", id="home-update-notice")
+                yield Select.from_values(
+                    changelog_versions(),
+                    prompt="Version",
+                    value=APP_VERSION,
+                    allow_blank=False,
+                    id="home-version-select",
+                )
                 yield Static(format_changelog(), id="home-changelog")
+
+    def show_update_notice(self, version: str) -> None:
+        """Show a link to the master branch when a newer release is available."""
+        notice = self.query_one("#home-update-notice", Static)
+        notice.update(
+            f"[bold yellow]New release v{escape(version)} is available. "
+            "Please update Toolbox using the "
+            '[link="https://github.com/AlexisCesar/toolbox/tree/master"]'
+            "master branch[/link].[/bold yellow]"
+        )
+        notice.display = True
+
+    @on(Select.Changed, "#home-version-select")
+    def on_changelog_version_changed(self, event: Select.Changed) -> None:
+        """Show the release notes for the selected version."""
+        if isinstance(event.value, str):
+            self.query_one("#home-changelog", Static).update(
+                format_changelog(event.value)
+            )
 
     def on_show(self) -> None:
         """Refresh seasonal guidance when returning to the home screen."""
