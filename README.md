@@ -1,6 +1,6 @@
 # Toolbox TUI 🧰
 
-![Toolbox TUI screenshot](https://github.com/user-attachments/assets/cb793e85-24b2-4d93-83d3-0b86fc051b0e)
+<img width="1864" height="1041" alt="image" src="https://github.com/user-attachments/assets/d9bf8f8a-aed3-42d1-9b1d-299869ba4643" />
 
 **Toolbox TUI** is a terminal user interface for everyday software development
 tasks. It brings together the scripts, logs, project folders, notes, and health
