@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,6 +23,12 @@ from src.utils.logger import Logger
 from src.utils.script_description_dialog import ScriptDescriptionDialog
 from src.utils.script_editor_dialog import ScriptEditorDialog
 from src.utils.script_runner import ScriptRunner
+from src.utils.sql_server import (
+    SQLServerCredentials,
+    SQLServerProfile,
+    execute_sql_server_script,
+)
+from src.utils.sql_server_dialog import SQLServerConnectionDialog, SQLServerResultDialog
 
 
 SCRIPT_TYPES = {
@@ -74,6 +81,8 @@ class Scripts(Static):
         self.script_runner = ScriptRunner(logger=self.logger)
         self.scripts: dict[str, ScriptEntry] = {}
         self.selected_script: ScriptEntry | None = None
+        self.last_sql_server_profile: SQLServerProfile | None = None
+        self.sql_script_running = False
 
     def compose(self) -> ComposeResult:
         with Vertical(id="scripts-container"):
@@ -97,6 +106,7 @@ class Scripts(Static):
                             yield Button(
                                 "Run With Parameters", id="script-run-parameters", disabled=True
                             )
+                            yield Button("Run SQL Server", variant="primary", id="script-run-sql-server", disabled=True)
                             yield Button("Copy SQL", id="script-copy", disabled=True)
                             yield Button("Open / Edit", id="script-open-edit", disabled=True)
                             yield Button(
@@ -229,6 +239,9 @@ class Scripts(Static):
             "script-run": self.query_one("#script-run", Button),
             "script-run-external": self.query_one("#script-run-external", Button),
             "script-run-parameters": self.query_one("#script-run-parameters", Button),
+            "script-run-sql-server": self.query_one(
+                "#script-run-sql-server", Button
+            ),
             "script-copy": self.query_one("#script-copy", Button),
             "script-open-edit": self.query_one("#script-open-edit", Button),
             "script-update-description": self.query_one(
@@ -243,6 +256,7 @@ class Scripts(Static):
             for button in actions.values():
                 button.disabled = True
                 button.styles.display = "block"
+            actions["script-run-sql-server"].styles.display = "none"
             actions["script-copy"].styles.display = "none"
             return
 
@@ -260,8 +274,10 @@ class Scripts(Static):
         if script.is_sql:
             for action_id in ("script-run", "script-run-external", "script-run-parameters"):
                 actions[action_id].styles.display = "none"
+            actions["script-run-sql-server"].disabled = self.sql_script_running
             actions["script-copy"].disabled = False
         else:
+            actions["script-run-sql-server"].styles.display = "none"
             actions["script-copy"].styles.display = "none"
         actions["script-update-description"].disabled = not self._scripts_config_path().is_file()
 
@@ -295,6 +311,13 @@ class Scripts(Static):
                     initialValue=latest_parameters,
                 ),
                 callback=lambda result: self.run_with_parameters_callback(result, script.path),
+            )
+        elif event.button.id == "script-run-sql-server":
+            self.app.push_screen(
+                SQLServerConnectionDialog(self.last_sql_server_profile),
+                callback=lambda credentials: self.run_sql_server_callback(
+                    credentials, script
+                ),
             )
         elif event.button.id == "script-copy":
             self._copy_script(script)
@@ -414,6 +437,64 @@ class Scripts(Static):
                 )
             self.script_runner.run(script_path, parameters=result.parameters)
             self.app.award_experience(SCRIPT_RUN_EXP)
+
+    def run_sql_server_callback(
+        self,
+        credentials: SQLServerCredentials | None,
+        script: ScriptEntry,
+    ) -> None:
+        if credentials is None:
+            return
+        self.last_sql_server_profile = credentials.profile
+        self.sql_script_running = True
+        self._update_details()
+        self.run_worker(
+            self._execute_sql_server_script(script, credentials),
+            name="run-sql-server-script",
+            group="sql-server-script",
+            exclusive=True,
+        )
+
+    async def _execute_sql_server_script(
+        self,
+        script: ScriptEntry,
+        credentials: SQLServerCredentials,
+    ) -> None:
+        self.logger.system(f"Executing SQL Server script: {script.relative_path}")
+        try:
+            report = await asyncio.to_thread(
+                execute_sql_server_script,
+                script.path,
+                credentials,
+                config.sql_timeout,
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:
+            message = str(error) or "An unexpected error occurred."
+            if len(credentials.password) >= 4:
+                message = message.replace(credentials.password, "[redacted]")
+            self.logger.error(
+                f"SQL Server script failed: {script.relative_path}: {message}"
+            )
+            self.app.push_screen(
+                SQLServerResultDialog("SQL Server execution failed", message)
+            )
+        else:
+            self.logger.info(
+                f"SQL Server script completed: {script.relative_path} "
+                f"({report.batches_executed} batch(es))."
+            )
+            self.app.award_experience(SCRIPT_RUN_EXP)
+            output = report.render()
+            if len(credentials.password) >= 4:
+                output = output.replace(credentials.password, "[redacted]")
+            self.app.push_screen(
+                SQLServerResultDialog("SQL Server script completed", output)
+            )
+        finally:
+            self.sql_script_running = False
+            self._update_details()
 
     def save_script_parameters(self, script_name: str, parameters: str) -> None:
         try:

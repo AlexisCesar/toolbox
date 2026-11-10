@@ -13,6 +13,7 @@ from textual.widgets import DataTable, Static
 
 from src.utils.config import config
 from src.utils.logger import Logger
+from src.utils.project_editor_dialog import EditorOption, ProjectEditorDialog
 
 
 ProjectRow = tuple[str, str, str, str]
@@ -21,13 +22,84 @@ ProjectRow = tuple[str, str, str, str]
 @dataclass(frozen=True)
 class ProjectSnapshot:
     rows: tuple[ProjectRow, ...]
-    vscode_executable: str | None
-    visual_studio_executable: str | None
+    editors: tuple[EditorOption, ...]
     warning: str | None = None
 
 
-def action_label(executable: str | None, available: str, missing: str) -> str:
-    return available if executable else missing
+EDITOR_COMMANDS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+    ("rider", "JetBrains Rider", ("rider", "rider64")),
+    ("idea", "IntelliJ IDEA", ("idea", "idea64")),
+    ("pycharm", "PyCharm", ("pycharm", "pycharm64")),
+    ("webstorm", "WebStorm", ("webstorm", "webstorm64")),
+    ("goland", "GoLand", ("goland", "goland64")),
+    ("clion", "CLion", ("clion", "clion64")),
+    ("phpstorm", "PhpStorm", ("phpstorm", "phpstorm64")),
+    ("rubymine", "RubyMine", ("rubymine", "rubymine64")),
+    ("rustrover", "RustRover", ("rustrover", "rustrover64")),
+    ("devin", "Devin Desktop", ("devin", "windsurf")),
+    ("cursor", "Cursor", ("cursor",)),
+    ("sublime", "Sublime Text", ("subl", "sublime_text")),
+    ("zed", "Zed", ("zed",)),
+    ("notepadpp", "Notepad++", ("notepad++", "notepad-plus-plus")),
+)
+
+JETBRAINS_PRODUCT_DIRS: dict[str, tuple[str, ...]] = {
+    "rider": ("Rider", "JetBrains Rider"),
+    "idea": ("IntelliJ IDEA",),
+    "pycharm": ("PyCharm",),
+    "webstorm": ("WebStorm",),
+    "goland": ("GoLand",),
+    "clion": ("CLion",),
+    "phpstorm": ("PhpStorm",),
+    "rubymine": ("RubyMine",),
+    "rustrover": ("RustRover",),
+}
+
+JETBRAINS_WINDOWS_BINARIES: dict[str, tuple[str, ...]] = {
+    "rider": ("rider64.exe", "rider.exe"),
+    "idea": ("idea64.exe", "idea.exe"),
+    "pycharm": ("pycharm64.exe", "pycharm.exe"),
+    "webstorm": ("webstorm64.exe", "webstorm.exe"),
+    "goland": ("goland64.exe", "goland.exe"),
+    "clion": ("clion64.exe", "clion.exe"),
+    "phpstorm": ("phpstorm64.exe", "phpstorm.exe"),
+    "rubymine": ("rubymine64.exe", "rubymine.exe"),
+    "rustrover": ("rustrover64.exe", "rustrover.exe"),
+}
+
+MACOS_APP_LAUNCHERS: dict[str, tuple[tuple[str, str], ...]] = {
+    "rider": (
+        ("JetBrains Rider.app", "Contents/MacOS/rider"),
+        ("Rider.app", "Contents/MacOS/rider"),
+    ),
+    "idea": (
+        ("IntelliJ IDEA.app", "Contents/MacOS/idea"),
+        ("IntelliJ IDEA CE.app", "Contents/MacOS/idea"),
+    ),
+    "pycharm": (
+        ("PyCharm.app", "Contents/MacOS/pycharm"),
+        ("PyCharm CE.app", "Contents/MacOS/pycharm"),
+    ),
+    "webstorm": (("WebStorm.app", "Contents/MacOS/webstorm"),),
+    "goland": (("GoLand.app", "Contents/MacOS/goland"),),
+    "clion": (("CLion.app", "Contents/MacOS/clion"),),
+    "phpstorm": (("PhpStorm.app", "Contents/MacOS/phpstorm"),),
+    "rubymine": (("RubyMine.app", "Contents/MacOS/rubymine"),),
+    "rustrover": (("RustRover.app", "Contents/MacOS/rustrover"),),
+    "devin": (
+        ("Devin.app", "Contents/MacOS/Devin"),
+        ("Devin.app", "Contents/MacOS/Electron"),
+        ("Windsurf.app", "Contents/MacOS/Windsurf"),
+        ("Windsurf.app", "Contents/MacOS/Electron"),
+    ),
+    "cursor": (("Cursor.app", "Contents/MacOS/Cursor"),),
+    "sublime": (("Sublime Text.app", "Contents/SharedSupport/bin/subl"),),
+    "zed": (("Zed.app", "Contents/MacOS/zed"),),
+}
+
+
+def _first_existing(paths: list[Path]) -> str | None:
+    return next((str(path) for path in paths if path.is_file()), None)
 
 
 def find_vscode_executable() -> str | None:
@@ -54,7 +126,7 @@ def find_vscode_executable() -> str | None:
             for applications in ("/Applications", str(Path.home() / "Applications"))
         )
 
-    return next((str(path) for path in candidates if path.is_file()), None)
+    return _first_existing(candidates)
 
 
 def find_visual_studio_executable() -> str | None:
@@ -110,15 +182,125 @@ def find_visual_studio_executable() -> str | None:
     return None
 
 
+def _find_jetbrains_windows_executable(
+    editor_id: str,
+    local_root: Path | None,
+    program_files: list[Path],
+) -> str | None:
+    """Find a JetBrains launcher in a standard install or Toolbox directory."""
+    binaries = JETBRAINS_WINDOWS_BINARIES[editor_id]
+    candidates: list[Path] = []
+    if local_root:
+        for product_dir in JETBRAINS_PRODUCT_DIRS[editor_id]:
+            toolbox_root = local_root / "JetBrains" / "Toolbox" / "apps" / product_dir
+            candidates.extend(
+                path
+                for binary in binaries
+                for path in toolbox_root.glob(f"*/*/bin/{binary}")
+            )
+
+    roots = [*program_files]
+    if local_root:
+        roots.append(local_root / "Programs")
+    for root in roots:
+        product_root = root / "JetBrains"
+        for product_dir in JETBRAINS_PRODUCT_DIRS[editor_id]:
+            for install in product_root.glob(f"{product_dir}*/bin"):
+                candidates.extend(install / name for name in binaries)
+    return _first_existing(candidates)
+
+
+def _find_windows_editor_executable(editor_id: str) -> str | None:
+    """Find an editor executable in common Windows installation directories."""
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    local_root = Path(local_app_data) if local_app_data else None
+    program_files = [
+        Path(root)
+        for root in (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"))
+        if root
+    ]
+    if editor_id in JETBRAINS_WINDOWS_BINARIES:
+        return _find_jetbrains_windows_executable(editor_id, local_root, program_files)
+
+    candidates: list[Path] = []
+    if editor_id == "cursor":
+        if local_root:
+            candidates.append(local_root / "Programs" / "Cursor" / "Cursor.exe")
+        candidates.extend(root / "Cursor" / "Cursor.exe" for root in program_files)
+    elif editor_id == "devin":
+        install_names = (("Devin", "Devin.exe"), ("Windsurf", "Windsurf.exe"))
+        if local_root:
+            candidates.extend(
+                local_root / "Programs" / folder / executable
+                for folder, executable in install_names
+            )
+        candidates.extend(
+            root / folder / executable
+            for root in program_files
+            for folder, executable in install_names
+        )
+    elif editor_id == "sublime":
+        candidates.extend(root / "Sublime Text" / "subl.exe" for root in program_files)
+    elif editor_id == "zed" and local_root:
+        candidates.append(local_root / "Programs" / "Zed" / "Zed.exe")
+    elif editor_id == "notepadpp":
+        candidates.extend(root / "Notepad++" / "notepad++.exe" for root in program_files)
+    return _first_existing(candidates)
+
+
+def _find_macos_editor_executable(editor_id: str) -> str | None:
+    """Find a macOS app launcher in the system or user's Applications folder."""
+    candidates = [
+        applications / app_name / binary
+        for app_name, binary in MACOS_APP_LAUNCHERS.get(editor_id, ())
+        for applications in (Path("/Applications"), Path.home() / "Applications")
+    ]
+    return _first_existing(candidates)
+
+
+def _find_editor_executable(editor_id: str, commands: tuple[str, ...]) -> str | None:
+    """Find an editor command or a common per-user installation location."""
+    executable = next((path for name in commands if (path := shutil.which(name))), None)
+    if executable:
+        return executable
+    if os.name == "nt":
+        return _find_windows_editor_executable(editor_id)
+    if sys.platform == "darwin":
+        return _find_macos_editor_executable(editor_id)
+    return None
+
+
+def find_installed_editors() -> tuple[EditorOption, ...]:
+    """Return supported editors found on PATH or in common install locations."""
+    editors: list[EditorOption] = []
+    vscode = find_vscode_executable()
+    if vscode:
+        editors.append(EditorOption("vscode", "Visual Studio Code", vscode))
+    visual_studio = find_visual_studio_executable()
+    if visual_studio:
+        editors.append(EditorOption("visual-studio", "Visual Studio", visual_studio))
+
+    for editor_id, name, commands in EDITOR_COMMANDS:
+        executable = _find_editor_executable(editor_id, commands)
+        if executable:
+            editors.append(
+                EditorOption(
+                    editor_id,
+                    name,
+                    executable,
+                    supports_folders=editor_id != "notepadpp",
+                )
+            )
+    return tuple(editors)
+
+
 def load_project_snapshot(projects_dir: Path) -> ProjectSnapshot:
-    """Read project folders and detect editor commands without touching the UI."""
-    vscode_executable = find_vscode_executable()
-    visual_studio_executable = find_visual_studio_executable()
+    """Read project folders and detect installed IDEs without touching the UI."""
+    editors = find_installed_editors()
     if not projects_dir.exists() or not projects_dir.is_dir():
         return ProjectSnapshot(
             (),
-            vscode_executable,
-            visual_studio_executable,
+            editors,
             "Projects directory does not exist. Configure it in Settings.",
         )
 
@@ -131,51 +313,25 @@ def load_project_snapshot(projects_dir: Path) -> ProjectSnapshot:
 
             sln_files = sorted(entry.glob("*.sln"))
             if sln_files:
-                for sln in sln_files:
-                    rows.append((
+                rows.extend(
+                    (
                         entry.name,
                         sln.name,
                         "🏗️ Visual Studio Solution",
-                        action_label(
-                            visual_studio_executable,
-                            "▶ Open with Visual Studio",
-                            "Visual Studio not found",
-                        ),
-                    ))
-                    rows.append((
-                        entry.name,
-                        sln.name,
-                        "🏗️ Visual Studio Solution",
-                        action_label(
-                            vscode_executable,
-                            "▶ Open in VS Code",
-                            "VSCode not found",
-                        ),
-                    ))
+                        "▶ Open",
+                    )
+                    for sln in sln_files
+                )
             else:
-                rows.append((
-                    entry.name,
-                    "-",
-                    "📂 Folder (no .sln)",
-                    action_label(
-                        vscode_executable,
-                        "▶ Open in VS Code",
-                        "VSCode not found",
-                    ),
-                ))
+                rows.append((entry.name, "-", "📂 Folder (no .sln)", "▶ Open"))
     except OSError as error:
         return ProjectSnapshot(
             (),
-            vscode_executable,
-            visual_studio_executable,
+            editors,
             f"Could not read projects directory: {error}",
         )
 
-    return ProjectSnapshot(
-        tuple(rows),
-        vscode_executable,
-        visual_studio_executable,
-    )
+    return ProjectSnapshot(tuple(rows), editors)
 
 
 class MyProjects(Static):
@@ -185,8 +341,7 @@ class MyProjects(Static):
         super().__init__(**kwargs)
         self.logger = logger
         self.rows: list[ProjectRow] = []
-        self.vscode_executable: str | None = None
-        self.visual_studio_executable: str | None = None
+        self.editors: tuple[EditorOption, ...] = ()
 
     def compose(self) -> ComposeResult:
         yield Static("-", id="projects-label")
@@ -221,8 +376,7 @@ class MyProjects(Static):
     def _apply_snapshot(self, snapshot: ProjectSnapshot) -> None:
         """Apply loaded project data and update widgets on the Textual loop."""
         self.rows = list(snapshot.rows)
-        self.vscode_executable = snapshot.vscode_executable
-        self.visual_studio_executable = snapshot.visual_studio_executable
+        self.editors = snapshot.editors
         if snapshot.warning:
             self.logger.warn(snapshot.warning)
         self.build_projects_datatable()
@@ -242,30 +396,51 @@ class MyProjects(Static):
 
     @on(DataTable.CellSelected)
     def handle_cell_click(self, event: DataTable.CellSelected) -> None:
-        cell_value = str(event.value).strip()
+        if str(event.value).strip() != "▶ Open":
+            return
+
         table = self.query_one("#projects-datatable", DataTable)
         row_data = table.get_row_at(event.coordinate.row)
         folder_name = str(row_data[0]).strip()
-        folder_path = config.projects_dir / folder_name
+        solution_name = str(row_data[1]).strip()
+        available_editors = self.editors
+        if solution_name == "-":
+            available_editors = tuple(
+                editor for editor in self.editors if editor.supports_folders
+            )
+        if not available_editors:
+            self.logger.warn("No supported IDEs or editors were found.")
+            self.notify("No supported IDEs or editors were found.", severity="warning")
+            return
 
-        if cell_value == "▶ Open with Visual Studio":
-            sln_name = str(row_data[1]).strip()
-            sln_path = folder_path / sln_name
-            executable = self.visual_studio_executable
-            if executable is None:
-                self.logger.warn("Visual Studio was not found.")
-                return
-            self._open_with(executable, sln_path, "Visual Studio")
-        elif cell_value == "▶ Open in VS Code":
-            executable = self.vscode_executable
-            if executable is None:
-                self.logger.warn("VSCode was not found.")
-                return
-            self._open_with(executable, folder_path, "VS Code")
-        elif cell_value == "Visual Studio not found":
-            self.logger.warn("Visual Studio was not found.")
-        elif cell_value == "VSCode not found":
-            self.logger.warn("VSCode was not found.")
+        folder_path = config.projects_dir / folder_name
+        self.app.push_screen(
+            ProjectEditorDialog(available_editors, folder_path),
+            lambda editor_id: self.open_project_with_editor(
+                editor_id,
+                folder_path,
+                folder_path / solution_name if solution_name != "-" else None,
+            ),
+        )
+
+    def open_project_with_editor(
+        self,
+        editor_id: str | None,
+        folder_path: Path,
+        solution_path: Path | None,
+    ) -> None:
+        if editor_id is None:
+            return
+        editor = next((option for option in self.editors if option.id == editor_id), None)
+        if editor is None:
+            self.logger.warn("The selected editor is no longer available.")
+            return
+        path = (
+            solution_path
+            if solution_path is not None and editor.id in {"visual-studio", "rider"}
+            else folder_path
+        )
+        self._open_with(editor.executable, path, editor.name)
 
     def _open_with(self, executable: str, path: Path, application: str) -> None:
         self.logger.info(f"Opening {path} with {application}: {executable}")

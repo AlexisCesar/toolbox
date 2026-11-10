@@ -148,6 +148,17 @@ Footer {
     height: auto;
 }
 
+#home-update-notice {
+    display: none;
+    height: auto;
+    margin-bottom: 1;
+}
+
+#home-version-select {
+    width: 1fr;
+    margin-bottom: 1;
+}
+
 #scripts-view {
     height: 1fr;
     padding: 1;
@@ -223,6 +234,97 @@ Footer {
     width: 1fr;
     min-width: 16;
     margin-bottom: 1;
+}
+
+SQLServerConnectionDialog,
+SQLServerResultDialog {
+    align: center middle;
+}
+
+#sql-server-connection-dialog {
+    width: 88%;
+    height: 90%;
+    max-height: 95%;
+    padding: 1 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#sql-server-connection-title,
+#sql-server-result-title {
+    height: 1;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#sql-server-connection-warning,
+#sql-server-connection-security-note {
+    height: auto;
+    margin-bottom: 1;
+}
+
+#sql-server-connection-form {
+    height: 1fr;
+    min-height: 6;
+}
+
+#sql-server-connection-fields {
+    width: 1fr;
+    height: auto;
+}
+
+.sql-server-connection-field {
+    width: 1fr;
+    min-width: 12;
+    height: auto;
+    margin-right: 1;
+}
+
+.sql-server-field-label {
+    height: 1;
+    margin-bottom: 0;
+}
+
+#sql-server-sql-auth-fields {
+    height: auto;
+    margin-top: 1;
+}
+
+#sql-server-trust-certificate {
+    margin-top: 1;
+}
+
+#sql-server-connection-error {
+    height: auto;
+    min-height: 1;
+    color: $error;
+    margin-top: 1;
+}
+
+#sql-server-connection-buttons,
+#sql-server-result-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#sql-server-connection-buttons Button,
+#sql-server-result-buttons Button {
+    margin-left: 1;
+}
+
+#sql-server-result-dialog {
+    width: 90%;
+    height: 85%;
+    min-height: 12;
+    padding: 1 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#sql-server-result-output {
+    height: 1fr;
+    min-height: 8;
 }
 
 ScriptDescriptionDialog {
@@ -461,8 +563,19 @@ ConfirmDialog {
     text-style: bold;
 }
 
+#settings-header-row {
+    height: auto;
+    min-height: 4;
+    align: left middle;
+}
+
+#settings-heading-copy {
+    width: 1fr;
+    height: auto;
+}
+
 #settings-subtitle {
-    margin: 0 0 1 1;
+    margin: 0 0 0 1;
     text-style: italic;
 }
 
@@ -523,6 +636,19 @@ ConfirmDialog {
 #settings-other-title {
     margin: 0 0 1 0;
     text-style: bold;
+}
+
+#settings-config-transfer-buttons {
+    height: 3;
+    width: auto;
+    margin: 0 1 0 0;
+    align: right middle;
+}
+
+#settings-config-transfer-buttons Button {
+    width: 9;
+    min-width: 9;
+    margin-left: 1;
 }
 
 #settings-logs-settings {
@@ -614,7 +740,8 @@ ConfirmDialog {
 .netrunner-theme #log-files-dialog,
 .netrunner-theme #log-file-dialog,
 .netrunner-theme #log-config-dialog,
-.netrunner-theme #health-config-dialog {
+.netrunner-theme #health-config-dialog,
+.netrunner-theme #config-transfer-dialog {
     border: thick #5c1727;
 }
 
@@ -715,6 +842,43 @@ ConfirmDialog {
     text-style: bold;
 }
 
+ProjectEditorDialog {
+    align: center middle;
+}
+
+#project-editor-dialog {
+    width: 70%;
+    height: auto;
+    max-height: 80%;
+    padding: 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#project-editor-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#project-editor-target {
+    margin-bottom: 1;
+}
+
+#project-editor-choice {
+    width: 1fr;
+    height: 3;
+}
+
+#project-editor-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#project-editor-buttons Button {
+    margin-left: 1;
+}
+
 #settings-directories-projects-input {
     margin: 1 -1;
 }
@@ -734,8 +898,20 @@ ConfirmDialog {
     margin: 0 1;
 }
 
-#todos-progress {
+#todos-progress-row {
+    height: 3;
     margin: 0 1;
+    align: center middle;
+}
+
+#todos-progress-label {
+    width: 10;
+    content-align: left middle;
+}
+
+#todos-progress {
+    width: 1fr;
+    height: 2;
 }
 
 #todos-table {
@@ -1051,6 +1227,56 @@ HealthCheckConfigDialog {
     margin-left: 1;
 }
 
+ConfigTransferDialog {
+    align: center middle;
+}
+
+#config-transfer-dialog {
+    width: 70%;
+    height: auto;
+    max-height: 90%;
+    padding: 2;
+    border: thick #374558;
+    background: $surface;
+}
+
+#config-transfer-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#config-transfer-description,
+#config-transfer-hint {
+    text-wrap: wrap;
+    margin-bottom: 1;
+}
+
+.config-transfer-label {
+    margin-top: 1;
+}
+
+#config-transfer-sections {
+    height: auto;
+    max-height: 12;
+    margin-top: 1;
+}
+
+#config-transfer-error {
+    min-height: 1;
+    color: $error;
+    margin-top: 1;
+}
+
+#config-transfer-buttons {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
+#config-transfer-buttons Button {
+    margin-left: 1;
+}
+
 TitleSelectionDialog {
     align: center middle;
 }
@@ -1098,3 +1324,66 @@ TitleSelectionDialog {
 #calendar-status { height: auto; margin-bottom: 1; }
 #calendar-table { height: 1fr; min-height: 6; }
 #calendar-details { height: auto; min-height: 3; margin-top: 1; }
+
+/* Addon management and external Addon views */
+#addons-view,
+#addon-view {
+    height: 1fr;
+}
+
+#addons-container,
+#addon-view-container {
+    height: 1fr;
+    padding: 1;
+}
+
+#addons-title,
+#addon-view-title {
+    height: auto;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#addons-description,
+#addon-view-status {
+    height: auto;
+    margin-bottom: 1;
+    text-wrap: wrap;
+}
+
+#addons-install-row {
+    height: 3;
+    margin-bottom: 1;
+}
+
+#addons-repository-url {
+    width: 1fr;
+}
+
+#addons-install,
+#addons-help {
+    margin-left: 1;
+}
+
+#addons-table {
+    height: 1fr;
+    min-height: 6;
+}
+
+#addons-actions,
+#addon-view-actions {
+    height: auto;
+    margin-top: 1;
+}
+
+#addons-actions Button,
+#addon-view-actions Button {
+    margin-right: 1;
+}
+
+#addon-view-body {
+    height: auto;
+    min-height: 3;
+    text-wrap: wrap;
+    padding: 1;
+}

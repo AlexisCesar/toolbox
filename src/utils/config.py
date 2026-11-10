@@ -1,10 +1,13 @@
-from collections.abc import MutableMapping
-from pathlib import Path
+import copy
+import json
 import os
-
 import tomllib
+from collections.abc import Iterable, Mapping, MutableMapping
+from pathlib import Path
+
 import tomlkit
 
+from src.utils.calendar_feed import validate_feed_url
 from src.utils.gamification import (
     DEFAULT_GAMIFICATION_SETTINGS,
     DEFAULT_TITLE_CODE,
@@ -15,6 +18,18 @@ from src.utils.gamification import (
 
 
 SCRIPT_EXTENSIONS = {".py", ".sh", ".sql", ".ps1", ".bat", ".cmd"}
+
+CONFIG_EXPORT_FORMAT = "toolbox-config"
+CONFIG_EXPORT_VERSION = 1
+CONFIG_TRANSFER_SECTIONS = {
+    "paths": "Directories",
+    "scripts": "Scripts",
+    "ui": "Interface",
+    "logs": "Log folders",
+    "services": "Health checks",
+    "calendar": "Calendar subscription (private URL)",
+    "gamification": "Profile and progress",
+}
 
 
 def normalize_directory_path(path: str) -> str:
@@ -156,6 +171,16 @@ class Config:
     @property
     def script_timeout(self) -> float:
         return float(self._data["scripts"]["timeout"])
+
+    @property
+    def sql_timeout(self) -> int:
+        """Return the SQL script query timeout in seconds (1 to 3600)."""
+        scripts = self._data.get("scripts", {})
+        try:
+            timeout = int(scripts.get("sql_timeout", 60))
+        except (AttributeError, TypeError, ValueError):
+            return 60
+        return max(1, min(timeout, 3600))
 
     @property
     def scripts_depth(self) -> int:
@@ -376,6 +401,190 @@ class Config:
         with self.config_path.open("w", encoding="utf-8") as f:
             f.write(tomlkit.dumps(doc))
         self._data["services"] = normalized_entries
+
+    def export_configuration(
+        self,
+        path: str | Path,
+        sections: Iterable[str],
+    ) -> Path:
+        """Write selected settings to a versioned Toolbox JSON export."""
+        selected = self._normalize_transfer_sections(sections)
+        if not selected:
+            raise ValueError("Select at least one configuration section to export.")
+
+        exported_sections = {}
+        for section in selected:
+            if section == "calendar":
+                exported_sections[section] = {"url": self.calendar_url}
+            elif section in self._data:
+                exported_sections[section] = copy.deepcopy(self._data[section])
+            else:
+                raise ValueError(f"Configuration section '{section}' is unavailable.")
+
+        destination = Path(path).expanduser()
+        protected_paths = {self.config_path.resolve(), self.default_path.resolve()}
+        if destination.resolve() in protected_paths:
+            raise ValueError("Choose a separate file so the Toolbox configuration is not overwritten.")
+        payload = {
+            "format": CONFIG_EXPORT_FORMAT,
+            "version": CONFIG_EXPORT_VERSION,
+            "sections": exported_sections,
+        }
+        content = json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=False)
+        destination.write_text(content + "\n", encoding="utf-8")
+        return destination
+
+    def read_configuration_export(self, path: str | Path) -> dict[str, object]:
+        """Read and validate a Toolbox configuration export."""
+        source = Path(path).expanduser()
+        try:
+            payload = json.loads(source.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as error:
+            raise ValueError(f"The selected file is not valid JSON: {error.msg}.") from error
+
+        if not isinstance(payload, dict):
+            raise ValueError("The selected file is not a Toolbox configuration export.")
+        if payload.get("format") != CONFIG_EXPORT_FORMAT:
+            raise ValueError("The selected file is not a Toolbox configuration export.")
+        if payload.get("version") != CONFIG_EXPORT_VERSION:
+            raise ValueError("This Toolbox configuration export version is not supported.")
+        sections = payload.get("sections")
+        if not isinstance(sections, dict):
+            raise ValueError("The configuration export does not contain a sections object.")
+
+        recognized_sections: dict[str, object] = {}
+        for section, value in sections.items():
+            if section not in CONFIG_TRANSFER_SECTIONS:
+                continue
+            _validate_transfer_section(section, value)
+            recognized_sections[section] = value
+        if not recognized_sections:
+            raise ValueError("The configuration export contains no supported sections.")
+        return recognized_sections
+
+    def import_configuration_sections(
+        self,
+        sections: Mapping[str, object],
+        selected_sections: Iterable[str],
+    ) -> tuple[str, ...]:
+        """Replace only the selected settings sections in the user override."""
+        selected = self._normalize_transfer_sections(selected_sections)
+        if not selected:
+            raise ValueError("Select at least one configuration section to import.")
+
+        imported: dict[str, object] = {}
+        for section in selected:
+            if section not in sections:
+                raise ValueError(f"The selected export does not contain '{section}'.")
+            value = copy.deepcopy(sections[section])
+            _validate_transfer_section(section, value)
+            if section == "gamification":
+                value = {**DEFAULT_GAMIFICATION_SETTINGS, **value}
+                self._validate_gamification_changes(value)
+            imported[section] = value
+
+        with self.config_path.open("r", encoding="utf-8") as config_file:
+            document = tomlkit.parse(config_file.read())
+        for section, value in imported.items():
+            document[section] = _to_toml_item(value)
+
+        serialized = tomlkit.dumps(document)
+        with self.config_path.open("w", encoding="utf-8") as config_file:
+            config_file.write(serialized)
+
+        self._data = tomllib.loads(serialized)
+        return selected
+
+    @staticmethod
+    def _normalize_transfer_sections(sections: Iterable[str]) -> tuple[str, ...]:
+        selected = set(sections)
+        unknown = selected - set(CONFIG_TRANSFER_SECTIONS)
+        if unknown:
+            names = ", ".join(sorted(str(name) for name in unknown))
+            raise ValueError(f"Unsupported configuration section(s): {names}.")
+        return tuple(section for section in CONFIG_TRANSFER_SECTIONS if section in selected)
+
+
+def _validate_transfer_section(section: str, value: object) -> None:
+    """Reject malformed or non-TOML values before they reach the config file."""
+    if section in {"paths", "scripts", "ui", "calendar", "gamification"}:
+        if not isinstance(value, dict) or not _is_toml_value(value):
+            raise ValueError(f"The '{section}' section must be a TOML-compatible object.")
+    elif section in {"logs", "services"}:
+        if not isinstance(value, list) or not all(
+            isinstance(entry, dict) and _is_toml_value(entry) for entry in value
+        ):
+            raise ValueError(f"The '{section}' section must be a list of TOML-compatible objects.")
+
+    if section == "paths":
+        required = {"scripts", "notes", "projects"}
+        if not required.issubset(value) or any(not isinstance(item, str) for item in value.values()):
+            raise ValueError("The 'paths' section must contain text paths for scripts, notes, and projects.")
+    elif section == "scripts":
+        if (
+            not isinstance(value.get("timeout"), (int, float))
+            or isinstance(value.get("timeout"), bool)
+            or not isinstance(value.get("depth"), int)
+            or isinstance(value.get("depth"), bool)
+        ):
+            raise ValueError("The 'scripts' section must contain a numeric timeout and integer depth.")
+    elif section == "ui":
+        if not isinstance(value.get("theme"), str):
+            raise ValueError("The 'ui' section must contain a text theme name.")
+        for key in ("todo_startup_notification", "enable_all_seasonal_themes"):
+            if key in value and not isinstance(value[key], bool):
+                raise ValueError(f"The 'ui.{key}' setting must be boolean.")
+    elif section == "logs":
+        if any(
+            not isinstance(entry.get("name"), str)
+            or not isinstance(entry.get("location"), str)
+            for entry in value
+        ):
+            raise ValueError("Each log folder must contain a text name and location.")
+    elif section == "calendar":
+        if "url" not in value:
+            return
+        if not isinstance(value["url"], str):
+            raise ValueError("The 'calendar.url' setting must be text.")
+        if value["url"]:
+            try:
+                value["url"] = validate_feed_url(value["url"])
+            except ValueError as error:
+                raise ValueError("The 'calendar.url' setting must be a valid HTTPS subscription URL.") from error
+    elif section == "gamification":
+        try:
+            Config._validate_gamification_changes(value)
+        except ValueError as error:
+            raise ValueError(f"The 'gamification' section is invalid: {error}") from error
+
+
+def _is_toml_value(value: object) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, dict):
+        return all(isinstance(key, str) and _is_toml_value(item) for key, item in value.items())
+    if isinstance(value, list):
+        return all(_is_toml_value(item) for item in value)
+    return isinstance(value, (str, int, float, bool))
+
+
+def _to_toml_item(value: object) -> object:
+    if isinstance(value, dict):
+        table = tomlkit.table()
+        for key, item in value.items():
+            table[key] = _to_toml_item(item)
+        return table
+    if isinstance(value, list):
+        if value and all(isinstance(item, dict) for item in value):
+            array_of_tables = tomlkit.aot()
+            for row in value:
+                array_of_tables.append(_to_toml_item(row))
+            return array_of_tables
+        array = tomlkit.array()
+        for item in value:
+            array.append(_to_toml_item(item))
+        return array
+    return value
 
 
 class ConfigInitializationError(OSError):

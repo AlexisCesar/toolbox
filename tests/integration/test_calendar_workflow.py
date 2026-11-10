@@ -34,6 +34,9 @@ def test_subscription_refresh_details_error_and_remove(tmp_path, monkeypatch, si
         async with CalendarApp().run_test(size=size) as pilot:
             await pilot.pause()
             view = pilot.app.query_one(calendar.CalendarView)
+            help_text = view.query_one("#calendar-help", Static).render().plain
+            assert "calendar provider's settings" in help_text
+            assert "Google Calendar" not in help_text
             field = view.query_one(Input)
             assert field.password
             field.value = "https://example.com/private.ics"

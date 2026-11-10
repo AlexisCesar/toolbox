@@ -27,7 +27,7 @@ class CalendarView(Static):
         with VerticalScroll(id="calendar-container"):
             yield Label("Calendar - Today", id="calendar-title")
             yield Static(
-                "Google Calendar: Settings > your calendar > Integrate calendar > Secret address in iCal format.\n"
+                "In your calendar provider's settings, find the option to copy or export a private iCal subscription link.\n"
                 "Paste the private link below. It is stored locally in config.override.toml; keep it secret.",
                 id="calendar-help", markup=False,
             )
@@ -45,6 +45,7 @@ class CalendarView(Static):
         self.set_interval(30, self._check_day)
 
     def on_show(self) -> None:
+        self.query_one("#calendar-url", Input).value = config.calendar_url
         self.refresh_events()
 
     def on_hide(self) -> None:

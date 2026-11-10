@@ -37,7 +37,7 @@ def test_scripts_are_grouped_searchable_and_show_selected_actions(tmp_path, monk
 
     async def check_workflow() -> None:
         async with app.run_test(size=(140, 45)) as pilot:
-            app.action_select_view(3)
+            app.action_select_view(4)
             await pilot.pause()
 
             assert isinstance(app.query_one("#script-details-scroll"), VerticalScroll)
@@ -67,6 +67,9 @@ def test_scripts_are_grouped_searchable_and_show_selected_actions(tmp_path, monk
             assert app.query_one("#script-open-edit", Button).disabled is False
             assert app.query_one("#script-update-description", Button).disabled is False
 
+            details_scroll = app.query_one("#script-details-scroll", VerticalScroll)
+            details_scroll.scroll_end(animate=False)
+            await pilot.pause()
             await pilot.click("#script-update-description")
             await pilot.pause()
             assert isinstance(app.screen, ScriptDescriptionDialog)
@@ -128,7 +131,7 @@ def test_update_description_requires_scripts_configuration(tmp_path, monkeypatch
 
     async def check_workflow() -> None:
         async with app.run_test(size=(100, 35)) as pilot:
-            app.action_select_view(3)
+            app.action_select_view(4)
             await pilot.pause()
             script_list = app.query_one("#script-list", OptionList)
             script_list.focus()

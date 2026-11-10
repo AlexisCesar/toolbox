@@ -48,11 +48,25 @@ def test_home_changelog_omits_empty_sections_and_escapes_markup() -> None:
         },
     )
 
-    assert "Version 1.2.3 Update Log:" in rendered
+    assert "Version 1.2.3 Log:" in rendered
     assert "Added:" in rendered
     assert "Added a \\[quick] action." in rendered
     assert "Changed:" not in rendered
     assert "Fixed:" in rendered
+
+
+def test_changelog_versions_are_sorted_newest_first() -> None:
+    changelog = {
+        "0.9.0": {},
+        "0.10.0": {},
+        "1.0.0": {},
+    }
+
+    assert home_module.changelog_versions(changelog) == [
+        "1.0.0",
+        "0.10.0",
+        "0.9.0",
+    ]
 
 
 def test_release_version_matches_project_metadata() -> None:

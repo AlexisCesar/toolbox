@@ -1,3 +1,7 @@
+import asyncio
+import ctypes
+import os
+import platform
 from datetime import date, datetime
 from pathlib import Path
 
@@ -41,9 +45,12 @@ from src.utils.seasonal_theme import (
     is_theme_available,
 )
 from src.utils.themes import NETRUNNER_THEME
-import platform
+from src.utils.addon_manager import AddonError, AddonManager, InstalledAddon
+from src.utils.update_checker import check_for_update
 
 from src.views.settings import Settings
+from src.views.addons import Addons
+from src.views.addon_view import AddonView
 from src.version import APP_VERSION
 
 class ToolboxTUI(App):
@@ -55,29 +62,30 @@ class ToolboxTUI(App):
         0: "home-view",
         1: "bash-view",
         2: "todos-view",
-        3: "scripts-view",
-        4: "logs-view",
-        5: "health-checkers-view",
-        6: "notes-view",
-        7: "markdow-preview-view",
-        8: "my-projects-view",
-        9: "utilities-view",
-        10: "settings-view",
-        11: "calendar-view",
+        3: "calendar-view",
+        4: "scripts-view",
+        5: "logs-view",
+        6: "health-checkers-view",
+        7: "notes-view",
+        8: "markdow-preview-view",
+        9: "my-projects-view",
+        10: "utilities-view",
+        11: "addons-view",
     }
     BINDINGS = [
         ("h", "select_view(0)", "Home"),
         ("b", "select_view(1)", "Bash"),
         ("d", "select_view(2)", "TODO list"),
-        ("c", "select_view(3)", "Scripts"),
-        ("l", "select_view(4)", "Logs"),
-        ("t", "select_view(5)", "Health Checkers"),
-        ("n", "select_view(6)", "Notes"),
-        ("m", "select_view(7)", "Markdown Viewer"),
-        ("p", "select_view(8)", "My Projects"),
-        ("u", "select_view(9)", "Utilities"),
-        ("e", "select_view(10)", "Settings"),
-        ("a", "select_view(11)", "Calendar"),
+        ("a", "select_view(3)", "Calendar"),
+        ("c", "select_view(4)", "Scripts"),
+        ("l", "select_view(5)", "Logs"),
+        ("t", "select_view(6)", "Health Checkers"),
+        ("n", "select_view(7)", "Notes"),
+        ("m", "select_view(8)", "Markdown Viewer"),
+        ("p", "select_view(9)", "My Projects"),
+        ("u", "select_view(10)", "Utilities"),
+        ("e", "select_settings", "Settings"),
+        ("g", "select_view(11)", "Addons"),
         ("q", "quit", "Quit")
     ]
 
@@ -85,12 +93,15 @@ class ToolboxTUI(App):
         super().__init__()
         self.logger = Logger(self)
         self.todo_store = TodoStore()
+        self.addon_manager = AddonManager()
+        self._addon_entries: list[InstalledAddon] = []
         self._seasonal_timer = None
         self._runtime_timer = None
         self._runtime_status_label: Label | None = None
         self._profile_status_button: Button | None = None
         self._process = psutil.Process()
         self._runtime_metrics_warning_logged = False
+        self._battery_status_warning_logged = False
         self._decoration_row = 0
         self.register_theme(
             Theme(
@@ -166,9 +177,13 @@ class ToolboxTUI(App):
                 with Horizontal(id="title-content"):
                     yield Label("Toolbox TUI", id="app-title")
                     yield Label(f" - v{APP_VERSION}", id="version")
-                    yield Label(" - " + os_icon + platform.system(), id="os-info")
+                    admin_label = " (Admin)" if self._is_running_as_admin() else ""
+                    yield Label(
+                        " - " + os_icon + platform.system() + admin_label,
+                        id="os-info",
+                    )
                 self._runtime_status_label = Label(
-                    f"{datetime.now():%H:%M:%S}  CPU --  RAM --",
+                    f"{datetime.now():%H:%M:%S  %b %d, %Y}  CPU --  RAM --",
                     id="runtime-status",
                 )
                 yield self._runtime_status_label
@@ -179,10 +194,37 @@ class ToolboxTUI(App):
                     yield self._build_main_content()
         yield Footer()
 
+    def _is_running_as_admin(self) -> bool:
+        """Return whether this process has administrator or root privileges."""
+        try:
+            if os.name == "nt":
+                return bool(ctypes.windll.shell32.IsUserAnAdmin())
+            if hasattr(os, "geteuid"):
+                return os.geteuid() == 0
+        except (AttributeError, OSError) as error:
+            self.logger.warn(f"Could not determine administrator privileges: {error}")
+        return False
 
     def _build_sidebar(self, id) -> ListView:
-        halloween_active = config.theme == HALLOWEEN_THEME and is_theme_available(config.theme)
-        christmas_active = config.theme == CHRISTMAS_THEME and is_theme_available(config.theme)
+        try:
+            self._addon_entries = self.addon_manager.list_installed()
+        except AddonError as error:
+            self.logger.error(f"Could not load installed Addons: {error}")
+            self._addon_entries = []
+        captions = self._sidebar_captions(config.theme)
+        list_view = ListView(
+            *[
+                ListItem(Label(Text(item)), classes="sidebar-item")
+                for item in captions
+            ],
+            id=id,
+        )
+        list_view.index = 0
+        return list_view
+
+    def _sidebar_captions(self, theme_name: str | None) -> list[str]:
+        halloween_active = theme_name == HALLOWEEN_THEME
+        christmas_active = theme_name == CHRISTMAS_THEME
         home_icon = (
             "\U0001F47B"
             if halloween_active
@@ -202,6 +244,7 @@ class ToolboxTUI(App):
             f"{home_icon} Home",
             "\U0001F41A Bash",
             "\u2705 TODO list",
+            "\U0001F4C5 Calendar",
             "\U0001F4DC Scripts",
             "\U0001F4DD Logs",
             "\U0001F3E5 Health Checkers",
@@ -209,13 +252,17 @@ class ToolboxTUI(App):
             "\U0001F4D6 Markdown Preview",
             "\U0001F4C2 My Projects",
             f"\U0001F9F0 Utilities",
-            f"{settings_icon} Settings",
-            "\U0001F4C5 Calendar",
-            f"{quit_icon} Quit",
         ]
-        list_view = ListView(*[ListItem(Label(item), classes="sidebar-item") for item in list_items], id=id)
-        list_view.index = 0
-        return list_view
+        list_items.append("🧩 Addons")
+        list_items.extend(
+            f"{addon.icon} {addon.name}"
+            if addon.available
+            else f"⚠️ {addon.name}"
+            for addon in self._addon_entries
+        )
+        list_items.append(f"{settings_icon} Settings")
+        list_items.append(f"{quit_icon} Quit")
+        return list_items
 
     
     def _build_main_content(self) -> Container:
@@ -235,6 +282,17 @@ class ToolboxTUI(App):
                 Todos(logger=self.logger, store=self.todo_store, id="todos-view"),
                 Utilities(logger=self.logger, id="utilities-view"),
                 CalendarView(logger=self.logger, id="calendar-view"),
+                Addons(
+                    manager=self.addon_manager,
+                    logger=self.logger,
+                    on_change=self.refresh_addon_navigation,
+                    id="addons-view",
+                ),
+                AddonView(
+                    manager=self.addon_manager,
+                    logger=self.logger,
+                    id="addon-view",
+                ),
                 initial="home-view",
                 id="main-content-switcher"
             ),
@@ -271,6 +329,27 @@ class ToolboxTUI(App):
                 title="Daily login",
             )
         self.logger.info("Toolbox TUI started.")
+        self.run_worker(
+            self._check_for_updates(),
+            name="check-for-updates",
+            group="update-check",
+            exclusive=True,
+        )
+
+    async def _check_for_updates(self) -> None:
+        """Check GitHub in a background thread and update Home when needed."""
+        try:
+            latest_version = await asyncio.to_thread(check_for_update, APP_VERSION)
+        except Exception as error:
+            if self._running:
+                self.logger.warn(f"Could not check for Toolbox updates: {error}")
+            return
+
+        if not self._running or latest_version is None:
+            return
+
+        self.query_one("#home-view", Home).show_update_notice(latest_version)
+        self.logger.info(f"A newer Toolbox release is available: v{latest_version}.")
 
     def _profile_status_text(self) -> Text:
         """Build the level and selected title, coloring only the title."""
@@ -348,12 +427,13 @@ class ToolboxTUI(App):
             self._profile_status_button.refresh(layout=True)
 
     def _update_runtime_status(self) -> None:
-        """Refresh the local clock and this process's CPU and memory usage."""
+        """Refresh the local date, resource usage, and available battery status."""
         status_label = self._runtime_status_label
         if status_label is None:
             return
 
-        clock = datetime.now().strftime("%H:%M:%S")
+        timestamp = datetime.now().strftime("%H:%M:%S  %b %d, %Y")
+        battery_status = self._battery_status_text()
         try:
             cpu_percent = self._process.cpu_percent()
             memory_mb = self._process.memory_info().rss / (1024 * 1024)
@@ -361,10 +441,28 @@ class ToolboxTUI(App):
             if not self._runtime_metrics_warning_logged:
                 self.logger.warn(f"Could not read TUI resource usage: {error}")
                 self._runtime_metrics_warning_logged = True
-            status_label.update(f"{clock}  CPU --  RAM --")
+            status_label.update(f"{timestamp}  CPU --  RAM --{battery_status}")
             return
 
-        status_label.update(f"{clock}  CPU {cpu_percent:.1f}%  RAM {memory_mb:.1f} MB")
+        status_label.update(
+            f"{timestamp}  CPU {cpu_percent:.1f}%  RAM {memory_mb:.1f} MB{battery_status}"
+        )
+
+    def _battery_status_text(self) -> str:
+        """Return the battery percentage and power state when available."""
+        try:
+            battery = psutil.sensors_battery()
+        except (NotImplementedError, OSError, psutil.Error) as error:
+            if not self._battery_status_warning_logged:
+                self.logger.warn(f"Could not read battery status: {error}")
+                self._battery_status_warning_logged = True
+            return ""
+
+        if battery is None:
+            return ""
+
+        power_state = "Plugged" if battery.power_plugged else "Unplugged"
+        return f"  {battery.percent:.0f}% ({power_state})"
 
     def apply_theme(self, theme_name: str) -> None:
         """Apply a theme and update seasonal navigation decorations."""
@@ -409,50 +507,19 @@ class ToolboxTUI(App):
         self._render_sidebar_labels(theme_name)
 
     def _render_sidebar_labels(self, theme_name: str) -> None:
-        halloween_active = theme_name == HALLOWEEN_THEME
-        christmas_active = theme_name == CHRISTMAS_THEME
         sidebar = self.query_one("#sidebar-list", ListView)
         labels = [child.query_one(Label) for child in sidebar.children]
-        home_icon = (
-            "\U0001F47B"
-            if halloween_active
-            else "\U0001F384"
-            if christmas_active
-            else "\U0001F3E1"
-        )
-        settings_icon = "\U0001F578 " if halloween_active else "\U0001F527"
-        quit_icon = (
-            "\U0001FAA6"
-            if halloween_active
-            else "\U0001F98C"
-            if christmas_active
-            else "\U0001F6AA"
-        )
+        captions = self._sidebar_captions(theme_name)
         decoration = (
             "\U0001F577"
-            if halloween_active
+            if theme_name == HALLOWEEN_THEME
             else "\U00002744"
-            if christmas_active
+            if theme_name == CHRISTMAS_THEME
             else ""
         )
-        captions = [
-            f"{home_icon} Home",
-            "\U0001F41A Bash",
-            "\u2705 TODO list",
-            "\U0001F4DC Scripts",
-            "\U0001F4DD Logs",
-            "\U0001F3E5 Health Checkers",
-            "\U0001F4D3 Notes",
-            "\U0001F4D6 Markdown Preview",
-            "\U0001F4C2 My Projects",
-            f"\U0001F9F0 Utilities",
-            f"{settings_icon} Settings",
-            "\U0001F4C5 Calendar",
-            f"{quit_icon} Quit",
-        ]
         for index, (label, caption) in enumerate(zip(labels, captions)):
             marker = f" {decoration}" if decoration and index == self._decoration_row else ""
-            label.update(caption + marker)
+            label.update(Text(caption + marker))
 
     def _animate_seasonal_decoration(self) -> None:
         """Move the seasonal spider or snowflake down the sidebar menu."""
@@ -460,7 +527,7 @@ class ToolboxTUI(App):
             return
         if self.screen.id != "_default":
             return
-        self._decoration_row = (self._decoration_row + 1) % 13
+        self._decoration_row = (self._decoration_row + 1) % max(1, len(self._addon_entries) + 14)
         try:
             self._render_sidebar_labels(self.theme)
         except NoMatches:
@@ -479,7 +546,7 @@ class ToolboxTUI(App):
 
     def show_markdown_preview(self, path: Path | None = None) -> None:
         """Switch the main content to the markdown viewer and load the selected file."""
-        self.query_one("#sidebar-list", ListView).index = 7
+        self.query_one("#sidebar-list", ListView).index = 8
 
         switcher = self.query_one("#main-content-switcher", ContentSwitcher)
         switcher.current = "markdow-preview-view"
@@ -529,10 +596,62 @@ class ToolboxTUI(App):
         list_view.focus()
         self._show_view(view_id)
 
+    def action_select_settings(self) -> None:
+        """Select Settings after any installed Addon tabs in the sidebar."""
+        self.action_select_view(12 + len(self._addon_entries))
+
     def _show_view(self, view_id: int) -> None:
-        if view_id == 12:
+        quit_index = 13 + len(self._addon_entries)
+        if view_id == quit_index:
             self.exit()
+            return
+        if view_id == 12 + len(self._addon_entries):
+            self.query_one("#main-content-switcher", ContentSwitcher).current = "settings-view"
+            return
+        if view_id == 11:
+            self.query_one("#main-content-switcher", ContentSwitcher).current = "addons-view"
+            return
+        addon_index = view_id - 12
+        if 0 <= addon_index < len(self._addon_entries):
+            addon = self._addon_entries[addon_index]
+            self.query_one("#main-content-switcher", ContentSwitcher).current = "addon-view"
+            self.query_one("#addon-view", AddonView).load_addon(addon)
             return
         view_name = self.VIEW_IDS.get(view_id)
         if view_name is not None:
             self.query_one("#main-content-switcher", ContentSwitcher).current = view_name
+
+    async def refresh_addon_navigation(self) -> None:
+        """Refresh Addon tabs after installation or removal."""
+        switcher = self.query_one("#main-content-switcher", ContentSwitcher)
+        addon_view = self.query_one("#addon-view", AddonView)
+        active_addon_id = addon_view.addon_id if switcher.current == "addon-view" else None
+        try:
+            self._addon_entries = self.addon_manager.list_installed()
+        except AddonError as error:
+            self.logger.error(f"Could not refresh installed Addons: {error}")
+            return
+
+        sidebar = self.query_one("#sidebar-list", ListView)
+        await sidebar.clear()
+        await sidebar.mount(
+            *(
+                ListItem(Label(Text(caption)), classes="sidebar-item")
+                for caption in self._sidebar_captions(self.theme)
+            )
+        )
+        remaining_index = next(
+            (index for index, addon in enumerate(self._addon_entries) if addon.id == active_addon_id),
+            None,
+        )
+        if active_addon_id is not None and remaining_index is None:
+            switcher.current = "addons-view"
+            sidebar.index = 11
+        elif remaining_index is not None:
+            sidebar.index = 12 + remaining_index
+        elif switcher.current == "addons-view":
+            sidebar.index = 11
+        elif switcher.current == "settings-view":
+            sidebar.index = 12 + len(self._addon_entries)
+        else:
+            sidebar.index = min(sidebar.index or 0, len(sidebar.children) - 1)

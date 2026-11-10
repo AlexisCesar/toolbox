@@ -1,13 +1,18 @@
-import tomlkit
+from pathlib import Path
+from typing import Literal
 
+import tomlkit
 from tomlkit import comment, document, nl
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Button, Checkbox, DataTable, Input, Label, Rule, Select, Static
-from textual import on
-from pathlib import Path
 
 from src.utils.config import config, iter_script_files, normalize_directory_path
+from src.utils.config_transfer_dialog import (
+    ConfigTransferDialog,
+    ConfigurationTransferResult,
+)
 from src.utils.logger import Logger
 from src.utils.confirm_dialog import ConfirmDialog
 from src.utils.log_config_dialog import LogConfigDialog, LogFolder
@@ -42,8 +47,13 @@ class Settings(Static):
     def compose(self) -> ComposeResult:
         """Create the layout for the settings view."""
         with VerticalScroll():
-            yield Label("Settings", id="settings-title")
-            yield Label("Configure your theme, paths, logs, and services.", id="settings-subtitle")
+            with Horizontal(id="settings-header-row"):
+                with Vertical(id="settings-heading-copy"):
+                    yield Label("Settings", id="settings-title")
+                    yield Label("Configure your theme, paths, logs, and services.", id="settings-subtitle")
+                with Horizontal(id="settings-config-transfer-buttons"):
+                    yield Button("Export", id="settings-config-export")
+                    yield Button("Import", id="settings-config-import")
             with Horizontal(id="settings-columns"):
                 with Vertical(id="settings-left-column"):
                     yield from self.build_path_settings()
@@ -204,6 +214,12 @@ class Settings(Static):
             if theme_name != previous_theme:
                 self.app.award_first_theme_change()
             self.logger.info(f"Application theme changed to: \"{theme_name}\".")
+
+        if event.button.id == "settings-config-export":
+            self.open_configuration_transfer("export")
+
+        if event.button.id == "settings-config-import":
+            self.open_configuration_transfer("import")
         
         if event.button.id == "settings-directories-scripts-change-button":
             self.app.push_screen(ConfirmDialog(f"Change scripts directory:",
@@ -246,6 +262,45 @@ class Settings(Static):
 
         if event.button.id == "settings-services-remove":
             self.confirm_remove_health_check(self.selected_service_index())
+
+    def open_configuration_transfer(self, operation: Literal["export", "import"]) -> None:
+        self.app.push_screen(
+            ConfigTransferDialog(
+                operation,
+                logger=self.logger,
+                configuration=config,
+            ),
+            callback=self.on_configuration_transfer_completed,
+        )
+
+    def on_configuration_transfer_completed(
+        self,
+        result: ConfigurationTransferResult | None,
+    ) -> None:
+        if result is None:
+            return
+        sections = ", ".join(result.sections)
+        if result.operation == "import":
+            self.update_fields()
+            if "ui" in result.sections:
+                theme_name = self.query_one("#settings-theme-select", Select).value
+                theme_name = str(theme_name)
+                if theme_name != config.theme:
+                    try:
+                        config.update("ui", "theme", theme_name)
+                    except OSError as error:
+                        self.logger.error(f"Could not save the fallback theme after import: {error}")
+                    else:
+                        self.logger.warn(
+                            f"The imported theme was unavailable; using '{theme_name}'."
+                        )
+                self.app.apply_theme(theme_name)
+            if "gamification" in result.sections:
+                self.app._update_profile_status()
+            message = f"Imported configuration sections ({sections}) from '{result.path.name}'."
+        else:
+            message = f"Exported configuration sections ({sections}) to '{result.path.name}'."
+        self.logger.info(message)
 
     def selected_log_index(self) -> int | None:
         entries = config.logs
