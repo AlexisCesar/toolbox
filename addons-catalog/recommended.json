@@ -1,0 +1,14 @@
+[
+    {
+      "name": "Environment Report",
+      "repository": "https://github.com/AlexisCesar/toolbox-environment-report",
+      "description": "General information about your system and environment (OS, hardware, languages installed, etc.).",
+      "category": "Development"
+    },
+    {
+      "name": "Pomodoro",
+      "repository": "https://github.com/AlexisCesar/toolbox-pomodoro",
+      "description": "A simple Pomodoro timer for focus and productivity.",
+      "category": "Productivity"
+    }
+]
