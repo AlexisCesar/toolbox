@@ -12,9 +12,15 @@ class VersionChanges(TypedDict, total=False):
     fixed: list[str]
 
 
-APP_VERSION = "0.4.0"
+APP_VERSION = "0.5.0"
 
 CHANGELOG: dict[str, VersionChanges] = {
+    "0.5.0": {
+        "date": "2026-11-16",
+        "added": [
+            "Ability to create a new folder in the Notes view.",
+        ],
+    },
     "0.4.0": {
         "date": "2026-11-10",
         "added": [

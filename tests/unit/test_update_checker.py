@@ -20,12 +20,12 @@ def mock_response(payload: object) -> MagicMock:
 
 
 def test_check_for_update_returns_newer_stable_release() -> None:
-    response = mock_response({"tag_name": "v0.4.0"})
+    response = mock_response({"tag_name": "v0.5.0"})
 
     with patch("src.utils.update_checker.urlopen", return_value=response) as urlopen:
-        result = check_for_update("0.3.0")
+        result = check_for_update("0.4.0")
 
-    assert result == "0.4.0"
+    assert result == "0.5.0"
     request = urlopen.call_args.args[0]
     assert request.full_url == LATEST_RELEASE_URL
     assert request.get_header("User-agent") == "ToolboxTUI"
