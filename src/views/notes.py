@@ -1,6 +1,7 @@
 import os
 from typing import Iterable
 from pathlib import Path
+import shutil
 
 from textual import Logger
 from textual.app import ComposeResult
@@ -107,6 +108,7 @@ class Notes(Static):
 
     BUTTON_ACTIONS = {
         "new-note-button": "new_note",
+        "new-folder-button": "new_folder",
         "refresh-folder-button": "refresh_folder",
         "open-file-button": "open_file",
         "refresh-file-button": "refresh_file",
@@ -138,13 +140,9 @@ class Notes(Static):
                     language=None
                 )
             
-        with Horizontal():
-            yield Button(
-                "\U0001F4C4 New Note",
-                id="new-note-button",
-                flat=True,
-                classes="icon-button",
-            )
+        with HorizontalScroll():
+            yield Button("\U0001F4C4 New Note", id="new-note-button", flat=True, classes="icon-button",)
+            yield Button("\U0001F4C1 New Folder", id="new-folder-button", flat=True, classes="icon-button",)
             yield Button("\U0001F503 Refresh Folder", id="refresh-folder-button", flat=True, classes="icon-button")
             yield Button("\U0001F50E Open File", id="open-file-button", flat=True, classes="icon-button")
             yield Button("\U0001F504\uFE0F Refresh File", id="refresh-file-button", flat=True, classes="icon-button")
@@ -188,6 +186,31 @@ class Notes(Static):
             ),
             callback=lambda draft: self.create_note(selected_directory, draft),
         )
+        
+    def action_new_folder(self) -> None:
+        """Ask for a folder name, then create a folder in the selected location."""
+        directory_tree = self.query_one(NotesDirectoryTree)
+        selected_node = directory_tree.cursor_node
+        if selected_node is None or selected_node.data is None:
+            self.logger.warn("Select a parent folder to create a subfolder.")
+            return
+
+        selected_directory = selected_node.data.path
+        if not selected_directory.is_dir():
+            self.logger.warn("Select a parent folder to create a subfolder.")
+            return
+
+        self.app.push_screen(
+            ConfirmDialog(
+                "Create a new folder.",
+                askParameters=True,
+                confirmButtonText="Create",
+                cancelButtonText="Cancel",
+                parametersPlaceholder="Enter folder name...",
+            ),
+            callback=lambda confirmResult: self.create_folder(selected_directory, confirmResult.parameters),
+        )
+
 
     def create_note(
         self,
@@ -233,6 +256,29 @@ class Notes(Static):
         self.action_refresh_folder(silent=True)
         self.open_created_note(file_path)
 
+    def create_folder(
+        self,
+        parent_directory: Path,
+        folder_name: str | None,
+    ) -> None:
+        """Create a new folder without replacing an existing one."""
+        if not folder_name:
+            self.logger.warn("A folder name is required.")
+            return
+
+        new_folder_path = parent_directory / folder_name
+        try:
+            new_folder_path.mkdir(exist_ok=False)
+        except FileExistsError:
+            self.logger.warn(f"A folder already exists at {new_folder_path}.")
+            return
+        except OSError as error:
+            self.logger.error(f"Could not create folder {new_folder_path}: {error}")
+            return
+
+        self.logger.info(f"Created notes folder: {new_folder_path}")
+        self.action_refresh_folder(silent=True)
+ 
     def open_created_note(self, file_path: Path) -> None:
         """Open a new note while preserving any unsaved editor content."""
         viewer = self.query_one("#viewer", TextArea)
@@ -307,15 +353,21 @@ class Notes(Static):
             self.logger.error("The current app does not implement markdown switching.")
     
     def action_delete_file(self) -> None:
-        """Deletes the selected file after user confirmation."""
+        """Deletes the selected file or folder after user confirmation."""
         selected_path = self.get_selected_path()
-        if selected_path is None:
-            self.logger.warn("Select a file to delete.")
+        selected_folder = self.get_selected_folder()
+        if selected_path is None and selected_folder is None:
+            self.logger.warn("Select a file or folder to delete.")
             return
 
+        if selected_folder is not None:
+            selected_path = selected_folder
+
+        file_or_folder = "folder" if selected_path.is_dir() else "file"
+        
         self.app.push_screen(
             ConfirmDialog(
-                f"Are you sure you want to delete the file:\n{selected_path.name}?",
+                f"Are you sure you want to delete the {file_or_folder}:\n{selected_path.name}?",
                 confirmButtonText="Delete",
                 cancelButtonText="Cancel"
             ),
@@ -325,12 +377,30 @@ class Notes(Static):
     def confirm_delete_file(self, confirmationResult: bool, path: Path) -> None:
         if confirmationResult.confirmed:
             try:
-                path.unlink()
-                self.logger.info(f"Deleted notes file: {path}")
+                if path.is_dir():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink()
+                self.logger.info(f"Deleted notes {('folder' if path.is_dir() else 'file')}: {path}")
                 self.action_refresh_folder(silent=True)
                 self.query_one("#viewer", TextArea).load_text("")
             except OSError as error:
-                self.logger.warn(f"Could not delete the file:\n\n{error}")
+                self.logger.warn(f"Could not delete:\n\n{error}")
+                
+    def get_selected_folder(self) -> Path | None:
+        """Returns the selected folder in the tree, if a valid one exists."""
+        directory_tree = self.query_one(NotesDirectoryTree)
+        selected_node = directory_tree.cursor_node
+
+        if selected_node is None or selected_node.data is None:
+            return None
+
+        selected_path = selected_node.data.path
+
+        if not selected_path.is_dir():
+            return None
+
+        return selected_path
 
     def get_selected_path(self) -> Path | None:
         """Returns the selected file in the tree, if a valid one exists."""
@@ -343,7 +413,6 @@ class Notes(Static):
         selected_path = selected_node.data.path
 
         if selected_path.is_dir():
-            self.logger.warn("Select a file, not a folder.")
             return None
 
         return selected_path
@@ -356,7 +425,6 @@ class Notes(Static):
             return
 
         self.display_file(selected_path)
-
 
     def display_file(self, path: Path) -> None:
         """Reads and displays the content of a text file in the editor."""

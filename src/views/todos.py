@@ -9,7 +9,7 @@ from typing import Callable
 from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, HorizontalScroll, Vertical
 from textual.widgets import Button, DataTable, Label, ProgressBar, Select, Static
 
 from src.utils.confirm_dialog import ConfirmDialog
@@ -56,10 +56,10 @@ class Todos(Static):
                 yield Label("Progress", id="todos-progress-label")
                 yield ProgressBar(total=1, show_eta=False, id="todos-progress")
             yield DataTable(id="todos-table", zebra_stripes=True, cursor_type="row")
-            with Horizontal(id="todos-controls"):
+            with HorizontalScroll(id="todos-controls"):
                 yield Button("\u2795 New task", id="todos-add", flat=True, classes="icon-button")
                 yield Button("\u21B3 Sub-item", id="todos-add-child", flat=True, classes="icon-button")
-                yield Button("\u270F\uFE0F Edit", id="todos-edit", flat=True, classes="icon-button")
+                yield Button("\U0000270F Edit", id="todos-edit", flat=True, classes="icon-button")
                 yield Button("\u2705 Done", id="todos-toggle", flat=True, classes="icon-button")
                 yield Button(
                     "\u23F8 Pause",

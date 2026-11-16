@@ -55,7 +55,6 @@ def test_get_selected_path_returns_file_and_rejects_directory(tmp_path: Path) ->
 
     tree.cursor_node.data.path = tmp_path
     assert notes.get_selected_path() is None
-    notes.logger.warn.assert_called_once_with("Select a file, not a folder.")
 
 
 def test_load_selected_file_displays_selected_file_and_tracks_baseline(
@@ -195,3 +194,13 @@ def test_new_note_does_not_overwrite_an_existing_file(tmp_path: Path) -> None:
         title="New Note",
         severity="warning",
     )
+
+def test_new_folder_requires_a_selected_folder() -> None:
+    tree = MagicMock()
+    tree.cursor_node = None
+    notes = make_notes(MagicMock(), tree)
+
+    notes.action_new_folder()
+
+    notes.test_app.push_screen.assert_not_called()
+    notes.logger.warn.assert_called_once_with("Select a parent folder to create a subfolder.")

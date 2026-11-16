@@ -11,7 +11,7 @@ def test_home_splits_guidance_and_update_log_and_shows_current_version(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(Bash, "start_session", lambda self: None)
-    monkeypatch.setattr("src.tui.check_for_update", lambda current_version: "0.4.0")
+    monkeypatch.setattr("src.tui.check_for_update", lambda current_version: "0.5.0")
     app = ToolboxTUI()
 
     async def check_home() -> None:
@@ -28,14 +28,14 @@ def test_home_splits_guidance_and_update_log_and_shows_current_version(
             await pilot.pause(0.1)
 
             assert update_notice.display is True
-            assert "New release v0.4.0 is available" in str(update_notice.content)
+            assert "New release v0.5.0 is available" in str(update_notice.content)
             assert "master branch" in str(update_notice.content)
             assert update_notice.region.y < version_select.region.y
             assert version_select.value == APP_VERSION
             assert f"Version {APP_VERSION} Log:" in str(changelog.content)
             assert f"v{APP_VERSION}" in str(app.query_one("#version", Label).content)
 
-            pending_version = "0.4.0"
+            pending_version = "0.5.0"
             assert pending_version in CHANGELOG
             version_select.value = pending_version
             await pilot.pause()
