@@ -9,6 +9,8 @@ from src.utils.addon_manager import (
     ADDON_MANIFEST,
     AddonError,
     AddonManager,
+    AddonNotification,
+    _parse_response,
     parse_addon_manifest,
     validate_repository_url,
 )
@@ -217,3 +219,140 @@ def test_request_rejects_response_for_another_request_id(
 
     with pytest.raises(AddonError, match="request id"):
         manager.request("pomodoro", "view")
+
+
+def test_parse_structured_layout_and_notifications() -> None:
+    response = _parse_response(
+        {
+            "protocol": 1,
+            "id": "request-1",
+            "view": {
+                "title": "Environment Report",
+                "layout": [
+                    {
+                        "type": "row",
+                        "children": [
+                            {
+                                "type": "panel",
+                                "title": "System",
+                                "children": [
+                                    {
+                                        "type": "text",
+                                        "content": "Windows 11",
+                                        "color": "cyan",
+                                        "bold": True,
+                                    }
+                                ],
+                            },
+                            {
+                                "type": "panel",
+                                "title": "Tools",
+                                "children": [
+                                    {
+                                        "type": "table",
+                                        "columns": ["Tool", "Version"],
+                                        "rows": [["Python", "3.12"]],
+                                    }
+                                ],
+                            },
+                        ],
+                    },
+                    {
+                        "type": "button",
+                        "action": "refresh",
+                        "label": "Refresh report",
+                        "variant": "primary",
+                    },
+                ],
+                "state": {"machine": "test"},
+                "actions": [{"id": "refresh", "label": "Refresh"}],
+            },
+            "notifications": [
+                {
+                    "title": "Report ready",
+                    "message": "The report was refreshed.",
+                    "severity": "information",
+                    "timeout": 4,
+                }
+            ],
+        },
+        "request-1",
+    )
+
+    assert response.body == ""
+    assert response.layout is not None
+    assert response.layout[0]["type"] == "row"
+    assert response.layout[1]["action"] == "refresh"
+    assert response.state == {"machine": "test"}
+    assert response.notifications == (
+        AddonNotification("Report ready", "The report was refreshed.", "information", 4.0),
+    )
+
+
+@pytest.mark.parametrize(
+    "view, message",
+    [
+        (
+            {"title": "Dashboard", "layout": [{"type": "unknown"}]},
+            "type.*text, panel, row, table, or button",
+        ),
+        (
+            {
+                "title": "Dashboard",
+                "layout": [{"type": "button", "action": "missing"}],
+            },
+            "reference an id declared in 'actions'",
+        ),
+        (
+            {
+                "title": "Dashboard",
+                "layout": [
+                    {"type": "table", "columns": ["Name", "Version"], "rows": [["Python"]]}
+                ],
+            },
+            "match the number of columns",
+        ),
+        (
+            {
+                "title": "Dashboard",
+                "layout": [{"type": "text", "content": "Ready", "color": "not-a-color"}],
+            },
+            "supported color",
+        ),
+        (
+            {
+                "title": "Dashboard",
+                "body": "Legacy",
+                "layout": [{"type": "text", "content": "New"}],
+            },
+            "either the Addon view 'body' or 'layout'",
+        ),
+    ],
+)
+def test_parse_structured_layout_rejects_invalid_blocks(view, message: str) -> None:
+    with pytest.raises(AddonError, match=message):
+        _parse_response(
+            {"protocol": 1, "id": "request-2", "view": view},
+            "request-2",
+        )
+
+
+@pytest.mark.parametrize(
+    "notification, message",
+    [
+        ({"message": "Done", "severity": "fatal"}, "severity.*information, warning, or error"),
+        ({"message": "Done", "timeout": True}, "timeout.*between 1 and 30"),
+        ({"message": "Done", "secret": "value"}, "Unknown Addon notification field"),
+    ],
+)
+def test_parse_notifications_rejects_invalid_values(notification, message: str) -> None:
+    with pytest.raises(AddonError, match=message):
+        _parse_response(
+            {
+                "protocol": 1,
+                "id": "request-3",
+                "view": {"title": "Dashboard", "body": "Ready."},
+                "notifications": [notification],
+            },
+            "request-3",
+        )
