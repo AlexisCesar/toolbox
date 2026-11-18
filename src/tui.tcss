@@ -154,6 +154,12 @@ Footer {
     margin-bottom: 1;
 }
 
+#home-update {
+    display: none;
+    width: 1fr;
+    margin-bottom: 1;
+}
+
 #home-version-select {
     width: 1fr;
     margin-bottom: 1;

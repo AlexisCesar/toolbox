@@ -47,6 +47,8 @@ from src.utils.seasonal_theme import (
 from src.utils.themes import NETRUNNER_THEME
 from src.utils.addon_manager import AddonError, AddonManager, InstalledAddon
 from src.utils.update_checker import check_for_update
+from src.utils.update_dialog import UpdateDialog
+from src.utils.update_manager import ToolboxUpdater
 
 from src.views.settings import Settings
 from src.views.addons import Addons
@@ -95,6 +97,7 @@ class ToolboxTUI(App):
         self.todo_store = TodoStore()
         self.addon_manager = AddonManager()
         self._addon_entries: list[InstalledAddon] = []
+        self._update_in_progress = False
         self._seasonal_timer = None
         self._runtime_timer = None
         self._runtime_status_label: Label | None = None
@@ -573,6 +576,26 @@ class ToolboxTUI(App):
             self._save_selected_title,
         )
 
+    def on_home_update_requested(self, event: Home.UpdateRequested) -> None:
+        """Open the guarded update workflow requested from the Home screen."""
+        event.stop()
+        if self._update_in_progress:
+            return
+        self._update_in_progress = True
+        self.push_screen(
+            UpdateDialog(ToolboxUpdater(), self.logger),
+            self._on_update_dialog_closed,
+        )
+
+    def _on_update_dialog_closed(self, _result: None) -> None:
+        """Unlock the application after a safe, non-mutating update failure."""
+        self._update_in_progress = False
+
+    def action_quit(self) -> None:
+        """Keep the user in the update screen while commands are running."""
+        if not self._update_in_progress:
+            self.exit()
+
     def _save_selected_title(self, selected_code: str | None) -> None:
         """Persist a title selected from the currently unlocked choices."""
         if selected_code is None:
@@ -591,6 +614,8 @@ class ToolboxTUI(App):
 
     def action_select_view(self, view_id: int) -> None:
         """Select a sidebar item and synchronously show its view."""
+        if self._update_in_progress:
+            return
         list_view = self.query_one("#sidebar-list")
         list_view.index = view_id
         list_view.focus()
@@ -601,6 +626,8 @@ class ToolboxTUI(App):
         self.action_select_view(12 + len(self._addon_entries))
 
     def _show_view(self, view_id: int) -> None:
+        if self._update_in_progress:
+            return
         quit_index = 13 + len(self._addon_entries)
         if view_id == quit_index:
             self.exit()
