@@ -16,11 +16,14 @@ APP_VERSION = "0.5.0"
 
 CHANGELOG: dict[str, VersionChanges] = {
     "0.6.0": {
-        "date": "2026-11-17",
         "added": [
             "Structured Addon layouts with panels, tables, styled text, and buttons.",
             "Addon notifications through Toolbox toasts.",
             "Recommended Addons catalog.",
+        ],
+        "changed": [
+            "Hide completed TODO items without changing saved data or progress.",
+            "Log file lists show modification times and sort newest first.",
         ],
     },
     "0.5.0": {

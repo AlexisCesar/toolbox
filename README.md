@@ -11,8 +11,9 @@ application: scripts, projects, notes, logs, health checks, TODOs, and more.
 - Browse scripts, descriptions, and saved parameters; run SQL Server scripts.
 - Find projects and open them with detected IDEs and editors.
 - Create and edit text files, and preview Markdown notes.
-- Browse local or network logs and monitor HTTP endpoints or TCP connections.
-- Organize TODOs and use offline tools for common text and data tasks.
+- Browse logs by last-modified time and monitor HTTP endpoints or TCP connections.
+- Organize TODOs, hide completed items without deleting them, and use offline
+  tools for common text and data tasks.
 - View calendar events and customize folders, themes, and health checks.
 
 ## Quick start

@@ -1,7 +1,8 @@
 import asyncio
+import os
 from pathlib import Path
 
-from textual.widgets import Button, Input, ListItem, TextArea
+from textual.widgets import Button, Input, Label, ListItem, TextArea
 
 from src.tui import ToolboxTUI
 from src.utils.config import config
@@ -15,8 +16,12 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
 ) -> None:
     log_folder = tmp_path / "application logs"
     log_folder.mkdir()
-    (log_folder / "application.log").write_text("older entry\nlatest entry", encoding="utf-8")
-    (log_folder / "image.png").write_bytes(b"\x89PNG\r\n\x1a\nimage")
+    log_file = log_folder / "application.log"
+    image_file = log_folder / "image.png"
+    log_file.write_text("older entry\nlatest entry", encoding="utf-8")
+    image_file.write_bytes(b"\x89PNG\r\n\x1a\nimage")
+    os.utime(log_file, (1_700_000_000, 1_700_000_000))
+    os.utime(image_file, (1_700_003_600, 1_700_003_600))
     monkeypatch.setitem(
         config._data,
         "logs",
@@ -34,10 +39,16 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
             assert isinstance(app.screen, LogFilesDialog)
             assert len(app.screen.files) == 2
             file_list = app.screen.query_one("#log-files-list")
-            assert [path.name for path in app.screen.files] == [
+            assert [entry.path.name for entry in app.screen.files] == [
                 "image.png",
                 "application.log",
             ]
+            first_label = file_list.children[0].query_one(Label)
+            assert "image.png" in str(first_label.content)
+            assert app.screen.files[0].modified_at is not None
+            assert app.screen.files[0].modified_at.strftime("%Y-%m-%d %H:%M") in str(
+                first_label.content
+            )
             assert app.screen.query_one("#log-files-open", Button).variant == "success"
             assert app.screen.query_one("#log-files-close", Button).variant == "primary"
             await pilot.click(ListItem, offset=(2, 1))
@@ -64,7 +75,10 @@ def test_log_folder_opens_supported_file_at_the_latest_line(
             assert not open_button.disabled
             await pilot.click("#log-files-open")
             for _ in range(40):
-                if isinstance(app.screen, LogFileDialog):
+                if (
+                    isinstance(app.screen, LogFileDialog)
+                    and len(app.screen.query("#log-file-close"))
+                ):
                     break
                 await pilot.pause(0.05)
 
