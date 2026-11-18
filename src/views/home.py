@@ -37,6 +37,8 @@ Use Settings → Configuration to export or import settings. The private subscri
 
 - Need to copy something from the screen such as logs? Hold down the [bold #5f5fff]SHIFT[/bold #5f5fff] key to select text from anywhere on the screen.
 
+- Enable [bold #5f5fff]Vim motions[/bold #5f5fff] in Scripts or Notes for NORMAL, INSERT, and VISUAL modes. Use :w, :q, :wq, and :set rnu in the command line.
+
 - Generating a [u]scripts configuration file[/u] through the [bold #5f5fff]Settings[/bold #5f5fff] tab enable script parameter history. Trust me, it's very helpful!
 
 - Completing an [bold #5f5fff]item[/bold #5f5fff] in the [bold #5f5fff]Tasks[/bold #5f5fff] tab will also complete its subtasks.

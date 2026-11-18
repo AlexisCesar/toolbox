@@ -515,13 +515,44 @@ ScriptEditorDialog {
     margin-bottom: 1;
 }
 
+#script-editor-header {
+    height: 3;
+    align: left middle;
+}
+
+#script-editor-header #script-editor-title {
+    width: 1fr;
+    margin-bottom: 0;
+}
+
+#script-editor-vim-toggle {
+    width: auto;
+}
+
 #script-editor-content {
     height: 1fr;
 }
 
 #script-editor-status {
+    width: 1fr;
     color: $error;
     min-height: 1;
+}
+
+#script-editor-command {
+    width: auto;
+    color: $text;
+}
+
+#script-editor-footer {
+    height: 1;
+}
+
+#script-editor-vim-mode {
+    display: none;
+    width: 12;
+    text-align: right;
+    color: $text-muted;
 }
 
 #script-editor-buttons {
@@ -835,6 +866,46 @@ ConfirmDialog {
 
 #notes-container {
     height: 90%;
+}
+
+#notes-editor-panel {
+    layout: horizontal;
+    width: 1fr;
+    height: 1fr;
+}
+
+#viewer {
+    height: 1fr;
+}
+
+#notes-vim-sidebar {
+    width: 22;
+    height: 1fr;
+    padding: 1;
+    border-left: solid $primary;
+}
+
+#notes-vim-toggle {
+    width: auto;
+}
+
+#notes-vim-mode {
+    display: none;
+    width: 1fr;
+    color: $text-muted;
+    text-align: right;
+}
+
+#notes-vim-command {
+    color: $text;
+    width: 1fr;
+    min-height: 1;
+}
+
+#notes-vim-status {
+    color: $text-muted;
+    width: 1fr;
+    min-height: 1;
 }
 
 #select-file-label {
