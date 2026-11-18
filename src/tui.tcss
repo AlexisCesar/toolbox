@@ -154,6 +154,12 @@ Footer {
     margin-bottom: 1;
 }
 
+#home-update {
+    display: none;
+    width: 1fr;
+    margin-bottom: 1;
+}
+
 #home-version-select {
     width: 1fr;
     margin-bottom: 1;
@@ -1405,6 +1411,44 @@ RecommendedAddonsDialog {
     padding: 1 2;
     border: thick $primary;
     background: $surface;
+}
+
+UpdateDialog {
+    align: center middle;
+}
+
+#toolbox-update-dialog {
+    width: 80%;
+    max-width: 100;
+    height: auto;
+    max-height: 90%;
+    padding: 2;
+    border: thick $primary;
+    background: $surface;
+}
+
+#toolbox-update-title {
+    height: auto;
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+#toolbox-update-status {
+    height: auto;
+    min-height: 1;
+    margin-bottom: 1;
+}
+
+#toolbox-update-error {
+    height: auto;
+    max-height: 12;
+    color: $error;
+    margin-bottom: 1;
+}
+
+#toolbox-update-actions {
+    height: 3;
+    align: right middle;
 }
 
 #recommended-addons-title {

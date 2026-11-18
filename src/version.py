@@ -20,6 +20,7 @@ CHANGELOG: dict[str, VersionChanges] = {
             "Structured Addon layouts with panels, tables, styled text, and buttons.",
             "Addon notifications through Toolbox toasts.",
             "Recommended Addons catalog.",
+            "Update Toolbox button."
         ],
         "changed": [
             "Hide completed TODO items without changing saved data or progress.",

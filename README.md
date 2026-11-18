@@ -48,6 +48,11 @@ uv run python main.py
 On first launch, Toolbox creates `config.override.toml` from the checked-in
 `config.toml`. The override contains local settings and is ignored by Git.
 
+When a newer release is available, the Home screen offers an update button.
+Updates require a clean working tree and a branch tracking `origin/<branch>`;
+Toolbox fetches, fast-forwards that branch, and runs `uv sync`. Afterward, close
+and relaunch Toolbox to use the updated version.
+
 ## Configuration
 
 Open **Settings** to configure folders, themes, log sources, and health checks.
