@@ -5,7 +5,15 @@ from unittest.mock import Mock
 from rich.console import Console
 from rich.text import Text
 from textual.app import App, ComposeResult
-from textual.widgets import ContentSwitcher, DataTable, Input, Select, TextArea
+from textual.widgets import (
+    Checkbox,
+    ContentSwitcher,
+    DataTable,
+    Input,
+    ProgressBar,
+    Select,
+    TextArea,
+)
 
 from src.tui import ToolboxTUI
 from src.utils.config import config
@@ -134,5 +142,61 @@ def test_completed_rows_dim_and_status_sort_updates_after_toggling(
             await pilot.pause()
             assert [item.id for item in view.visible_items] == [pending.id, paused.id, done.id]
             assert_dimmed(done, True)
+
+    asyncio.run(exercise())
+
+
+def test_hide_completed_todos_preserves_items_and_progress(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setitem(config._data["ui"], "todo_startup_notification", False)
+    completed = TodoItem("Completed", completed=True, order=0)
+    pending = TodoItem("Pending", order=1)
+    completed_child = TodoItem(
+        "Completed sub-item",
+        parent_id=pending.id,
+        completed=True,
+        order=0,
+    )
+    store = TodoStore(tmp_path / "todos.json")
+    store.save([completed, pending, completed_child])
+
+    class TodoApp(App):
+        def compose(self) -> ComposeResult:
+            yield Todos(Mock(), store=store)
+
+    async def exercise() -> None:
+        async with TodoApp().run_test(size=(120, 36)) as pilot:
+            view = pilot.app.query_one(Todos)
+            table = view.query_one("#todos-table", DataTable)
+            progress = view.query_one("#todos-progress", ProgressBar)
+            checkbox = view.query_one("#todos-hide-completed", Checkbox)
+
+            assert table.row_count == 3
+            assert progress.total == 3
+            assert progress.progress == 2
+
+            await pilot.click("#todos-hide-completed")
+            await pilot.pause()
+
+            assert checkbox.value
+            assert table.row_count == 1
+            assert [item.id for item in view.visible_items] == [pending.id]
+            assert [(item.id, item.completed) for item in store.load()] == [
+                (completed.id, True),
+                (pending.id, False),
+                (completed_child.id, True),
+            ]
+            assert progress.total == 3
+            assert progress.progress == 2
+
+            await pilot.click("#todos-hide-completed")
+            await pilot.pause()
+
+            assert not checkbox.value
+            assert table.row_count == 3
+            assert progress.total == 3
+            assert progress.progress == 2
 
     asyncio.run(exercise())

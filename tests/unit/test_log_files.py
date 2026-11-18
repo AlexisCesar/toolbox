@@ -1,3 +1,5 @@
+import os
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -13,23 +15,42 @@ from src.utils.log_files import (
 def test_iter_log_entries_lists_all_items_without_filtering_extensions(
     tmp_path: Path,
 ) -> None:
-    (tmp_path / "app.LOG").write_text("latest", encoding="utf-8")
-    (tmp_path / "details.txt").write_text("details", encoding="utf-8")
-    (tmp_path / "events.jsonl").write_text("{}", encoding="utf-8")
-    (tmp_path / "2001-01-02.log").write_text("newer", encoding="utf-8")
-    (tmp_path / "2001-01-01.log").write_text("older", encoding="utf-8")
-    (tmp_path / "screenshot.png").write_bytes(b"\x89PNG\r\n\x1a\nimage")
-    (tmp_path / "subfolder").mkdir()
-
-    assert [path.name for path in iter_log_entries(tmp_path)] == [
-        "subfolder",
-        "screenshot.png",
-        "events.jsonl",
-        "details.txt",
-        "app.LOG",
-        "2001-01-02.log",
-        "2001-01-01.log",
+    paths = [
+        tmp_path / "app.LOG",
+        tmp_path / "details.txt",
+        tmp_path / "events.jsonl",
+        tmp_path / "2001-01-02.log",
+        tmp_path / "2001-01-01.log",
+        tmp_path / "screenshot.png",
+        tmp_path / "subfolder",
     ]
+    contents = [
+        b"latest",
+        b"details",
+        b"{}",
+        b"newer",
+        b"older",
+        b"\x89PNG\r\n\x1a\nimage",
+    ]
+    for path, content in zip(paths[:6], contents, strict=True):
+        path.write_bytes(content)
+    paths[-1].mkdir()
+
+    first_timestamp = 1_700_000_000
+    for index, path in enumerate(paths[:6]):
+        timestamp = first_timestamp + index
+        os.utime(path, (timestamp, timestamp))
+
+    entries = iter_log_entries(tmp_path)
+    files = [entry for entry in entries if entry.path.is_file()]
+
+    assert {entry.path.name for entry in entries} == {path.name for path in paths}
+    assert [entry.path.name for entry in files] == [
+        path.name for path in reversed(paths[:6])
+    ]
+    assert files[0].modified_at == datetime.fromtimestamp(
+        first_timestamp + len(paths[:6]) - 1
+    ).astimezone()
 
 
 def test_is_text_log_file_accepts_rotated_and_extensionless_logs_and_rejects_binary(

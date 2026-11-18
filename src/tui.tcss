@@ -889,9 +889,20 @@ ProjectEditorDialog {
     height: 100%;
 }
 
+#todos-header-row {
+    height: 3;
+    margin: 0 1;
+    align: left middle;
+}
+
 #todos-title {
-    padding: 0 1;
+    width: 1fr;
     text-style: bold;
+}
+
+#todos-hide-completed {
+    width: auto;
+    margin-right: 1;
 }
 
 #todos-summary {

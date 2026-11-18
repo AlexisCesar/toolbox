@@ -1,5 +1,7 @@
 import os
 import unicodedata
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 
@@ -25,12 +27,39 @@ _BINARY_SIGNATURES = (
 )
 
 
-def iter_log_entries(directory: Path) -> list[Path]:
-    """List directory entry names without querying metadata for each network item."""
+@dataclass(frozen=True)
+class LogEntry:
+    """A directory entry and its last modification time, when available."""
+
+    path: Path
+    modified_at: datetime | None
+    metadata_error: str | None = None
+
+
+def iter_log_entries(directory: Path) -> list[LogEntry]:
+    """List all directory entries, newest modified first."""
     directory = Path(directory)
+    log_entries: list[LogEntry] = []
     with os.scandir(directory) as entries:
-        paths = [directory / entry.name for entry in entries]
-    return sorted(paths, key=lambda path: path.name.casefold(), reverse=True)
+        for entry in entries:
+            path = directory / entry.name
+            try:
+                modified_at = datetime.fromtimestamp(entry.stat().st_mtime).astimezone()
+            except (OSError, OverflowError, ValueError) as error:
+                log_entries.append(LogEntry(path, None, str(error)))
+            else:
+                log_entries.append(LogEntry(path, modified_at))
+
+    log_entries.sort(key=lambda item: item.path.name.casefold())
+    log_entries.sort(
+        key=lambda item: (
+            item.modified_at.timestamp()
+            if item.modified_at is not None
+            else float("-inf")
+        ),
+        reverse=True,
+    )
+    return log_entries
 
 
 def is_text_log_file(path: Path) -> bool:
