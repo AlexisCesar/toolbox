@@ -24,9 +24,20 @@ ADDON_BODY_LIMIT = 100_000
 ADDON_STATE_LIMIT = 100_000
 ADDON_REQUEST_TIMEOUT = 15
 ADDON_INSTALL_TIMEOUT = 120
+ADDON_LAYOUT_BLOCK_LIMIT = 100
+ADDON_LAYOUT_DEPTH_LIMIT = 5
+ADDON_NOTIFICATION_LIMIT = 5
 ADDON_ID_PATTERN = re.compile(r"^[a-z][a-z0-9-]{0,63}$")
 ACTION_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+LAYOUT_COLOR_PATTERN = re.compile(r"^(#[0-9a-fA-F]{6}|[a-zA-Z][a-zA-Z0-9_]*)$")
 SSH_URL_PATTERN = re.compile(r"^[\w.-]+@[\w.-]+:[\w./-]+(?:\.git)?$")
+LAYOUT_COLORS = {
+    "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white",
+    "bright_black", "bright_red", "bright_green", "bright_yellow", "bright_blue",
+    "bright_magenta", "bright_cyan", "bright_white", "gray", "grey",
+}
+BUTTON_VARIANTS = {"default", "primary", "success", "warning", "error"}
+NOTIFICATION_SEVERITIES = {"information", "warning", "error"}
 
 
 class AddonError(ValueError):
@@ -72,6 +83,16 @@ class AddonAction:
 
 
 @dataclass(frozen=True, slots=True)
+class AddonNotification:
+    """A toast requested by an Addon in its latest response."""
+
+    title: str
+    message: str
+    severity: str
+    timeout: float | None
+
+
+@dataclass(frozen=True, slots=True)
 class AddonViewState:
     """Content returned by an Addon process."""
 
@@ -79,6 +100,8 @@ class AddonViewState:
     body: str
     state: dict[str, Any] | None
     actions: tuple[AddonAction, ...]
+    layout: tuple[dict[str, Any], ...] | None = None
+    notifications: tuple[AddonNotification, ...] = ()
 
 
 def default_addons_dir() -> Path:
@@ -365,15 +388,16 @@ def _parse_response(value: object, request_id: str) -> AddonViewState:
 
     title = view.get("title")
     body = view.get("body")
+    has_layout = "layout" in view
+    layout: tuple[dict[str, Any], ...] | None = None
     state = view.get("state")
     actions = view.get("actions", [])
     if not _valid_text(title, maximum=120):
         raise AddonError("The Addon view title must be non-empty text of at most 120 characters.")
-    if (
-        not isinstance(body, str)
-        or len(body) > ADDON_BODY_LIMIT
-        or any(ord(character) < 32 and character not in "\t\n\r" for character in body)
-    ):
+    if has_layout:
+        if "body" in view:
+            raise AddonError("Use either the Addon view 'body' or 'layout', not both.")
+    elif not _valid_body(body, maximum=ADDON_BODY_LIMIT):
         raise AddonError("The Addon view body must be text of at most 100,000 characters.")
     if state is not None:
         if not isinstance(state, dict):
@@ -403,7 +427,223 @@ def _parse_response(value: object, request_id: str) -> AddonViewState:
         used_ids.add(action_id)
         parsed_actions.append(AddonAction(action_id, label.strip()))
 
-    return AddonViewState(title.strip(), body, state, tuple(parsed_actions))
+    if has_layout:
+        layout = _parse_layout(view.get("layout"), used_ids)
+
+    notifications = _parse_notifications(value.get("notifications", []), title.strip())
+    return AddonViewState(
+        title.strip(),
+        body if isinstance(body, str) else "",
+        state,
+        tuple(parsed_actions),
+        layout,
+        notifications,
+    )
+
+
+def _valid_body(value: object, *, maximum: int) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) <= maximum
+        and not any(ord(character) < 32 and character not in "\t\n\r" for character in value)
+    )
+
+
+def _layout_text(value: object, *, field: str, maximum: int, allow_empty: bool = False) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) > maximum
+        or (not allow_empty and not value.strip())
+        or any(ord(character) < 32 and character not in "\t\n\r" for character in value)
+    ):
+        raise AddonError(
+            f"Addon layout '{field}' must be plain text of at most {maximum} characters."
+        )
+    return value
+
+
+def _reject_unknown_layout_fields(block: dict[str, Any], allowed: set[str]) -> None:
+    unknown = set(block) - allowed
+    if unknown:
+        field = sorted(unknown)[0]
+        raise AddonError(f"Unknown field '{field}' in Addon layout block '{block.get('type')}'.")
+
+
+def _parse_layout(
+    value: object,
+    action_ids: set[str],
+) -> tuple[dict[str, Any], ...]:
+    if not isinstance(value, list) or not value or len(value) > 40:
+        raise AddonError("Addon view 'layout' must be a non-empty array of at most 40 blocks.")
+    block_count = [0]
+    return tuple(
+        _parse_layout_block(block, action_ids, block_count, depth=1)
+        for block in value
+    )
+
+
+def _parse_layout_block(
+    value: object,
+    action_ids: set[str],
+    block_count: list[int],
+    *,
+    depth: int,
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise AddonError("Each Addon layout block must be a JSON object.")
+    block_count[0] += 1
+    if block_count[0] > ADDON_LAYOUT_BLOCK_LIMIT:
+        raise AddonError(
+            f"Addon layout cannot contain more than {ADDON_LAYOUT_BLOCK_LIMIT} blocks."
+        )
+    if depth > ADDON_LAYOUT_DEPTH_LIMIT:
+        raise AddonError(f"Addon layout nesting cannot exceed {ADDON_LAYOUT_DEPTH_LIMIT} levels.")
+
+    block_type = value.get("type")
+    if block_type == "text":
+        _reject_unknown_layout_fields(
+            value,
+            {"type", "content", "color", "background", "bold", "italic", "underline"},
+        )
+        content = _layout_text(value.get("content"), field="content", maximum=10_000)
+        parsed: dict[str, Any] = {"type": "text", "content": content}
+        for field in ("color", "background"):
+            if field in value:
+                color = value[field]
+                if (
+                    not isinstance(color, str)
+                    or not LAYOUT_COLOR_PATTERN.fullmatch(color)
+                    or (not color.startswith("#") and color.lower() not in LAYOUT_COLORS)
+                ):
+                    raise AddonError(
+                        f"Addon layout '{field}' must be a supported color name or #RRGGBB value."
+                    )
+                parsed[field] = color if color.startswith("#") else color.lower()
+        for field in ("bold", "italic", "underline"):
+            if field in value:
+                if not isinstance(value[field], bool):
+                    raise AddonError(f"Addon layout '{field}' must be true or false.")
+                parsed[field] = value[field]
+        return parsed
+
+    if block_type in {"panel", "row"}:
+        allowed = {"type", "children"} | ({"title"} if block_type == "panel" else set())
+        _reject_unknown_layout_fields(value, allowed)
+        title = None
+        if block_type == "panel":
+            title = _layout_text(value.get("title"), field="title", maximum=80)
+        children_value = value.get("children")
+        if not isinstance(children_value, list) or not children_value or len(children_value) > 20:
+            raise AddonError("Addon panel and row blocks need 1 to 20 child blocks.")
+        if block_type == "row" and len(children_value) < 2:
+            raise AddonError("Addon row blocks need at least 2 child blocks.")
+        children = tuple(
+            _parse_layout_block(child, action_ids, block_count, depth=depth + 1)
+            for child in children_value
+        )
+        parsed = {"type": block_type, "children": children}
+        if title is not None:
+            parsed["title"] = title
+        return parsed
+
+    if block_type == "table":
+        _reject_unknown_layout_fields(value, {"type", "title", "columns", "rows"})
+        title = None
+        if "title" in value:
+            title = _layout_text(value["title"], field="title", maximum=80)
+        columns = value.get("columns")
+        rows = value.get("rows")
+        if not isinstance(columns, list) or not 1 <= len(columns) <= 12:
+            raise AddonError("Addon table 'columns' must contain 1 to 12 column names.")
+        parsed_columns = tuple(
+            _layout_text(column, field="column name", maximum=80)
+            for column in columns
+        )
+        if not isinstance(rows, list) or len(rows) > 100:
+            raise AddonError("Addon table 'rows' must contain at most 100 rows.")
+        parsed_rows: list[tuple[str, ...]] = []
+        for row in rows:
+            if not isinstance(row, list) or len(row) != len(parsed_columns):
+                raise AddonError("Every Addon table row must match the number of columns.")
+            parsed_rows.append(
+                tuple(
+                    _layout_text(cell, field="table cell", maximum=1_000, allow_empty=True)
+                    for cell in row
+                )
+            )
+        parsed = {
+            "type": "table",
+            "columns": parsed_columns,
+            "rows": tuple(parsed_rows),
+        }
+        if title is not None:
+            parsed["title"] = title
+        return parsed
+
+    if block_type == "button":
+        _reject_unknown_layout_fields(value, {"type", "action", "label", "variant"})
+        action_id = value.get("action")
+        if not isinstance(action_id, str) or action_id not in action_ids:
+            raise AddonError("Addon layout buttons must reference an id declared in 'actions'.")
+        parsed = {"type": "button", "action": action_id}
+        if "label" in value:
+            parsed["label"] = _layout_text(value["label"], field="label", maximum=80)
+        if "variant" in value:
+            variant = value["variant"]
+            if not isinstance(variant, str) or variant not in BUTTON_VARIANTS:
+                raise AddonError(
+                    "Addon layout button 'variant' must be default, primary, success, "
+                    "warning, or error."
+                )
+            parsed["variant"] = variant
+        return parsed
+
+    raise AddonError("Addon layout block 'type' must be text, panel, row, table, or button.")
+
+
+def _parse_notifications(value: object, default_title: str) -> tuple[AddonNotification, ...]:
+    if not isinstance(value, list) or len(value) > ADDON_NOTIFICATION_LIMIT:
+        raise AddonError(
+            f"Addon 'notifications' must be an array of at most {ADDON_NOTIFICATION_LIMIT} items."
+        )
+    notifications: list[AddonNotification] = []
+    for item in value:
+        if not isinstance(item, dict):
+            raise AddonError("Each Addon notification must be a JSON object.")
+        unknown = set(item) - {"title", "message", "severity", "timeout"}
+        if unknown:
+            raise AddonError(f"Unknown Addon notification field '{sorted(unknown)[0]}'.")
+        title = item.get("title", default_title)
+        message = item.get("message")
+        severity = item.get("severity", "information")
+        timeout = item.get("timeout")
+        if not _valid_text(title, maximum=80):
+            raise AddonError(
+                "Addon notification 'title' must be non-empty text of at most 80 characters."
+            )
+        if not _valid_text(message, maximum=500):
+            raise AddonError(
+                "Addon notification 'message' must be non-empty text of at most 500 characters."
+            )
+        if not isinstance(severity, str) or severity not in NOTIFICATION_SEVERITIES:
+            raise AddonError(
+                "Addon notification 'severity' must be information, warning, or error."
+            )
+        if timeout is not None and (
+            not isinstance(timeout, (int, float))
+            or isinstance(timeout, bool)
+            or not 1 <= timeout <= 30
+        ):
+            raise AddonError("Addon notification 'timeout' must be between 1 and 30 seconds.")
+        notifications.append(
+            AddonNotification(
+                title.strip(),
+                message.strip(),
+                severity,
+                float(timeout) if timeout is not None else None,
+            )
+        )
+    return tuple(notifications)
 
 
 def _no_console_window() -> int:

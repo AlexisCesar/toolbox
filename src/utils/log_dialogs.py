@@ -8,6 +8,7 @@ from textual.widgets import Button, Label, ListItem, ListView, Static, TextArea
 
 from src.utils.log_files import (
     DEFAULT_TAIL_BYTES,
+    LogEntry,
     is_text_log_file,
     iter_log_entries,
     read_log_tail,
@@ -24,7 +25,7 @@ class LogFilesDialog(ModalScreen[Path | None]):
         self.log_name = name
         self.directory = directory
         self.logger = logger
-        self.files: list[Path] = []
+        self.files: list[LogEntry] = []
 
     def compose(self) -> ComposeResult:
         with Vertical(id="log-files-dialog"):
@@ -52,9 +53,25 @@ class LogFilesDialog(ModalScreen[Path | None]):
 
         file_list = self.query_one("#log-files-list", ListView)
         if self.files:
-            await file_list.mount(
-                *(ListItem(Label(path.name)) for path in self.files)
-            )
+            items: list[ListItem] = []
+            for entry in self.files:
+                if entry.modified_at is None:
+                    modified_text = "Date unavailable"
+                    self.logger.warn(
+                        f"Could not read last modification time for {entry.path}: "
+                        f"{entry.metadata_error or 'unknown error'}"
+                    )
+                else:
+                    modified_text = entry.modified_at.strftime("%Y-%m-%d %H:%M")
+                items.append(
+                    ListItem(
+                        Label(
+                            f"{entry.path.name}  ·  {modified_text}",
+                            markup=False,
+                        )
+                    )
+                )
+            await file_list.mount(*items)
             file_list.index = 0
             self.query_one("#log-files-status", Static).update(
                 f"{len(self.files)} items. Select an entry and choose Open."
@@ -82,7 +99,7 @@ class LogFilesDialog(ModalScreen[Path | None]):
         if not 0 <= index < len(self.files):
             return
 
-        path = self.files[index]
+        path = self.files[index].path
         self.query_one("#log-files-status", Static).update("Checking selected item…")
         try:
             is_log_file = await asyncio.to_thread(is_text_log_file, path)

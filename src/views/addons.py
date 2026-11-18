@@ -14,6 +14,8 @@ from textual.widgets import Button, DataTable, Input, Label, Static
 from src.utils.addon_manager import AddonError, AddonManager, InstalledAddon
 from src.utils.confirm_dialog import ConfirmDialog, ConfirmResult
 from src.utils.logger import Logger
+from src.utils.recommended_addons import RecommendedAddonsCatalog
+from src.utils.recommended_addons_dialog import RecommendedAddonsDialog
 
 
 class Addons(Static):
@@ -52,7 +54,9 @@ class Addons(Static):
             yield DataTable(id="addons-table", cursor_type="row", zebra_stripes=True)
             with Horizontal(id="addons-actions"):
                 yield Button("Remove selected", variant="error", id="addons-remove", disabled=True)
+            with Horizontal(id="addons-catalog-actions"):
                 yield Button("Refresh list", id="addons-refresh")
+                yield Button("See Recommended Addons", id="addons-recommended")
 
     def on_mount(self) -> None:
         table = self.query_one("#addons-table", DataTable)
@@ -108,6 +112,11 @@ class Addons(Static):
         elif button_id == "addons-refresh":
             event.stop()
             self.refresh_list()
+        elif button_id == "addons-recommended":
+            event.stop()
+            self.app.push_screen(
+                RecommendedAddonsDialog(RecommendedAddonsCatalog(), self.logger)
+            )
         elif button_id == "addons-help":
             event.stop()
             self.run_worker(self._open_developer_guide(), group="addons-guide", exclusive=True)

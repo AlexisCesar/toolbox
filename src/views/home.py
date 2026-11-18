@@ -2,7 +2,8 @@ from rich.markup import escape
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, VerticalScroll
-from textual.widgets import Rule, Select, Static
+from textual.message import Message
+from textual.widgets import Button, Rule, Select, Static
 
 from src.utils.seasonal_theme import (
     CHRISTMAS_THEME,
@@ -35,6 +36,8 @@ Use Settings → Configuration to export or import settings. The private subscri
 [bold]Tips:[/bold]
 
 - Need to copy something from the screen such as logs? Hold down the [bold #5f5fff]SHIFT[/bold #5f5fff] key to select text from anywhere on the screen.
+
+- Enable [bold #5f5fff]Vim motions[/bold #5f5fff] in Scripts or Notes for NORMAL, INSERT, and VISUAL modes. Use :w, :q, :wq, and :set rnu in the command line.
 
 - Generating a [u]scripts configuration file[/u] through the [bold #5f5fff]Settings[/bold #5f5fff] tab enable script parameter history. Trust me, it's very helpful!
 
@@ -85,6 +88,9 @@ def format_changelog(
 
 class Home(Static):
     """A simple home view for the Toolbox TUI."""
+
+    class UpdateRequested(Message):
+        """Request that the application open its update workflow."""
 
     def instructions(self, theme_name: str | None = None) -> str:
         """Return the home guidance with seasonal information when available."""
@@ -138,6 +144,7 @@ class Home(Static):
                 yield Static(self.instructions(theme_name), id="home-instructions")
             with VerticalScroll(id="home-update-log"):
                 yield Static("", id="home-update-notice")
+                yield Button("Update Toolbox", variant="primary", id="home-update")
                 yield Select.from_values(
                     changelog_versions(),
                     prompt="Version",
@@ -148,15 +155,20 @@ class Home(Static):
                 yield Static(format_changelog(), id="home-changelog")
 
     def show_update_notice(self, version: str) -> None:
-        """Show a link to the master branch when a newer release is available."""
+        """Show the update action when a newer release is available."""
         notice = self.query_one("#home-update-notice", Static)
         notice.update(
             f"[bold yellow]New release v{escape(version)} is available. "
-            "Please update Toolbox using the "
-            '[link="https://github.com/AlexisCesar/toolbox/tree/master"]'
-            "master branch[/link].[/bold yellow]"
+            "Use the button below to update this installation.[/bold yellow]"
         )
         notice.display = True
+        self.query_one("#home-update", Button).display = True
+
+    @on(Button.Pressed, "#home-update")
+    def on_update_pressed(self, event: Button.Pressed) -> None:
+        """Ask the app to begin the safe update workflow."""
+        event.stop()
+        self.post_message(self.UpdateRequested())
 
     @on(Select.Changed, "#home-version-select")
     def on_changelog_version_changed(self, event: Select.Changed) -> None:

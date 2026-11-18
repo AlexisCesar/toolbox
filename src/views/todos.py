@@ -10,7 +10,15 @@ from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, HorizontalScroll, Vertical
-from textual.widgets import Button, DataTable, Label, ProgressBar, Select, Static
+from textual.widgets import (
+    Button,
+    Checkbox,
+    DataTable,
+    Label,
+    ProgressBar,
+    Select,
+    Static,
+)
 
 from src.utils.confirm_dialog import ConfirmDialog
 from src.utils.config import config
@@ -46,11 +54,14 @@ class Todos(Static):
         self.items: list[TodoItem] = []
         self.visible_items: list[TodoItem] = []
         self.sort_mode = "manual"
+        self.hide_completed = False
         self.load_failed = False
 
     def compose(self) -> ComposeResult:
         with Vertical(id="todos-content"):
-            yield Label("TODO list", id="todos-title")
+            with Horizontal(id="todos-header-row"):
+                yield Label("TODO list", id="todos-title")
+                yield Checkbox("Hide completed", id="todos-hide-completed")
             yield Static("", id="todos-summary")
             with Horizontal(id="todos-progress-row"):
                 yield Label("Progress", id="todos-progress-label")
@@ -132,7 +143,10 @@ class Todos(Static):
         table = self.query_one("#todos-table", DataTable)
         table.clear(columns=True)
         table.add_columns("Task", "Status", "Priority", "Created")
-        self.visible_items = flatten_todos(self.items, self.sort_mode)
+        sorted_items = flatten_todos(self.items, self.sort_mode)
+        self.visible_items = [
+            item for item in sorted_items if not self.hide_completed or not item.completed
+        ]
 
         for item in self.visible_items:
             is_sub_item = item.parent_id is not None
@@ -203,6 +217,11 @@ class Todos(Static):
         if event.value in {"manual", "created", "priority", "status"}:
             self.sort_mode = event.value
             self.refresh_table()
+
+    @on(Checkbox.Changed, "#todos-hide-completed")
+    def on_hide_completed_changed(self, event: Checkbox.Changed) -> None:
+        self.hide_completed = event.value
+        self.refresh_table()
 
     def action_add(self) -> None:
         if self.load_failed:
