@@ -1471,6 +1471,115 @@ TitleSelectionDialog {
     margin-right: 1;
 }
 
+RecommendedAddonsDialog {
+    align: center middle;
+}
+
+#recommended-addons-dialog {
+    width: 90%;
+    max-width: 110;
+    height: 90%;
+    padding: 1 2;
+    border: thick $primary;
+    background: $surface;
+}
+
+UpdateDialog {
+    align: center middle;
+}
+
+#toolbox-update-dialog {
+    width: 80%;
+    max-width: 100;
+    height: auto;
+    max-height: 90%;
+    padding: 2;
+    border: thick $primary;
+    background: $surface;
+}
+
+#toolbox-update-title {
+    height: auto;
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+#toolbox-update-status {
+    height: auto;
+    min-height: 1;
+    margin-bottom: 1;
+}
+
+#toolbox-update-error {
+    height: auto;
+    max-height: 12;
+    color: $error;
+    margin-bottom: 1;
+}
+
+#toolbox-update-actions {
+    height: 3;
+    align: right middle;
+}
+
+#recommended-addons-title {
+    height: auto;
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+#recommended-addons-status {
+    height: auto;
+    min-height: 1;
+    margin-bottom: 1;
+    color: $text-muted;
+}
+
+#recommended-addons-list {
+    height: 1fr;
+    min-height: 6;
+}
+
+.recommended-addon-card {
+    height: auto;
+    padding: 1;
+    margin-bottom: 1;
+    border: round $secondary;
+}
+
+.recommended-addon-name {
+    height: auto;
+    text-style: bold;
+}
+
+.recommended-addon-category,
+.recommended-addon-description,
+.recommended-addon-repository {
+    height: auto;
+    text-wrap: wrap;
+}
+
+.recommended-addon-category {
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+.recommended-addon-link-row {
+    height: auto;
+    align: left middle;
+    margin-top: 1;
+}
+
+.recommended-addon-repository {
+    width: 1fr;
+}
+
+#recommended-addons-actions {
+    height: 3;
+    align: right middle;
+    margin-top: 1;
+}
+
 #addon-view-body {
     height: auto;
     min-height: 3;
