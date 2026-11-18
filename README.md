@@ -1,6 +1,6 @@
 # Toolbox TUI 🧰
 
-<img width="1864" height="1041" alt="Toolbox TUI screenshot" src="https://github.com/user-attachments/assets/d9bf8f8a-aed3-42d1-9b1d-299869ba4643" />
+<img width="1607" height="920" alt="image" src="https://github.com/user-attachments/assets/91e36ab8-5adb-4c9d-8542-a8bca8336cf2" />
 
 **Toolbox TUI** brings common software development tasks into one terminal
 application: scripts, projects, notes, logs, health checks, TODOs, and more.
