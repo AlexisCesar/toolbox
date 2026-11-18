@@ -20,11 +20,14 @@ CHANGELOG: dict[str, VersionChanges] = {
             "Structured Addon layouts with panels, tables, styled text, and buttons.",
             "Addon notifications through Toolbox toasts.",
             "Recommended Addons catalog.",
-            "Update Toolbox button."
+            "Update Toolbox button.",
+            "Optional Vim motions in the script and Notes editors.",
+            "Run scripts in the root folder"
         ],
         "changed": [
             "Hide completed TODO items without changing saved data or progress.",
             "Log file lists show modification times and sort newest first.",
+            "Simplified app start with \"uv run toolbox\" command.",
         ],
     },
     "0.5.0": {

@@ -9,6 +9,7 @@ application: scripts, projects, notes, logs, health checks, TODOs, and more.
 
 - Run commands in a persistent Bash session.
 - Browse scripts, descriptions, and saved parameters; run SQL Server scripts.
+- Edit scripts and notes with optional Vim motions.
 - Find projects and open them with detected IDEs and editors.
 - Create and edit text files, and preview Markdown notes.
 - Browse logs by last-modified time and monitor HTTP endpoints or TCP connections.
@@ -42,7 +43,7 @@ Optional tools:
 ```bash
 git clone https://github.com/AlexisCesar/toolbox.git
 cd toolbox
-uv run python main.py
+uv run toolbox # or run.bat (Windows) / run.sh (Linux and MacOS)
 ```
 
 On first launch, Toolbox creates `config.override.toml` from the checked-in

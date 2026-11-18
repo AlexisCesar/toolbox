@@ -1,16 +1,17 @@
 import os
-from typing import Iterable
-from pathlib import Path
 import shutil
+from pathlib import Path
+from typing import Iterable
 
-from textual import Logger
+from textual import Logger, on
 from textual.app import ComposeResult
-from textual.containers import Horizontal, HorizontalScroll
-from textual.widgets import Button, Static, DirectoryTree, TextArea
+from textual.containers import Horizontal, HorizontalScroll, Vertical
+from textual.widgets import Button, Checkbox, DirectoryTree, Static, TextArea
 from src.utils.config import config
 from src.utils.confirm_dialog import ConfirmDialog
 from src.utils.gamification import NOTE_OPEN_EXP
 from src.utils.new_note_dialog import NewNoteDialog, NewNoteDraft
+from src.utils.vim_motions import VimTextArea
 
 MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
 
@@ -129,16 +130,28 @@ class Notes(Static):
         with Horizontal(id="notes-container"):
             with HorizontalScroll(id="notes-directory-tree-wrapper"):
                 yield NotesDirectoryTree(config.notes_dir, id="notes-directory-tree")
-              
-            yield TextArea.code_editor(
+
+            with Horizontal(id="notes-editor-panel"):
+                yield VimTextArea(
                     "",
                     id="viewer",
                     read_only=False,
                     show_cursor=False,
                     show_line_numbers=True,
                     soft_wrap=True,
-                    language=None
+                    language=None,
+                    theme="monokai",
+                    tab_behavior="indent",
+                    on_mode_changed=self._update_vim_mode,
+                    on_command_changed=self._update_vim_command,
+                    on_command_submitted=self._execute_vim_command,
+                    on_command_result=self._show_vim_result,
                 )
+                with Vertical(id="notes-vim-sidebar"):
+                    yield Checkbox("Vim motions", id="notes-vim-toggle")
+                    yield Static("", id="notes-vim-mode", markup=False)
+                    yield Static("", id="notes-vim-command", markup=False)
+                    yield Static("", id="notes-vim-status", markup=False)
             
         with HorizontalScroll():
             yield Button("\U0001F4C4 New Note", id="new-note-button", flat=True, classes="icon-button",)
@@ -158,6 +171,62 @@ class Notes(Static):
         action_name = self.BUTTON_ACTIONS.get(button_id)
         if action_name is not None:
             getattr(self, f"action_{action_name}")()
+
+    @on(Checkbox.Changed, "#notes-vim-toggle")
+    def on_vim_toggle_changed(self, event: Checkbox.Changed) -> None:
+        editor = self.query_one("#viewer", VimTextArea)
+        editor.vim_motions.set_enabled(event.value)
+        editor.focus()
+
+    def _update_vim_mode(self, mode: str) -> None:
+        mode_label = self.query_one("#notes-vim-mode", Static)
+        mode_label.update(mode)
+        mode_label.display = bool(mode)
+
+    def _update_vim_command(self, command: str) -> None:
+        self.query_one("#notes-vim-command", Static).update(command)
+
+    def _show_vim_result(self, message: str) -> None:
+        self.query_one("#notes-vim-status", Static).update(message)
+
+    def _execute_vim_command(self, command: str) -> None:
+        if command in {"w", "write"}:
+            if self.action_save_file():
+                self._show_vim_result("Written")
+            else:
+                self._show_vim_result("Could not write the current note")
+        elif command in {"q", "quit"}:
+            if self._has_unsaved_changes():
+                self._show_vim_result("E37: No write since last change")
+            else:
+                self._close_current_note()
+        elif command in {"q!", "quit!"}:
+            self._close_current_note()
+        elif command in {"wq", "x"}:
+            if self.action_save_file():
+                self._close_current_note()
+                self._show_vim_result("Written and closed")
+            else:
+                self._show_vim_result("Could not write the current note")
+        else:
+            self._show_vim_result(f"E492: Not an editor command: {command}")
+
+    def _has_unsaved_changes(self) -> bool:
+        if self.current_file_path is None or self.saved_content is None:
+            return False
+        return self.query_one("#viewer", VimTextArea).text != self.saved_content
+
+    def _close_current_note(self) -> None:
+        if self.current_file_path is None:
+            self._show_vim_result("No note is open")
+            return
+        closed_path = self.current_file_path
+        viewer = self.query_one("#viewer", VimTextArea)
+        viewer.load_text("")
+        viewer.language = None
+        self.current_file_path = None
+        self.saved_content = None
+        self.logger.info(f"Closed notes file: {closed_path}")
 
     def action_refresh_folder(self, silent: bool = False) -> None:
         if not silent:
@@ -319,12 +388,12 @@ class Notes(Static):
         """Refreshes the selected file in the text viewer."""
         self.load_selected_file()
 
-    def action_save_file(self) -> None:
-        """Saves the content of the text viewer to the currently opened file."""
+    def action_save_file(self) -> bool:
+        """Save the current note and report whether the write succeeded."""
         file_path = self.current_file_path
         if file_path is None:
             self.logger.warn("Open a file before saving.")
-            return
+            return False
 
         viewer = self.query_one("#viewer", TextArea)
         content = viewer.text
@@ -333,8 +402,10 @@ class Notes(Static):
             file_path.write_bytes(content.encode("utf-8"))
             self.saved_content = content
             self.logger.info(f"Saved notes file: {file_path}")
+            return True
         except Exception as error:
             self.logger.error(f"Could not save notes file {file_path}: {error}")
+            return False
 
     def action_view_markdown(self) -> None:
         """Switches to the markdown viewer and loads the selected markdown file."""
