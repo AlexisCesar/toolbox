@@ -222,14 +222,13 @@ def execute_sql_server_script(
 
     connection = pyodbc.connect(
         build_connection_string(driver, credentials),
-        timeout=CONNECT_TIMEOUT_SECONDS,
+        timeout=max(int(query_timeout_seconds), CONNECT_TIMEOUT_SECONDS),
         autocommit=True,
     )
     result_sets: list[SQLQueryResult] = []
     rows_affected = 0
     try:
         cursor = connection.cursor()
-        cursor.timeout = max(1, int(query_timeout_seconds))
         for batch in batches:
             cursor.execute(batch)
             while True:

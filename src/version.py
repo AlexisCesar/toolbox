@@ -12,9 +12,15 @@ class VersionChanges(TypedDict, total=False):
     fixed: list[str]
 
 
-APP_VERSION = "0.6.0"
+APP_VERSION = "0.6.1"
 
 CHANGELOG: dict[str, VersionChanges] = {
+    "0.6.1": {
+        "date": "2026-11-24",
+        "fixed": [
+            "SQL Server script execution failing due to incorrect query timeout handling.",
+        ]
+    },
     "0.6.0": {
         "date": "2026-11-18",
         "added": [
