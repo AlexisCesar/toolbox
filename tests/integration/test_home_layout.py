@@ -13,7 +13,7 @@ def test_home_splits_guidance_and_update_log_and_shows_current_version(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr(Bash, "start_session", lambda self: None)
-    monkeypatch.setattr("src.tui.check_for_update", lambda current_version: "0.6.0")
+    monkeypatch.setattr("src.tui.check_for_update", lambda current_version: "0.6.1")
     app = ToolboxTUI()
     update_steps: list[str] = []
 
@@ -48,7 +48,7 @@ def test_home_splits_guidance_and_update_log_and_shows_current_version(
             await pilot.pause(0.1)
 
             assert update_notice.display is True
-            assert "New release v0.6.0 is available" in str(update_notice.content)
+            assert "New release v0.6.1 is available" in str(update_notice.content)
             assert "button below" in str(update_notice.content)
             assert update_button.display is True
             assert update_notice.region.y < version_select.region.y
@@ -56,13 +56,13 @@ def test_home_splits_guidance_and_update_log_and_shows_current_version(
             assert f"Version {APP_VERSION} Log:" in str(changelog.content)
             assert f"v{APP_VERSION}" in str(app.query_one("#version", Label).content)
 
-            pending_version = "0.6.0"
+            pending_version = "0.6.1"
             assert pending_version in CHANGELOG
             version_select.value = pending_version
             await pilot.pause()
 
             assert f"Version {pending_version} Log:" in str(changelog.content)
-            assert CHANGELOG[pending_version]["added"][0] in str(changelog.content)
+            assert CHANGELOG[pending_version]["fixed"][0] in str(changelog.content)
 
             await pilot.click("#home-update")
             await pilot.pause(0.2)
